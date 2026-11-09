@@ -52,22 +52,25 @@ export default function Home() {
         </section>
         <SocietyShowcase />
         <section id="tools" className="catalog-section">
-          <div className="shell">
-            <div className="section-heading">
-              <div>
-                <span className="kicker">THE NEIGHBORHOOD SHELF</span>
-                <h2>
-                  Find your next
-                  <br />
-                  <em>“just what I needed.”</em>
-                </h2>
+          <PublicCatalog
+            heading={
+              <div className="shell section-heading">
+                <div>
+                  <span className="kicker">THE NEIGHBORHOOD SHELF</span>
+                  <h2>
+                    Find your next
+                    <br />
+                    <em>“just what I needed.”</em>
+                  </h2>
+                </div>
+                <p>
+                  A live peek at LendLoop. Just item names and categories here.
+                  Sign in to explore the details.
+                </p>
               </div>
-              <p>
-                A live peek at LendLoop. Just item names and categories here.
-                Sign in to explore the details.
-              </p>
-            </div>
-            <PublicCatalog />
+            }
+          />
+          <div className="shell">
             <div className="catalog-entry">
               <span>Have something useful sitting idle?</span>
               <Link href="/dashboard" className="button-primary">

@@ -175,6 +175,11 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         city: "Demo city",
       },
     ];
+  if (name === "tools:publicList")
+    return items.map(({ name, category }) => ({
+      name: `Demo · ${name}`,
+      category,
+    }));
   if (name === "tools:explore") {
     Object.assign(window, { __atlasExploreArgs: args });
     return items.filter(
