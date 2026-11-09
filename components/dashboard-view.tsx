@@ -1,3 +1,4 @@
+import { RequestList } from "@/components/borrowing";
 import { Compass, Inbox, Package, UserRound } from "lucide-react";
 import { ExploreTools, MyListings } from "@/components/marketplace";
 
@@ -31,6 +32,8 @@ const pages = {
 export function DashboardView({ section }: { section?: keyof typeof pages }) {
   if (!section) return <ExploreTools />;
   if (section === "listings") return <MyListings />;
+  if (section === "requests") return <RequestList incoming={false} />;
+  if (section === "incoming") return <RequestList incoming />;
   const page = pages[section];
   const Icon = page.icon;
   return (

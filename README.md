@@ -14,6 +14,14 @@ No new environment variables are required. Run `npx convex dev --once` against a
 
 The Rizvi Oak CHSL development society has [synthetic demo neighbors and eight photographed listings](docs/DEVELOPMENT.md#rizvi-oak-chsl-demo-data).
 
+## Phase 3 borrowing and returns
+
+On an active listing, an onboarded neighbor can request 1–30 inclusive calendar days. Dates use **Asia/Kolkata**; the backend rejects past or invalid ranges. A free listing has a zero total; a paid request snapshots its INR daily rate in paise and the inclusive total. Requests are proposals, not payments. Multiple pending requests can overlap. A lender can approve or decline; a borrower can cancel while pending. Approval atomically checks existing active loans and creates one reservation, so overlapping loans cannot both be approved. Returned loans no longer block dates, and their history remains after listing archive. My Requests and Incoming Requests update through Convex subscriptions.
+
+Approved loans have a participant-only detail page. Borrowers can report a handback; lenders confirm the return and may also mark it returned directly. Overdue is derived from the local end date and unconfirmed return state. Either participant may optionally share a phone, pickup point or instructions; these live in a separate private table and can be cleared. No full address is required. No payment, negotiation, reminders, n8n workflow or admin dashboard is included.
+
+Push the new schema and functions to a **development** Convex deployment with `npx convex dev --once`, then run `npx convex codegen`. No new environment variables are required. For manual verification, sign in as two onboarded users in separate browser sessions: create an active listing as the lender; request dates as the borrower; approve in Incoming; inspect My Requests and the private loan page; report and confirm the return. Repeat with Decline. Run `npm test` for transaction and privacy cases. Authenticated Playwright borrowing tests require two isolated Clerk test accounts (`E2E_CLERK_USER_EMAIL` and `E2E_CLERK_BORROWER_EMAIL`) in the same development Convex deployment.
+
 ## Vercel demo deployment
 
 This deployment is for testing. The Vercel project uses a Clerk **development** instance and a Convex **development** deployment, with synthetic data only. Do not connect it to live production credentials or user data. The Vercel Production target provides a stable `*.vercel.app` URL for the demo; it does not make Clerk or Convex a production environment. Clerk development authentication on a provider domain is intended for demos and testing, not a real production launch.

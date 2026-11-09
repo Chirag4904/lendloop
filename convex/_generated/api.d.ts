@@ -8,10 +8,13 @@
  * @module
  */
 
+import type * as borrowing from "../borrowing.js";
 import type * as crons from "../crons.js";
 import type * as demoRizvi from "../demoRizvi.js";
 import type * as devSeed from "../devSeed.js";
+import type * as loans from "../loans.js";
 import type * as photos from "../photos.js";
+import type * as requests from "../requests.js";
 import type * as societies from "../societies.js";
 import type * as suggestions from "../suggestions.js";
 import type * as tools from "../tools.js";
@@ -24,10 +27,13 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  borrowing: typeof borrowing;
   crons: typeof crons;
   demoRizvi: typeof demoRizvi;
   devSeed: typeof devSeed;
+  loans: typeof loans;
   photos: typeof photos;
+  requests: typeof requests;
   societies: typeof societies;
   suggestions: typeof suggestions;
   tools: typeof tools;

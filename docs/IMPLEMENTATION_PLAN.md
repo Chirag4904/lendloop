@@ -13,10 +13,14 @@ Project setup, design tokens and landing page; Clerk/Convex integration code; mi
 
 ## Later phases, pending review
 
-After Phase 2 review, design request/approval and one-round negotiation state machines, loans and return tracking, participant contact disclosure, notification adapters and n8n workflows, retention/deletion processes, and eventually payments and AI.
+After Phase 3 review, design one-round negotiation, notification adapters and n8n workflows, retention/deletion processes, and eventually payments and AI.
 
 ## Completed in Phase 2
 
 Listing creation and editing, Convex File Storage photo pipeline, in-app camera and native capture fallback, listing management, authenticated discovery with approximate society-center radius, tool detail gallery, backend authorization and privacy tests are implemented. CI retains formatting, lint, typecheck, Vitest, build and Playwright gates. Authenticated browser tests require a separate test Clerk account and development Convex deployment. Hardware camera capture still needs a manual Android/iOS check when available.
 
-Next phase, after review: borrowing requests and owner approval/decline, date-aware availability, negotiation, loan state and participant contact disclosure. Payments, n8n workflows, AI and society-admin roles remain outside Phase 2.
+Phase 3 adds borrowing requests, owner approval/decline, transactional date reservations, loan returns and optional participant-only handover details. Negotiation, payments, n8n workflows, AI and society-admin roles remain deferred.
+
+## Completed in Phase 3
+
+The borrower can submit, track and cancel pending requests; the lender can approve or decline. Approval atomically reserves dates and snapshots the agreed terms in a loan. Borrowers report returns; lenders close them. Optional handover details are private to participants. Overdue derives from Kolkata dates. Convex tests cover authorization, pricing, transitions, overlap, concurrency, returns and archive history. Authenticated two-account browser tests require isolated development credentials. Before production launch, add pagination for high-volume histories, a retention policy, and explicit admin access/audit rules.

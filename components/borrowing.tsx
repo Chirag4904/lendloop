@@ -1,0 +1,589 @@
+"use client";
+
+import { useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import type { Id } from "@/convex/_generated/dataModel";
+
+const money = (minor: number) =>
+  minor === 0
+    ? "Free"
+    : new Intl.NumberFormat("en-IN", {
+        style: "currency",
+        currency: "INR",
+      }).format(minor / 100);
+const localToday = () =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+const rentalDays = (start: string, end: string) =>
+  start && end
+    ? (Date.parse(`${end}T00:00:00Z`) - Date.parse(`${start}T00:00:00Z`)) /
+        86_400_000 +
+      1
+    : 0;
+const dateLabel = (date: string) =>
+  new Intl.DateTimeFormat("en-IN", {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(`${date}T00:00:00Z`));
+const statusLabel = (status: string, overdue = false) =>
+  overdue
+    ? "Overdue"
+    : ((
+        {
+          pending: "Pending",
+          approved: "Approved",
+          declined: "Declined",
+          cancelled: "Cancelled",
+          reserved: "Reserved",
+          return_pending: "Return awaiting confirmation",
+          returned: "Returned",
+        } as Record<string, string>
+      )[status] ?? status);
+
+const requestState = (status: string, loanStatus: string | null) =>
+  loanStatus === "returned" || loanStatus === "return_pending"
+    ? loanStatus
+    : status;
+
+export function RequestForm({
+  toolId,
+  name,
+  category,
+  condition,
+  ownerName,
+  dailyAmount,
+  coverUrl,
+}: {
+  toolId: Id<"tools">;
+  name: string;
+  category: string;
+  condition: string;
+  ownerName: string;
+  dailyAmount: number | null;
+  coverUrl: string | null;
+}) {
+  const router = useRouter();
+  const dialog = useRef<HTMLDialogElement>(null);
+  const create = useMutation(api.requests.create);
+  const [open, setOpen] = useState(false),
+    [startDate, setStart] = useState(""),
+    [endDate, setEnd] = useState(""),
+    [busy, setBusy] = useState(false),
+    [error, setError] = useState("");
+  const count = rentalDays(startDate, endDate);
+  const valid = startDate >= localToday() && count >= 1 && count <= 30;
+  const available = useQuery(
+    api.requests.availability,
+    open && valid ? { toolId, startDate, endDate } : "skip",
+  );
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!valid || available !== true) return;
+    setBusy(true);
+    setError("");
+    try {
+      await create({ toolId, startDate, endDate });
+      router.push("/dashboard/requests");
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="borrow-panel" aria-label="Borrow this item">
+      <button
+        type="button"
+        className="button-primary"
+        onClick={() => {
+          dialog.current?.showModal();
+          setOpen(true);
+        }}
+      >
+        Request to Borrow
+      </button>
+      <dialog
+        ref={dialog}
+        className="borrow-dialog"
+        aria-labelledby="request-title"
+        onClose={() => setOpen(false)}
+      >
+        {open && (
+          <form id="request-form" onSubmit={submit} className="borrow-form">
+            <div className="borrow-form-heading">
+              <h2 id="request-title">Request to Borrow</h2>
+              <button
+                type="button"
+                aria-label="Close request"
+                onClick={() => dialog.current?.close()}
+              >
+                ×
+              </button>
+            </div>
+            <div className="borrow-item">
+              {coverUrl && <img src={coverUrl} alt="" />}
+              <div>
+                <strong>{name}</strong>
+                <span>
+                  {category} · {condition} · {ownerName}
+                </span>
+                <span>
+                  {dailyAmount === null
+                    ? "Free"
+                    : `${money(dailyAmount)} / day`}
+                </span>
+              </div>
+            </div>
+            <p>
+              Choose calendar days in India Standard Time. Both dates count
+              toward the rental.
+            </p>
+            <div className="borrow-dates">
+              <label>
+                Start date
+                <input
+                  type="date"
+                  min={localToday()}
+                  value={startDate}
+                  onChange={(e) => setStart(e.target.value)}
+                  required
+                />
+              </label>
+              <label>
+                End date
+                <input
+                  type="date"
+                  min={startDate || localToday()}
+                  value={endDate}
+                  onChange={(e) => setEnd(e.target.value)}
+                  required
+                />
+              </label>
+            </div>
+            {count > 0 && (
+              <p className="borrow-total">
+                <strong>
+                  {count} {count === 1 ? "day" : "days"} ·{" "}
+                  {money((dailyAmount ?? 0) * count)}
+                </strong>
+                <span>
+                  Estimated at the listed rate. No payment is collected.
+                </span>
+              </p>
+            )}
+            {valid && available === false && (
+              <p role="alert" className="form-message error">
+                These dates are already reserved. Choose another range.
+              </p>
+            )}
+            {error && (
+              <p role="alert" className="form-message error">
+                {error}
+              </p>
+            )}
+            <button
+              type="submit"
+              className="button-primary"
+              disabled={!valid || available !== true || busy}
+            >
+              {busy ? "Sending…" : "Send request"}
+            </button>
+          </form>
+        )}
+      </dialog>
+    </section>
+  );
+}
+
+export function RequestList({ incoming }: { incoming: boolean }) {
+  const rows = useQuery(
+    incoming ? api.requests.incoming : api.requests.mine,
+    {},
+  );
+  const approve = useMutation(api.requests.approve),
+    decline = useMutation(api.requests.decline),
+    cancel = useMutation(api.requests.cancel);
+  const [busy, setBusy] = useState<string | null>(null),
+    [error, setError] = useState("");
+  async function act(
+    id: Id<"borrowRequests">,
+    action: "approve" | "decline" | "cancel",
+  ) {
+    if (
+      (action === "decline" || action === "approve") &&
+      !window.confirm(
+        `${action === "approve" ? "Approve" : "Decline"} this request?`,
+      )
+    )
+      return;
+    setBusy(id);
+    setError("");
+    try {
+      if (action === "approve") await approve({ requestId: id });
+      else if (action === "decline") await decline({ requestId: id });
+      else await cancel({ requestId: id });
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+  return (
+    <section className="request-page">
+      <div className="app-heading">
+        <span className="kicker">
+          {incoming ? "YOUR SHELF" : "YOUR BORROWING"}
+        </span>
+        <h1>{incoming ? "Incoming Requests" : "My Requests"}</h1>
+        <p>
+          {incoming
+            ? "Respond to neighbors who want to borrow your items."
+            : "Follow your requests and return borrowed items."}
+        </p>
+      </div>
+      {error && (
+        <p role="alert" className="form-message error">
+          {error}
+        </p>
+      )}
+      {rows === undefined ? (
+        <p role="status" className="catalog-state">
+          Loading requests…
+        </p>
+      ) : rows.length === 0 ? (
+        <div className="app-empty">
+          <h2>{incoming ? "No requests yet" : "Nothing requested yet"}</h2>
+          <p>
+            {incoming
+              ? "New borrowing requests will appear here."
+              : "Explore your neighborhood to find something useful."}
+          </p>
+          <Link className="button-primary" href="/dashboard">
+            Explore tools
+          </Link>
+        </div>
+      ) : (
+        <div className="request-grid">
+          {rows.map((row) => (
+            <article className="request-card" key={row.id}>
+              {row.coverUrl ? (
+                <img className="request-cover" src={row.coverUrl} alt="" />
+              ) : (
+                <div
+                  className="request-cover request-placeholder"
+                  aria-hidden="true"
+                >
+                  ✳
+                </div>
+              )}
+              <div className="request-body">
+                <div className="request-card-top">
+                  <span
+                    className={`request-status status-${row.status === "approved" && row.loanStatus !== "returned" && row.endDate < localToday() ? "overdue" : requestState(row.status, row.loanStatus)}`}
+                  >
+                    {statusLabel(
+                      requestState(row.status, row.loanStatus),
+                      row.status === "approved" &&
+                        row.loanStatus !== "returned" &&
+                        row.endDate < localToday(),
+                    )}
+                  </span>
+                  <span>
+                    {dateLabel(row.startDate)} – {dateLabel(row.endDate)}
+                  </span>
+                </div>
+                <h2>
+                  <Link href={`/dashboard/tools/${row.toolId}`}>
+                    {row.toolName}
+                  </Link>
+                </h2>
+                <p>
+                  {incoming ? "From" : "Shared by"} {row.otherName}
+                  {row.trusted
+                    ? ` · Trusted ${incoming ? "Borrower" : "Lender"}`
+                    : ""}
+                </p>
+                <p>
+                  {row.days} {row.days === 1 ? "day" : "days"} ·{" "}
+                  {money(row.totalMinor)}{" "}
+                  {row.status === "approved" ? "agreed" : "proposed"}
+                </p>
+                {row.conflict && (
+                  <p className="request-conflict" role="status">
+                    These dates overlap another confirmed loan. This request
+                    cannot be approved.
+                  </p>
+                )}
+                {row.status === "declined" && !incoming && (
+                  <p>
+                    This request was declined. You can explore another item.
+                  </p>
+                )}
+                <div className="request-actions">
+                  {row.loanId && (
+                    <Link
+                      className="button-primary"
+                      href={`/dashboard/loans/${row.loanId}`}
+                    >
+                      View loan
+                    </Link>
+                  )}
+                  {row.status === "pending" &&
+                    (incoming ? (
+                      <>
+                        <button
+                          type="button"
+                          className="button-primary"
+                          disabled={!!busy || row.conflict}
+                          onClick={() => void act(row.id, "approve")}
+                        >
+                          Approve Request
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!!busy}
+                          onClick={() => void act(row.id, "decline")}
+                        >
+                          Decline Request
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={!!busy}
+                        onClick={() => void act(row.id, "cancel")}
+                      >
+                        Cancel request
+                      </button>
+                    ))}
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
+  const loan = useQuery(api.loans.detail, { loanId });
+  const report = useMutation(api.loans.reportReturn),
+    confirm = useMutation(api.loans.confirmReturn),
+    save = useMutation(api.loans.saveHandover);
+  const [phone, setPhone] = useState(""),
+    [pickupPoint, setPickupPoint] = useState(""),
+    [instructions, setInstructions] = useState(""),
+    [editing, setEditing] = useState(false),
+    [busy, setBusy] = useState(false),
+    [message, setMessage] = useState("");
+  if (loan === undefined) return <p role="status">Loading loan…</p>;
+  if (loan === null)
+    return (
+      <div className="app-empty">
+        <h1>Loan unavailable</h1>
+        <Link href="/dashboard/requests">My Requests</Link>
+      </div>
+    );
+  const mine = loan.details.find((d) => d.isMine);
+  async function action(kind: "report" | "confirm" | "save") {
+    setBusy(true);
+    setMessage("");
+    try {
+      if (kind === "report") await report({ loanId });
+      else if (kind === "confirm") await confirm({ loanId });
+      else {
+        await save({ loanId, phone, pickupPoint, instructions });
+        setEditing(false);
+      }
+    } catch (err) {
+      setMessage((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <article className="loan-page">
+      <Link
+        className="text-link"
+        href={loan.isLender ? "/dashboard/incoming" : "/dashboard/requests"}
+      >
+        ← Back to requests
+      </Link>
+      <div className="loan-hero">
+        {loan.coverUrl && <img src={loan.coverUrl} alt="" />}
+        <div>
+          <span className="kicker">CONFIRMED LOAN</span>
+          <h1>{loan.toolName}</h1>
+          <span
+            className={`request-status status-${loan.overdue ? "overdue" : loan.status}`}
+          >
+            {statusLabel(loan.status, loan.overdue)}
+          </span>
+          <p>
+            {dateLabel(loan.startDate)} – {dateLabel(loan.endDate)} ·{" "}
+            {loan.days} {loan.days === 1 ? "day" : "days"}
+          </p>
+          <strong>
+            {money(loan.totalMinor)} agreed · {money(loan.rateMinor)} / day
+          </strong>
+          <p>
+            Lender: {loan.lenderName}
+            <br />
+            Borrower: {loan.borrowerName}
+          </p>
+        </div>
+      </div>
+      {message && (
+        <p role="alert" className="form-message error">
+          {message}
+        </p>
+      )}
+      <div className="loan-columns">
+        <section className="loan-card">
+          <h2>Return</h2>
+          {loan.status === "returned" ? (
+            <p>Return confirmed. This loan is complete.</p>
+          ) : loan.isLender ? (
+            <>
+              <p>
+                {loan.status === "return_pending"
+                  ? "The borrower reported handing back the item."
+                  : "Confirm the return when you have the item back."}
+              </p>
+              <button
+                type="button"
+                className="button-primary"
+                disabled={busy}
+                onClick={() => void action("confirm")}
+              >
+                Confirm Return
+              </button>
+            </>
+          ) : (
+            <>
+              <p>
+                {loan.status === "return_pending"
+                  ? "Waiting for the lender to confirm the return."
+                  : "Let the lender know after you hand the item back."}
+              </p>
+              {loan.status === "reserved" && (
+                <button
+                  type="button"
+                  className="button-primary"
+                  disabled={busy}
+                  onClick={() => void action("report")}
+                >
+                  I’ve Returned the Item
+                </button>
+              )}
+            </>
+          )}
+        </section>
+        <section className="loan-card">
+          <h2>Handover details</h2>
+          <p>
+            Only you and the other participant can see details shared here. A
+            pickup point is enough; a home address is optional.
+          </p>
+          {loan.details.length ? (
+            loan.details.map((d) => (
+              <div className="handover-entry" key={d.authorId}>
+                <strong>{d.authorName} shared</strong>
+                {d.phone && <p>Phone: {d.phone}</p>}
+                {d.pickupPoint && <p>Pickup point: {d.pickupPoint}</p>}
+                {d.instructions && <p>Instructions: {d.instructions}</p>}
+              </div>
+            ))
+          ) : (
+            <p>No details shared yet. Agree on a convenient handover point.</p>
+          )}
+          {!editing ? (
+            <button
+              type="button"
+              onClick={() => {
+                setPhone(mine?.phone ?? "");
+                setPickupPoint(mine?.pickupPoint ?? "");
+                setInstructions(mine?.instructions ?? "");
+                setEditing(true);
+              }}
+            >
+              Edit my details
+            </button>
+          ) : (
+            <form
+              className="handover-form"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void action("save");
+              }}
+            >
+              <label>
+                Contact phone (optional)
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  maxLength={20}
+                />
+              </label>
+              <label>
+                Pickup point (optional)
+                <input
+                  value={pickupPoint}
+                  onChange={(e) => setPickupPoint(e.target.value)}
+                  maxLength={200}
+                />
+              </label>
+              <label>
+                Pickup and return instructions (optional)
+                <textarea
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
+                  maxLength={500}
+                />
+              </label>
+              <button type="submit" className="button-primary" disabled={busy}>
+                Save details
+              </button>
+              <button type="button" onClick={() => setEditing(false)}>
+                Cancel
+              </button>
+              <p>Clear all fields and save to remove your details.</p>
+            </form>
+          )}
+        </section>
+      </div>
+      <section className="loan-card loan-history">
+        <h2>Activity</h2>
+        <ol>
+          <li>
+            Request sent ·{" "}
+            {new Date(loan.requestCreatedAt).toLocaleString("en-IN")}
+          </li>
+          <li>
+            Approved · {new Date(loan.approvedAt).toLocaleString("en-IN")}
+          </li>
+          {loan.returnReportedAt && (
+            <li>
+              Borrower reported return ·{" "}
+              {new Date(loan.returnReportedAt).toLocaleString("en-IN")}
+            </li>
+          )}
+          {loan.returnedAt && (
+            <li>
+              Lender confirmed return ·{" "}
+              {new Date(loan.returnedAt).toLocaleString("en-IN")}
+            </li>
+          )}
+        </ol>
+      </section>
+    </article>
+  );
+}

@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { categories, conditions } from "./listing-form";
+import { RequestForm } from "./borrowing";
 
 type Tool = {
   id: Id<"tools">;
@@ -24,6 +25,7 @@ type Tool = {
   archived: boolean;
   distanceMeters: number;
   ownerName: string;
+  isOwner: boolean;
   trustedLender: boolean;
   photos: { id: Id<"listingPhotos">; url: string | null }[];
 };
@@ -396,14 +398,17 @@ export function ToolDetail({ toolId }: { toolId: Id<"tools"> }) {
         </p>
         <h2>About this item</h2>
         <p>{tool.description}</p>
-        <div className="process-note">
-          <strong>How sharing will work</strong>
-          <p>
-            Neighbors will be able to request dates, and the owner will approve
-            or decline. Requests and date availability are coming in a later
-            phase.
-          </p>
-        </div>
+        {tool.active && !tool.archived && !tool.isOwner && (
+          <RequestForm
+            toolId={tool.id}
+            name={tool.name}
+            category={tool.category}
+            condition={conditions[tool.condition]}
+            ownerName={tool.ownerName}
+            dailyAmount={tool.dailyAmount}
+            coverUrl={tool.photos[0]?.url ?? null}
+          />
+        )}
       </div>
     </article>
   );

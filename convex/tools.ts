@@ -28,6 +28,7 @@ const toolView = v.object({
   archived: v.boolean(),
   distanceMeters: v.number(),
   ownerName: v.string(),
+  isOwner: v.boolean(),
   trustedLender: v.boolean(),
   photos: v.array(
     v.object({ id: v.id("listingPhotos"), url: v.union(v.string(), v.null()) }),
@@ -67,7 +68,12 @@ async function ownerTool(ctx: MutationCtx, toolId: Id<"tools">) {
   if (!tool || tool.ownerId !== me._id) throw new Error("Listing unavailable");
   return tool;
 }
-async function view(ctx: QueryCtx, tool: Doc<"tools">, distance: number) {
+async function view(
+  ctx: QueryCtx,
+  tool: Doc<"tools">,
+  distance: number,
+  viewerId: Id<"users">,
+) {
   const owner = await ctx.db.get(tool.ownerId);
   const photos = await Promise.all(
     (tool.photoIds ?? []).map(async (id) => {
@@ -88,6 +94,7 @@ async function view(ctx: QueryCtx, tool: Doc<"tools">, distance: number) {
     archived: tool.archived ?? false,
     distanceMeters: Number.isFinite(distance) ? Math.round(distance) : -1,
     ownerName: owner?.displayName ?? "Neighbor",
+    isOwner: tool.ownerId === viewerId,
     trustedLender: owner?.trustedLender ?? false,
     photos: photos.filter(
       (photo): photo is { id: Id<"listingPhotos">; url: string | null } =>
@@ -143,6 +150,7 @@ export const mine = query({
             : home && society
               ? meters(home, society)
               : -1,
+          me._id,
         );
       }),
     );
@@ -293,7 +301,7 @@ export const explore = query({
     return Promise.all(
       filtered
         .slice(0, 100)
-        .map(({ tool, distance }) => view(ctx, tool, distance)),
+        .map(({ tool, distance }) => view(ctx, tool, distance, me._id)),
     );
   },
 });
@@ -315,6 +323,7 @@ export const detail = query({
         : home && society
           ? meters(home, society)
           : -1,
+      me._id,
     );
   },
 });

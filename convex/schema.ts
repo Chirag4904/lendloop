@@ -85,6 +85,66 @@ export default defineSchema({
     .index("by_owner_and_tool", ["ownerId", "toolId"])
     .index("by_tool", ["toolId"])
     .index("by_storage", ["storageId"]),
+  borrowRequests: defineTable({
+    toolId: v.id("tools"),
+    borrowerId: v.id("users"),
+    lenderId: v.id("users"),
+    startDate: v.string(),
+    endDate: v.string(),
+    days: v.number(),
+    rateMinor: v.number(),
+    totalMinor: v.number(),
+    currency: v.literal("INR"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("approved"),
+      v.literal("declined"),
+      v.literal("cancelled"),
+    ),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    respondedAt: v.optional(v.number()),
+  })
+    .index("by_borrower", ["borrowerId"])
+    .index("by_lender", ["lenderId"])
+    .index("by_tool_and_borrower", ["toolId", "borrowerId"]),
+  loans: defineTable({
+    requestId: v.id("borrowRequests"),
+    toolId: v.id("tools"),
+    borrowerId: v.id("users"),
+    lenderId: v.id("users"),
+    startDate: v.string(),
+    endDate: v.string(),
+    days: v.number(),
+    rateMinor: v.number(),
+    totalMinor: v.number(),
+    currency: v.literal("INR"),
+    status: v.union(
+      v.literal("reserved"),
+      v.literal("return_pending"),
+      v.literal("returned"),
+    ),
+    approvedAt: v.number(),
+    returnReportedAt: v.optional(v.number()),
+    returnedAt: v.optional(v.number()),
+    updatedAt: v.number(),
+  })
+    .index("by_request", ["requestId"])
+    .index("by_tool_and_status_and_start_date", [
+      "toolId",
+      "status",
+      "startDate",
+    ])
+    .index("by_borrower", ["borrowerId"])
+    .index("by_lender", ["lenderId"]),
+  loanHandoverDetails: defineTable({
+    loanId: v.id("loans"),
+    authorId: v.id("users"),
+    phone: v.optional(v.string()),
+    pickupPoint: v.optional(v.string()),
+    instructions: v.optional(v.string()),
+    updatedAt: v.number(),
+  }).index("by_loan_and_author", ["loanId", "authorId"]),
   uploadTickets: defineTable({
     ownerId: v.id("users"),
     sha256: v.string(),

@@ -7,7 +7,7 @@
 - **Onboarding:** `users.ensureCurrent` creates a minimal user; `societies.search` reads active society names; `users.selectSociety` verifies the selected society; `suggestions.create` stores only a pending suggestion.
 - **Deployment:** Next.js is prepared for Vercel. Convex and Clerk require their own development and production configurations. Local n8n is separate Docker Compose infrastructure and has no workflows yet.
 
-The authenticated dashboard now includes listing creation, management, discovery and detail routes. Requests, loans, automation adapters, and contact disclosure are later phases. See [database](DATABASE.md) and [security and privacy](SECURITY_AND_PRIVACY.md).
+The authenticated dashboard now includes listing creation, management, discovery and detail routes. Requests, loans, returns and optional participant-only handover details are implemented; automation remains later. See [database](DATABASE.md) and [security and privacy](SECURITY_AND_PRIVACY.md).
 
 ## Phase 2 marketplace architecture
 
@@ -15,4 +15,10 @@ Authenticated dashboard routes call Convex queries and mutations directly. `tool
 
 Discovery queries use indexed active tools for each eligible society. Haversine distance is calculated from society centers. The initial implementation checks the first 200 active societies and at most 40 active tools per society, returning up to 100 matches. It needs a geographic index and pagination as the directory grows. Search and filters are applied to these bounded candidates. No external maps or geocoding service is called.
 
-Clerk authenticates; Convex derives the owner and society from the verified subject. Public catalog responses explicitly map to name and category. Protected listing views expose limited owner display names, pricing and image URLs. Borrowing requests and transactions are not implemented.
+Clerk authenticates; Convex derives the owner and society from the verified subject. Public catalog responses explicitly map to name and category. Protected listing views expose limited owner display names, pricing and image URLs. Phase 3 borrowing functions are in `convex/requests.ts` and `convex/loans.ts`, with shared date and identity helpers in `convex/borrowing.ts`.
+
+## Phase 3 transaction architecture
+
+A request stores borrower/lender IDs derived from the verified Clerk subject and listing owner, inclusive `YYYY-MM-DD` dates, and a rate/total snapshot in INR paise. `pending → approved | declined | cancelled` is enforced by separate mutations. Approval reads indexed loans for the tool through the requested end date, rejects any inclusive overlap with a non-returned loan, then inserts a loan and approves the request in one Convex transaction. Concurrent approvals conflict through Convex optimistic concurrency; only a non-overlapping reservation can commit. The loan lifecycle is `reserved → return_pending → returned`, or `reserved → returned` when the lender records it directly. Overdue is derived in Asia/Kolkata, not stored. The indexed reservation scan is correct but will need partitioning if one tool accumulates thousands of historical loans.
+
+Loan detail and optional `loanHandoverDetails` are returned only to the borrower or lender named on the loan. Pending request read models expose only display names, terms and listing imagery. No contact fields are copied into requests, loan activity or public profiles. The loan page presents chronology from immutable timestamps instead of a separate event table. Admin-wide reads are deferred until an explicit admin task and authorization model are defined.
