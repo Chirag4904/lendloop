@@ -3188,6 +3188,10 @@ textarea:focus-visible {
 .scene-layer:not(.scene-1) {
   opacity: 0;
 }
+/* Above .traveling-drill (z-index 3). */
+.scene-front {
+  z-index: 4;
+}
 .scene-svg {
   position: absolute;
   inset: 0;

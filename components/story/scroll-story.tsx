@@ -211,7 +211,13 @@ export function ScrollStory() {
         const canvas = el.querySelector<HTMLElement>(".stage-canvas")!;
         const drill = el.querySelector<HTMLElement>(".traveling-drill")!;
         const tag = el.querySelector<HTMLElement>(".journey-tag")!;
-        const layers = gsap.utils.toArray<HTMLElement>(".scene-layer", el);
+        // A scene can span several layers (scene 4 draws a grip above the drill).
+        const layers = poses.map((_, index) =>
+          gsap.utils.toArray<HTMLElement>(
+            `.scene-layer.scene-${index + 1}`,
+            el,
+          ),
+        );
         const sections = gsap.utils.toArray<HTMLElement>(".story-chapter", el);
         // offsetWidth ignores the camera transform, unlike getBoundingClientRect.
         const unit = () => canvas.offsetWidth / CANVAS_W;
@@ -243,7 +249,9 @@ export function ScrollStory() {
             current = index;
             const pose =
               index === 5 ? homeward[homeward.length - 1] : poses[index];
-            gsap.set(layers, { opacity: (n: number) => (n === index ? 1 : 0) });
+            layers.forEach((layer, n) =>
+              gsap.set(layer, { opacity: n === index ? 1 : 0 }),
+            );
             gsap.set(stage, { backgroundColor: backgrounds[index] });
             gsap.set(drill, {
               left: percent(pose.x, CANVAS_W),
@@ -284,10 +292,12 @@ export function ScrollStory() {
         });
 
         gsap.set(drill, { transformOrigin: "0 0", ...drillAt(base) });
-        gsap.set(layers, {
-          opacity: (n: number) => (n === 0 ? 1 : 0),
-          transformOrigin: "50% 50%",
-        });
+        layers.forEach((layer, n) =>
+          gsap.set(layer, {
+            opacity: n === 0 ? 1 : 0,
+            transformOrigin: "50% 50%",
+          }),
+        );
         gsap.set([".thread-reveal", ".loop-path"], { strokeDashoffset: 1 });
         if (stacked)
           gsap.set(camera, { transformOrigin: "50% 50%", ...cameraAt(0) });

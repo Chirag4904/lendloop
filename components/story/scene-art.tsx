@@ -118,29 +118,6 @@ export function SceneArt() {
             <stop stopColor="#D9F36A" stopOpacity=".5" />
             <stop offset="1" stopColor="#D9F36A" stopOpacity="0" />
           </radialGradient>
-          <symbol id="story-hand" viewBox="-20 -120 300 200" overflow="visible">
-            <path
-              d="M0-38C40-46 78-44 104-36L190-30C204-29 206-12 192-10L120-6L196 2C210 3 210 21 196 22L118 22L188 30C201 32 200 49 186 49L112 46L170 56C182 58 180 74 167 73L96 68C60 70 26 62 0 52Z"
-              fill="#F6F2E9"
-              stroke="#0E2230"
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M86-36C96-62 112-86 130-96C142-102 152-90 146-78C136-60 124-46 118-30"
-              fill="#F6F2E9"
-              stroke="#0E2230"
-              strokeWidth="3"
-              strokeLinejoin="round"
-            />
-            <path
-              d="M40 18C62 26 84 26 104 20"
-              stroke="#C9C1AE"
-              strokeWidth="3"
-              fill="none"
-              strokeLinecap="round"
-            />
-          </symbol>
         </defs>
       </svg>
 
@@ -358,7 +335,6 @@ export function SceneArt() {
       {/* 04 · The handover */}
       <div className="scene-layer scene-4" aria-hidden="true">
         <svg className="scene-svg" viewBox="0 0 1440 900">
-          {/* Sits low so the pinned headline clears the drill on short screens. */}
           <g transform="translate(0 30)">
             <circle
               cx="720"
@@ -375,55 +351,85 @@ export function SceneArt() {
               strokeLinecap="round"
               fill="none"
             />
-            <rect
-              x="-40"
-              y="660"
-              width="560"
-              height="110"
-              rx="20"
-              fill="#2B4757"
-            />
-            <rect
-              x="470"
-              y="652"
-              width="34"
-              height="126"
-              rx="10"
-              fill="#D9F36A"
-            />
-            <use href="#story-hand" x="486" y="610" width="300" height="200" />
-            <g transform="translate(1440 0) scale(-1 1)">
-              <rect
-                x="-40"
-                y="680"
-                width="560"
-                height="110"
-                rx="20"
-                fill="#E4DDCD"
+          </g>
+          {/* Borrower: an open hand reaching up to the drill's nose. */}
+          <g transform="translate(865 705) rotate(-30)">
+            <path d="M0 6V40" stroke="#0E2230" strokeWidth="58" />
+            <path d="M0 4V40" stroke="#F6F2E9" strokeWidth="52" />
+            <path d="M0 40V520" stroke="#0E2230" strokeWidth="100" />
+            <path d="M0 40V520" stroke="#E4DDCD" strokeWidth="94" />
+            <path d="M0 40V70" stroke="#0E2230" strokeWidth="104" />
+            <path d="M0 41V69" stroke="#9FB0B0" strokeWidth="98" />
+            <g fill="#F6F2E9" stroke="#0E2230" strokeWidth="3">
+              <rect x="-37" y="-150" width="18" height="80" rx="9" />
+              <rect x="-18" y="-166" width="18" height="96" rx="9" />
+              <rect x="1" y="-160" width="18" height="90" rx="9" />
+              <rect x="20" y="-136" width="17" height="66" rx="8.5" />
+              <path
+                d="M-38-80C-38-90-32-94-22-94H24C34-94 40-88 40-78L36-24C34-8 22 2 0 2C-22 2-34-8-36-24Z"
+                strokeLinejoin="round"
               />
-              <rect
-                x="470"
-                y="672"
-                width="34"
-                height="126"
-                rx="10"
-                fill="#9FB0B0"
-              />
-              <use
-                href="#story-hand"
-                x="486"
-                y="630"
-                width="300"
-                height="200"
+              <path
+                d="M-34-28C-52-38-64-56-68-70C-72-84-60-90-54-80C-48-70-42-60-30-54"
+                strokeLinejoin="round"
               />
             </g>
-            <ellipse
-              cx="722"
-              cy="676"
-              rx="170"
-              ry="12"
-              fill="#07161F"
-              opacity=".45"
+            <g stroke="#E4DDCD" strokeLinecap="round" fill="none">
+              <path d="M-30-66C-12-60 12-60 30-68" strokeWidth="3.5" />
+              <path d="M-20-30C-10-42 4-48 18-50" strokeWidth="3.5" />
+              <path
+                d="M-32-118h8M-13-132h8M6-126h8M25-108h7M-32-96h8M-13-102h8M6-98h8M25-90h7"
+                strokeWidth="3"
+              />
+            </g>
+          </g>
+        </svg>
+      </div>
+      {/* The lender's grip sits above the traveling drill so the fingers wrap its handle. */}
+      <div className="scene-layer scene-4 scene-front" aria-hidden="true">
+        <svg className="scene-svg" viewBox="0 0 1440 900">
+          <g transform="translate(712 640) rotate(-21)">
+            <path d="M-58 14L-760 175" stroke="#0E2230" strokeWidth="104" />
+            <path d="M-58 14L-760 175" stroke="#2B4757" strokeWidth="98" />
+            <path d="M-112 26L-146 34" stroke="#0E2230" strokeWidth="94" />
+            <path d="M-113 26L-145 34" stroke="#D9F36A" strokeWidth="88" />
+            <path
+              d="M-40 12L-112 26"
+              stroke="#0E2230"
+              strokeWidth="62"
+              strokeLinecap="round"
+            />
+            <path
+              d="M-40 12L-112 26"
+              stroke="#F6F2E9"
+              strokeWidth="56"
+              strokeLinecap="round"
+            />
+            <g
+              fill="#F6F2E9"
+              stroke="#0E2230"
+              strokeWidth="3"
+              strokeLinejoin="round"
+            >
+              <path d="M-24-48C-46-48-62-34-64-10C-66 14-60 38-44 52C-34 60-20 62-8 58L-4-46Z" />
+              <rect x="-34" y="17" width="64" height="19" rx="9.5" />
+              <rect x="-36" y="-1" width="74" height="19" rx="9.5" />
+              <rect x="-36" y="-19" width="78" height="19" rx="9.5" />
+              <rect x="-34" y="-37" width="74" height="19" rx="9.5" />
+            </g>
+            <path
+              d="M-52-4C-54 14-50 32-40 44M22 22h4M30 4h4M33-14h4M31-32h4"
+              stroke="#E4DDCD"
+              strokeWidth="4"
+              strokeLinecap="round"
+              fill="none"
+            />
+            <path
+              d="M-50-34C-34-50-12-58 8-58C20-58 22-44 10-42C-8-40-26-32-38-22Z"
+              fill="#F6F2E9"
+              stroke="#0E2230"
+              strokeWidth="3"
+              strokeLinejoin="round"
             />
           </g>
         </svg>
