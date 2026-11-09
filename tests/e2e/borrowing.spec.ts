@@ -1,3 +1,4 @@
+import { selectBorrowDates } from "./select-borrow-dates";
 import { clerk } from "@clerk/testing/playwright";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "../../convex/_generated/api";
@@ -55,8 +56,7 @@ async function sendOffer(page: Page, href: string) {
   await page.goto(href);
   await page.getByRole("button", { name: "Make an Offer" }).click();
   await page.getByLabel("Your daily offer in rupees").fill("600");
-  await page.getByLabel("Start date").fill(start);
-  await page.getByLabel("End date").fill(end);
+  await selectBorrowDates(page, start, end);
   for (const width of [360, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     expect(
@@ -215,8 +215,7 @@ async function request(page: Page, href: string) {
   const { start, end } = dates();
   await page.goto(href);
   await page.getByRole("button", { name: "Request to Borrow" }).click();
-  await page.getByLabel("Start date").fill(start);
-  await page.getByLabel("End date").fill(end);
+  await selectBorrowDates(page, start, end);
   await expect(page.getByText("3 days · Free")).toBeVisible();
   for (const width of [360, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 800 });

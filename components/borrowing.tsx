@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { BorrowCalendar } from "./borrow-calendar";
 import type { Id } from "@/convex/_generated/dataModel";
 
 const money = (minor: number) =>
@@ -60,26 +61,14 @@ const requestState = (status: string, loanStatus: string | null) =>
 
 export function RequestForm({
   toolId,
-  name,
-  category,
-  condition,
-  ownerName,
   dailyAmount,
-  coverUrl,
 }: {
   toolId: Id<"tools">;
-  name: string;
-  category: string;
-  condition: string;
-  ownerName: string;
   dailyAmount: number | null;
-  coverUrl: string | null;
 }) {
   const router = useRouter();
-  const dialog = useRef<HTMLDialogElement>(null);
   const create = useMutation(api.requests.create);
-  const [open, setOpen] = useState(false),
-    [mode, setMode] = useState<"standard" | "offer">("standard"),
+  const [mode, setMode] = useState<"standard" | "offer">("standard"),
     [offer, setOffer] = useState(""),
     [startDate, setStart] = useState(""),
     [endDate, setEnd] = useState(""),
@@ -95,7 +84,7 @@ export function RequestForm({
     offerMinor < dailyAmount;
   const available = useQuery(
     api.requests.availability,
-    open && valid ? { toolId, startDate, endDate } : "skip",
+    valid ? { toolId, startDate, endDate } : "skip",
   );
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -118,14 +107,22 @@ export function RequestForm({
   }
   return (
     <section className="borrow-panel" aria-label="Borrow this item">
-      <div className="borrow-choices">
+      <div className="borrow-panel-intro">
+        <div>
+          <span className="borrow-eyebrow">PLAN YOUR BORROW</span>
+          <h2>Make it yours for a while.</h2>
+        </div>
+        <div className="borrow-rate">
+          <strong>{dailyAmount === null ? "Free" : money(dailyAmount)}</strong>
+          <span>{dailyAmount === null ? "to borrow" : "per day"}</span>
+        </div>
+      </div>
+      <div className="borrow-choices" role="group" aria-label="Request type">
         <button
           type="button"
-          className="button-primary"
+          aria-pressed={mode === "standard"}
           onClick={() => {
             setMode("standard");
-            dialog.current?.showModal();
-            setOpen(true);
           }}
         >
           {dailyAmount === null
@@ -135,148 +132,128 @@ export function RequestForm({
         {dailyAmount !== null && (
           <button
             type="button"
+            aria-pressed={mode === "offer"}
             onClick={() => {
               setMode("offer");
-              dialog.current?.showModal();
-              setOpen(true);
             }}
           >
             Make an Offer
           </button>
         )}
       </div>
-      <dialog
-        ref={dialog}
-        className="borrow-dialog"
-        aria-labelledby="request-title"
-        onClose={() => setOpen(false)}
-      >
-        {open && (
-          <form id="request-form" onSubmit={submit} className="borrow-form">
-            <div className="borrow-form-heading">
-              <h2 id="request-title">
-                {mode === "offer" ? "Make an Offer" : "Request to Borrow"}
-              </h2>
-              <button
-                type="button"
-                aria-label="Close request"
-                onClick={() => dialog.current?.close()}
-              >
-                ×
-              </button>
-            </div>
-            {mode === "offer" && (
-              <>
-                <label className="offer-field">
-                  Your daily offer in rupees
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={offer}
-                    onChange={(e) => setOffer(e.target.value)}
-                    placeholder="e.g. 600"
-                    aria-describedby="offer-help"
-                    required
-                  />
-                </label>
-                <p id="offer-help">
-                  Offer less than {money(dailyAmount!)} per day. The lender may
-                  accept, suggest one final price, or keep the listed price.
-                </p>
-                {offer && !validOffer && (
-                  <p role="alert" className="form-message error">
-                    Enter a positive offer below {money(dailyAmount!)} using at
-                    most two decimal places.
-                  </p>
-                )}
-              </>
-            )}
-            <div className="borrow-item">
-              {coverUrl && <img src={coverUrl} alt="" />}
-              <div>
-                <strong>{name}</strong>
-                <span>
-                  {category} · {condition} · {ownerName}
-                </span>
-                <span>
-                  {dailyAmount === null
-                    ? "Free"
-                    : `${money(dailyAmount)} / day`}
-                </span>
-              </div>
-            </div>
-            <p>
-              Choose calendar days in India Standard Time. Both dates count
-              toward the rental.
+      <form id="request-form" onSubmit={submit} className="borrow-form">
+        <div className="borrow-form-heading">
+          <div>
+            <h3>When do you need it?</h3>
+            <p>Choose up to 30 days. Both dates are included.</p>
+          </div>
+        </div>
+        {mode === "offer" && (
+          <>
+            <label className="offer-field">
+              Your daily offer in rupees
+              <input
+                type="text"
+                inputMode="decimal"
+                value={offer}
+                onChange={(e) => setOffer(e.target.value)}
+                placeholder="e.g. 600"
+                aria-describedby="offer-help"
+                required
+              />
+            </label>
+            <p id="offer-help">
+              Offer less than {money(dailyAmount!)} per day. The lender may
+              accept, suggest one final price, or keep the listed price.
             </p>
-            <div className="borrow-dates">
-              <label>
-                Start date
-                <input
-                  type="date"
-                  min={localToday()}
-                  value={startDate}
-                  onChange={(e) => setStart(e.target.value)}
-                  required
-                />
-              </label>
-              <label>
-                End date
-                <input
-                  type="date"
-                  min={startDate || localToday()}
-                  value={endDate}
-                  onChange={(e) => setEnd(e.target.value)}
-                  required
-                />
-              </label>
-            </div>
-            {count > 0 && (mode !== "offer" || validOffer) && (
-              <p className="borrow-total">
-                <strong>
-                  {count} {count === 1 ? "day" : "days"} ·{" "}
-                  {money(
-                    (mode === "offer" && validOffer
-                      ? offerMinor
-                      : (dailyAmount ?? 0)) * count,
-                  )}
-                </strong>
-                <span>
-                  {mode === "offer"
-                    ? "Your proposed total. The lender has not agreed yet."
-                    : "Estimated at the listed rate. No payment is collected."}
-                </span>
-              </p>
-            )}
-            {valid && available === false && (
+            {offer && !validOffer && (
               <p role="alert" className="form-message error">
-                These dates are already reserved. Choose another range.
+                Enter a positive offer below {money(dailyAmount!)} using at most
+                two decimal places.
               </p>
             )}
-            {error && (
-              <p role="alert" className="form-message error">
-                {error}
-              </p>
-            )}
-            <button
-              type="submit"
-              className="button-primary"
-              disabled={
-                !valid ||
-                available !== true ||
-                busy ||
-                (mode === "offer" && !validOffer)
-              }
-            >
-              {busy
-                ? "Sending…"
-                : mode === "offer"
-                  ? "Send Offer"
-                  : "Send request"}
-            </button>
-          </form>
+          </>
         )}
-      </dialog>
+        <BorrowCalendar
+          toolId={toolId}
+          today={localToday()}
+          start={startDate}
+          end={endDate}
+          onSelect={(date) => {
+            if (!startDate || endDate || date < startDate) {
+              setStart(date);
+              setEnd("");
+            } else setEnd(date);
+          }}
+        />
+        <dl className="borrow-date-summary" aria-live="polite">
+          <div>
+            <dt>Start date</dt>
+            <dd>{startDate ? dateLabel(startDate) : "Select a date"}</dd>
+          </div>
+          <div>
+            <dt>End date</dt>
+            <dd>{endDate ? dateLabel(endDate) : "Select a date"}</dd>
+          </div>
+        </dl>
+        {count > 0 && (mode !== "offer" || validOffer) && (
+          <p className="borrow-total">
+            <strong>
+              {count} {count === 1 ? "day" : "days"} ·{" "}
+              {money(
+                (mode === "offer" && validOffer
+                  ? offerMinor
+                  : (dailyAmount ?? 0)) * count,
+              )}
+            </strong>
+            <span>
+              {mode === "offer"
+                ? "Your proposed total. The lender has not agreed yet."
+                : "Estimated at the listed rate. No payment is collected."}
+            </span>
+          </p>
+        )}
+        {startDate && endDate && !valid && (
+          <p role="alert" className="form-message error">
+            Choose a date range of 1 to 30 days, starting today or later.
+          </p>
+        )}
+        {valid && available === undefined && (
+          <p role="status" className="borrow-checking">
+            Checking these dates…
+          </p>
+        )}
+        {valid && available === true && (
+          <p role="status" className="borrow-available">
+            Dates are available to request.
+          </p>
+        )}
+        {valid && available === false && (
+          <p role="alert" className="form-message error">
+            These dates are already reserved. Choose another range.
+          </p>
+        )}
+        {error && (
+          <p role="alert" className="form-message error">
+            {error}
+          </p>
+        )}
+        <button
+          type="submit"
+          className="button-primary"
+          disabled={
+            !valid ||
+            available !== true ||
+            busy ||
+            (mode === "offer" && !validOffer)
+          }
+        >
+          {busy ? "Sending…" : mode === "offer" ? "Send Offer" : "Send request"}
+        </button>
+        <p className="borrow-reassurance">
+          The owner reviews your request. No payment is collected on LendLoop.
+        </p>
+      </form>
     </section>
   );
 }

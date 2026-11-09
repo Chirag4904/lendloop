@@ -353,11 +353,11 @@ function Listings() {
       <Notice text={message} />
       <div className="admin-records">
         {rows.map((r) => (
-          <article className="admin-row" key={r.id}>
+          <article className="admin-row admin-listing" key={r.id}>
             {r.coverUrl && (
               <img className="admin-cover" src={r.coverUrl} alt="" />
             )}
-            <div>
+            <div className="admin-listing-info">
               <strong>{r.name}</strong>
               <small>
                 {r.category} · {r.owner} · {r.society} · {money(r.dailyAmount)}{" "}

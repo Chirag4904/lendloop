@@ -1,16 +1,10 @@
 "use client";
-import { useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import {
-  MapPin,
-  PackageOpen,
-  Plus,
-  Search,
-  SlidersHorizontal,
-} from "lucide-react";
+import { MapPin, PackageOpen, Plus, Search } from "lucide-react";
 import { categories, conditions } from "./listing-form";
 import { useCurrentProfile } from "./use-current-profile";
 import { RequestForm } from "./borrowing";
@@ -101,7 +95,6 @@ export function ExploreTools() {
     [category, setCategory] = useState(""),
     [cost, setCost] = useState<"all" | "free" | "paid">("all"),
     [sort, setSort] = useState<"nearest" | "newest" | "price">("nearest");
-  const filterDialog = useRef<HTMLDialogElement>(null);
   const tools = useQuery(api.tools.explore, {
     scope,
     text,
@@ -148,16 +141,6 @@ export function ExploreTools() {
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <button
-              type="button"
-              className="filter-toggle"
-              onClick={() => filterDialog.current?.showModal()}
-              aria-haspopup="dialog"
-              aria-controls="explore-filters"
-            >
-              <SlidersHorizontal size={17} aria-hidden="true" /> Filters
-              {(cost !== "all" || sort !== "nearest") && " · Active"}
-            </button>
           </div>
           <div className="scope-tabs" role="group" aria-label="Search distance">
             <MapPin size={16} aria-hidden="true" />
@@ -177,6 +160,32 @@ export function ExploreTools() {
                 {label}
               </button>
             ))}
+          </div>
+          <div className="inline-filters">
+            <label>
+              Price
+              <select
+                className="text-input"
+                value={cost}
+                onChange={(e) => setCost(e.target.value as typeof cost)}
+              >
+                <option value="all">Free and paid</option>
+                <option value="free">Free</option>
+                <option value="paid">Paid</option>
+              </select>
+            </label>
+            <label>
+              Sort by
+              <select
+                className="text-input"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as typeof sort)}
+              >
+                <option value="nearest">Nearest first</option>
+                <option value="newest">Newest first</option>
+                <option value="price">Lowest price</option>
+              </select>
+            </label>
           </div>
           <div className="category-chips" role="group" aria-label="Categories">
             {["", ...categories].map((c) => (
@@ -199,75 +208,6 @@ export function ExploreTools() {
             </button>
           )}
         </div>
-        <dialog
-          ref={filterDialog}
-          id="explore-filters"
-          className="atlas-filters"
-          aria-labelledby="filter-title"
-        >
-          <div className="filter-panel">
-            <div className="filter-panel-head">
-              <strong id="filter-title">Refine your neighborhood</strong>
-              <button
-                type="button"
-                onClick={() => filterDialog.current?.close()}
-              >
-                Close
-              </button>
-              <button type="button" onClick={clear}>
-                Clear all
-              </button>
-            </div>
-            <label>
-              Category
-              <select
-                aria-label="Category"
-                className="text-input"
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">All categories</option>
-                {categories.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Price
-              <select
-                className="text-input"
-                aria-label="Price"
-                value={cost}
-                onChange={(e) => setCost(e.target.value as typeof cost)}
-              >
-                <option value="all">Free and paid</option>
-                <option value="free">Free</option>
-                <option value="paid">Paid</option>
-              </select>
-            </label>
-            <label>
-              Sort by
-              <select
-                className="text-input"
-                aria-label="Sort by"
-                value={sort}
-                onChange={(e) => setSort(e.target.value as typeof sort)}
-              >
-                <option value="nearest">Nearest first</option>
-                <option value="newest">Newest first</option>
-                <option value="price">Lowest price</option>
-              </select>
-            </label>
-            <p>Distances are approximate and use society centers.</p>
-            <button
-              className="button-primary"
-              type="button"
-              onClick={() => filterDialog.current?.close()}
-            >
-              Show results
-            </button>
-          </div>
-        </dialog>
         <div className="explore-results">
           {tools === undefined ? (
             <div className="catalog-state" role="status">
@@ -459,15 +399,7 @@ export function ToolDetail({ toolId }: { toolId: Id<"tools"> }) {
         <h2>About this item</h2>
         <p>{tool.description}</p>
         {tool.active && !tool.archived && !tool.isOwner && (
-          <RequestForm
-            toolId={tool.id}
-            name={tool.name}
-            category={tool.category}
-            condition={conditions[tool.condition]}
-            ownerName={tool.ownerName}
-            dailyAmount={tool.dailyAmount}
-            coverUrl={tool.photos[0]?.url ?? null}
-          />
+          <RequestForm toolId={tool.id} dailyAmount={tool.dailyAmount} />
         )}
       </div>
     </article>

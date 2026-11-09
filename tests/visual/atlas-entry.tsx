@@ -17,8 +17,8 @@ createRoot(document.getElementById("root")!).render(
     >
       Visual QA fixture · synthetic data · no live account or mutations
     </div>
-    {view === "admin" ? (
-      <Admin section="overview" />
+    {view === "admin" || view === "admin-listings" ? (
+      <Admin section={view === "admin" ? "overview" : "listings"} />
     ) : (
       <DashboardShell>
         {view === "detail" ? (

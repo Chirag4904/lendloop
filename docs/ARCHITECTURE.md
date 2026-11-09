@@ -60,6 +60,6 @@ An optional borrower offer on the existing request distinguishes negotiation fro
 
 ## Internal editorial redesign
 
-The internal redesign reuses `marketplace.tsx`, `borrowing.tsx`, `notifications.tsx` and the existing admin markup. `DashboardShell` groups navigation without removing routes. `Profile` replaces the placeholder using existing account and society queries. Compact filtering is a native `<dialog>`; local UI state controls scope/category/search/price/sort and the completed-return view. No backend function, permission, schema or transaction was changed.
+The internal redesign reuses `marketplace.tsx`, `borrowing.tsx`, `notifications.tsx` and the existing admin markup. `DashboardShell` groups navigation without removing routes. `Profile` replaces the placeholder using existing account and society queries. Compact filtering is inline; local UI state controls scope/category/search/price/sort and the completed-return view. No backend function, permission, schema or transaction was changed.
 
 `tests/visual/atlas-qa.mjs` bundles the real presentation components with explicit synthetic query/identity adapters using a development-only esbuild dependency. Playwright intercepts test-only URLs; no fixture route or auth bypass is shipped in Next. Mutations throw in this renderer. It validates presentation and local controls, not the live Clerk/Convex bridge or transaction subscriptions.

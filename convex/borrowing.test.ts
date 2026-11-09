@@ -578,3 +578,56 @@ test("declines, cancellations, and overlapping final acceptances cannot create l
   expect(results.filter((r) => r.status === "rejected")).toHaveLength(1);
   expect(await t.run((ctx) => ctx.db.query("loans").collect())).toHaveLength(1);
 });
+
+test("calendar exposes only confirmed reserved dates to authenticated borrowers", async () => {
+  const { t, alice, bob, toolId } = await setup(false);
+  const args = { toolId, month: "2026-11" };
+  await expect(t.query(api.requests.reservedDates, args)).rejects.toThrow(
+    "Authentication",
+  );
+  await expect(alice.query(api.requests.reservedDates, args)).rejects.toThrow(
+    "Listing unavailable",
+  );
+  const requestId = await bob.mutation(api.requests.create, {
+    toolId,
+    startDate: "2026-11-10",
+    endDate: "2026-11-12",
+  });
+  expect(await bob.query(api.requests.reservedDates, args)).toEqual([]);
+  const loanId = await alice.mutation(api.requests.approve, { requestId });
+  expect(await bob.query(api.requests.reservedDates, args)).toEqual([
+    { startDate: "2026-11-10", endDate: "2026-11-12" },
+  ]);
+  expect(
+    await bob.query(api.requests.availability, {
+      toolId,
+      startDate: "2026-11-09",
+      endDate: "2026-11-17",
+    }),
+  ).toBe(false);
+  expect(
+    await bob.query(api.requests.availability, {
+      toolId,
+      startDate: "2026-11-13",
+      endDate: "2026-11-17",
+    }),
+  ).toBe(true);
+  const spanning = await bob.mutation(api.requests.create, {
+    toolId,
+    startDate: "2026-11-29",
+    endDate: "2026-12-02",
+  });
+  await alice.mutation(api.requests.approve, { requestId: spanning });
+  expect(
+    await bob.query(api.requests.reservedDates, { toolId, month: "2026-12" }),
+  ).toEqual([{ startDate: "2026-12-01", endDate: "2026-12-02" }]);
+  await bob.mutation(api.loans.reportReturn, { loanId });
+  expect(await bob.query(api.requests.reservedDates, args)).toHaveLength(2);
+  await alice.mutation(api.loans.confirmReturn, { loanId });
+  expect(await bob.query(api.requests.reservedDates, args)).toEqual([
+    { startDate: "2026-11-29", endDate: "2026-11-30" },
+  ]);
+  await expect(
+    bob.query(api.requests.reservedDates, { ...args, month: "2026-13" }),
+  ).rejects.toThrow("Invalid month");
+});

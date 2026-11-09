@@ -12,7 +12,7 @@ Desktop/mobile captures were visually reviewed across the major screens. Iterati
 
 - Fixture browser run: 40 page/viewport combinations passed overflow checks; search, free-price filtering, reset, completed returns, lender-facing progress wording and Escape dismissal checked. No captured page errors. This is presentation testing, not live-service validation.
 - Vitest: 39 tests passed across 8 files, including privacy, borrowing, negotiation and admin rules.
-- Existing Playwright suite: 11 passed; 29 authenticated scenarios skipped because isolated test credentials are absent. Existing selectors were updated for new headings and the filter dialog, and 1440px was added to marketplace checks.
+- Existing Playwright suite: 11 passed; 29 authenticated scenarios skipped because isolated test credentials are absent. Existing selectors were updated for new headings and inline filters, and 1440px was added to marketplace checks.
 - Production build and TypeScript passed. Lint has the existing image optimization warnings. No Lighthouse score measured.
 
 ## Limits and manual review

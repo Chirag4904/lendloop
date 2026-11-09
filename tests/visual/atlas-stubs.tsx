@@ -85,8 +85,21 @@ export function useMutation() {
     throw new Error("Mutations disabled in visual QA");
   };
 }
-export function usePaginatedQuery() {
-  return { results: [], status: "Exhausted", loadMore: () => {} };
+export function usePaginatedQuery(ref: never) {
+  const results =
+    getFunctionName(ref) === "admin:listings"
+      ? items.slice(0, 3).map((item, index) => ({
+          ...item,
+          owner: "A neighbor",
+          society: "Paper Gardens",
+          societyId: "society1",
+          status: "active",
+          coverUrl: index === 1 ? null : item.photos[0].url,
+          createdAt: 1794200000000,
+          updatedAt: 1794200000000,
+        }))
+      : [];
+  return { results, status: "Exhausted", loadMore: () => {} };
 }
 export function useQuery(ref: never, args?: Record<string, unknown>) {
   const name = getFunctionName(ref);
@@ -112,7 +125,11 @@ export function useQuery(ref: never, args?: Record<string, unknown>) {
   if (name === "tools:mine")
     return items.map((x, i) => ({ ...x, isOwner: true, active: i !== 2 }));
   if (name === "tools:detail") return items[0];
-  if (name === "tools:availability") return true;
+  if (name === "requests:availability") return true;
+  if (name === "requests:reservedDates")
+    return args?.month === "2026-11"
+      ? [{ startDate: "2026-11-10", endDate: "2026-11-12" }]
+      : [];
   if (name.startsWith("requests:"))
     return ["pending", "awaiting_borrower", "approved"].map((status, i) => ({
       id: `request${i}`,

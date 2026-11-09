@@ -61,6 +61,7 @@ for (const width of [360, 390, 768, 1280, 1440]) {
     "notifications",
     "profile",
     "admin",
+    "admin-listings",
   ]) {
     await page.goto(`http://localhost:3000/__atlas-qa?view=${view}`);
     await page.locator("h1").waitFor();
@@ -86,12 +87,9 @@ for (const width of [360, 390, 768, 1280, 1440]) {
   }
 }
 await page.goto("http://localhost:3000/__atlas-qa?view=explore");
-await page.getByRole("button", { name: "Filters", exact: true }).click();
-assert(await page.getByRole("dialog").isVisible());
 await page
   .getByRole("combobox", { name: "Price", exact: true })
   .selectOption("free");
-await page.getByRole("button", { name: "Show results" }).click();
 assert.equal(await page.locator(".tool-card").count(), 1);
 await page.getByRole("button", { name: "Reset filters" }).click();
 await page.getByLabel("Search tools").fill("drill");
@@ -114,12 +112,54 @@ assert.equal(
     .count(),
   1,
 );
-await page.goto("http://localhost:3000/__atlas-qa?view=explore");
-await page.getByRole("button", { name: "Filters", exact: true }).click();
-await page.keyboard.press("Escape");
-assert.equal(await page.getByRole("dialog").count(), 0);
+await page.goto("http://localhost:3000/__atlas-qa?view=detail");
+assert.equal(await page.locator("input[type=date]").count(), 0);
+await page.getByText("Choose dates on a calendar").click();
+if (
+  (await page.locator(".calendar-heading strong").textContent()) ===
+  "November 2026"
+) {
+  const blocked = page.getByRole("button", {
+    name: /10 November 2026, reserved/,
+  });
+  assert(await blocked.isDisabled());
+  assert.equal(await page.locator(".calendar-grid .is-reserved").count(), 3);
+}
+
+await page.screenshot({
+  path: "artifacts/atlas/borrow-calendar.png",
+  fullPage: true,
+});
+const day = page.locator(".calendar-grid button:not(:disabled)").first();
+await day.click();
+const selectedStart = await page
+  .locator(".borrow-date-summary dd")
+  .first()
+  .textContent();
+assert(selectedStart);
+await day.click();
+assert.equal(
+  await page.locator(".borrow-date-summary dd").last().textContent(),
+  selectedStart,
+);
+await page.getByRole("button", { name: "Next month" }).click();
+await page.getByRole("button", { name: "Previous month" }).click();
+
+assert(await page.getByRole("button", { name: "Send request" }).isEnabled());
+await page.getByRole("button", { name: "Make an Offer" }).click();
+assert(await page.getByLabel("Your daily offer in rupees").isVisible());
+assert(await page.getByRole("button", { name: "Send Offer" }).isDisabled());
+await page.getByLabel("Your daily offer in rupees").fill("100");
+assert(await page.getByRole("button", { name: "Send Offer" }).isEnabled());
+await page.getByRole("button", { name: "Request at Listed Price" }).click();
+assert.equal(await page.getByLabel("Your daily offer in rupees").count(), 0);
+await page.goto("http://localhost:3000/__atlas-qa?view=admin-listings");
+assert.equal(await page.locator(".admin-listing").count(), 3);
+for (const row of await page.locator(".admin-listing").all()) {
+  assert((await row.locator(".admin-listing-info").boundingBox()).width > 100);
+}
 assert.deepEqual(errors, []);
 console.log(
-  "40 viewport/page renders + filter/search/completed checks passed. Fixture UI only.",
+  "45 viewport/page renders + filter/search/completed checks passed. Fixture UI only.",
 );
 await browser.close();

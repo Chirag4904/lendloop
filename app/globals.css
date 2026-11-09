@@ -3974,3 +3974,370 @@ textarea:focus-visible {
     padding-block: 16px;
   }
 }
+
+/* Inline discovery and borrowing controls. */
+.inline-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.inline-filters label {
+  display: grid;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+}
+.inline-filters select {
+  min-width: 180px;
+  min-height: 44px;
+  padding: 8px 32px 8px 14px;
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.borrow-panel {
+  margin-top: 28px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--paper);
+}
+.borrow-choices button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.borrow-panel .borrow-form {
+  margin: 20px 0 0;
+  padding: 0;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+.borrow-form-heading h2 {
+  font:
+    500 23px var(--font-heading),
+    sans-serif;
+}
+.admin-listing {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto auto;
+  gap: 12px 16px;
+  align-items: center;
+}
+.admin-listing .admin-cover {
+  grid-column: 1;
+  flex: none;
+}
+.admin-listing-info {
+  grid-column: 2;
+  min-width: 0;
+}
+.admin-listing .admin-status {
+  grid-column: 3;
+}
+.admin-listing > button {
+  grid-column: 4;
+}
+.admin-listing-detail {
+  grid-column: 2 / -1;
+  min-width: 0;
+}
+@media (max-width: 600px) {
+  .inline-filters {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .inline-filters select {
+    min-width: 0;
+    width: 100%;
+  }
+  .borrow-panel {
+    padding: 18px;
+  }
+  .admin-listing {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    align-items: start;
+  }
+  .admin-listing .admin-cover {
+    width: 48px;
+    height: 48px;
+  }
+  .admin-listing .admin-status {
+    grid-column: 3;
+  }
+  .admin-listing > button {
+    grid-column: 2;
+  }
+  .admin-listing-detail {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Borrowing: a quiet, accessible planning card. */
+.borrow-panel {
+  padding: 28px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+}
+.borrow-panel-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 20px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+.borrow-eyebrow {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+.detail-copy .borrow-panel-intro h2 {
+  font:
+    500 23px/1.2 var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.04em;
+  margin: 8px 0 0;
+}
+.borrow-rate {
+  text-align: right;
+  white-space: nowrap;
+}
+.borrow-rate strong,
+.borrow-rate span {
+  display: block;
+}
+.borrow-rate strong {
+  font:
+    600 21px var(--font-heading),
+    sans-serif;
+}
+.borrow-rate span {
+  color: var(--muted);
+  font-size: 12px;
+  margin-top: 3px;
+}
+.borrow-choices {
+  margin-top: 20px;
+  gap: 8px;
+}
+.borrow-choices button:not(.button-primary) {
+  flex: 1;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  background: var(--brand-paper);
+  color: var(--ink);
+  border-radius: 10px;
+  font-size: 13px;
+}
+.borrow-choices button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+.borrow-panel .borrow-form {
+  margin-top: 26px;
+}
+.borrow-form-heading {
+  margin-bottom: 16px;
+}
+.borrow-form-heading h3 {
+  margin: 0;
+  font:
+    600 18px var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.02em;
+}
+.detail-copy .borrow-form-heading p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.borrow-calendar {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 15px;
+  background: var(--brand-paper);
+}
+.borrow-calendar summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 15px;
+  font-weight: 600;
+  font-size: 13px;
+}
+.borrow-calendar summary::-webkit-details-marker {
+  display: none;
+}
+.borrow-calendar summary:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 3px;
+}
+.calendar-content {
+  padding: 0 15px 15px;
+}
+.calendar-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 14px;
+}
+.calendar-heading button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink);
+}
+.calendar-heading button:disabled {
+  opacity: 0.35;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+.calendar-weekday {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  padding: 8px 0;
+}
+.calendar-grid button {
+  min-width: 0;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+}
+.calendar-grid button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper);
+}
+.calendar-grid button.in-range {
+  background: var(--surface-selected);
+}
+.calendar-grid button:disabled {
+  color: #8b9494;
+}
+.detail-copy .calendar-content p {
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 12px 0 0;
+}
+.borrow-dates {
+  gap: 10px;
+}
+.borrow-dates label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.borrow-dates input {
+  margin-top: 7px;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 14px;
+  padding: 10px;
+}
+.borrow-form .button-primary {
+  width: 100%;
+  margin-top: 18px;
+}
+.detail-copy .borrow-form .borrow-reassurance {
+  margin: 12px 0 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.detail-copy .borrow-form .borrow-available,
+.detail-copy .borrow-form .borrow-checking {
+  font-size: 13px;
+  margin: 14px 0 0;
+}
+.detail-copy .borrow-form .borrow-available {
+  color: #365a38;
+}
+.borrow-total {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--surface-selected);
+}
+.offer-field {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.offer-field input {
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+@media (max-width: 700px) {
+  .borrow-panel {
+    padding: 20px;
+  }
+  .borrow-dates {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .borrow-choices {
+    flex-wrap: wrap;
+  }
+  .borrow-choices button:not(.button-primary) {
+    flex: 1 1 140px;
+  }
+}
+.borrow-date-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+.borrow-date-summary > div {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.borrow-date-summary dt {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.borrow-date-summary dd {
+  margin: 5px 0 0;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+.calendar-grid button.is-reserved:disabled {
+  background: #f9dddd;
+  color: #922d2d;
+  text-decoration: line-through;
+  opacity: 1;
+}

@@ -144,6 +144,45 @@ export const availability = query({
   },
 });
 
+export const reservedDates = query({
+  args: { toolId: v.id("tools"), month: v.string() },
+  returns: v.array(v.object({ startDate: v.string(), endDate: v.string() })),
+  handler: async (ctx, { toolId, month }) => {
+    const me = await currentUser(ctx);
+    const tool = await ctx.db.get(toolId);
+    if (!tool?.active || tool.archived || tool.ownerId === me._id)
+      throw new Error("Listing unavailable");
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month) || month.startsWith("0000"))
+      throw new Error("Invalid month");
+    const first = `${month}-01`;
+    const last = new Date(
+      Date.UTC(Number(month.slice(0, 4)), Number(month.slice(5)), 0),
+    )
+      .toISOString()
+      .slice(0, 10);
+    const rows = await Promise.all(
+      (["reserved", "return_pending"] as const).map((status) =>
+        ctx.db
+          .query("loans")
+          .withIndex("by_tool_and_status_and_start_date", (q) =>
+            q.eq("toolId", toolId).eq("status", status).lte("startDate", last),
+          )
+          .take(1001),
+      ),
+    );
+    // shortcut: fail closed after 1,000 rows per status; add an interval index when reservation history grows.
+    if (rows.some((group) => group.length > 1000))
+      throw new Error("Too many reservations to display");
+    return rows
+      .flat()
+      .filter((loan) => loan.endDate >= first)
+      .map((loan) => ({
+        startDate: loan.startDate < first ? first : loan.startDate,
+        endDate: loan.endDate > last ? last : loan.endDate,
+      }));
+  },
+});
+
 export const create = mutation({
   args: {
     toolId: v.id("tools"),

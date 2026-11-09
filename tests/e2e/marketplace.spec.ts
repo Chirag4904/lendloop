@@ -64,12 +64,10 @@ test("create, edit, discover, unlist and relist a listing", async ({
     .click();
   await page.goto("/dashboard");
   await page.getByLabel("Search tools").fill(`${name} updated`);
-  await page.getByRole("button", { name: "Filters", exact: true }).click();
-  await page.getByLabel("Category").selectOption("Power Tools");
+  await page.getByRole("button", { name: "Power Tools", exact: true }).click();
   await page
     .getByRole("combobox", { name: "Price", exact: true })
     .selectOption("paid");
-  await page.getByRole("button", { name: "Show results" }).click();
   await page.getByRole("button", { name: "Within 500 m" }).click();
   await expect(
     page.getByRole("heading", { name: `${name} updated` }),

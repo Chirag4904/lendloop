@@ -1,3 +1,4 @@
+import { selectBorrowDates } from "./select-borrow-dates";
 import { clerk } from "@clerk/testing/playwright";
 import { expect, test } from "@playwright/test";
 
@@ -222,8 +223,7 @@ test("admin inspects a confirmed loan without private handover details", async (
     const date = new Date(Date.now() + 3 * 86_400_000)
       .toISOString()
       .slice(0, 10);
-    await borrower.page.getByLabel("Start date").fill(date);
-    await borrower.page.getByLabel("End date").fill(date);
+    await selectBorrowDates(borrower.page, date, date);
     await borrower.page.getByRole("button", { name: "Send request" }).click();
     await lender.page.goto("/dashboard/incoming");
     const incoming = lender.page
