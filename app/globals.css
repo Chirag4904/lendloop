@@ -3192,6 +3192,9 @@ textarea:focus-visible {
 .scene-front {
   z-index: 4;
 }
+.scene-front .scene-svg {
+  filter: drop-shadow(0 10px 10px #07161f80);
+}
 .scene-svg {
   position: absolute;
   inset: 0;
