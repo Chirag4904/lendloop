@@ -4,23 +4,15 @@ LendLoop is a neighborhood marketplace for borrowing and sharing tools and every
 
 Good things go around.
 
-## Phase 2 marketplace
+## Marketplace
 
-Signed-in users who have selected an active society can create, edit, unlist, relist and archive listings. A listing has a required name and description, one of eight categories, a condition, and either a free label or an INR daily price stored in paise. Up to five JPEG, PNG or WebP photos can be uploaded through Convex File Storage. The browser resizes to at most 1600 px, re-encodes to JPEG, and strips embedded metadata. Original files over 5 MB and HEIC/HEIF are rejected. The camera preview requests video permission only after **Take Photo**; HTTPS or localhost is required. A device capture file input is offered when camera preview is unavailable. Camera hardware behavior should also be checked manually on an Android or iOS device.
+Signed-in neighbors who have selected an active society can list, discover, and borrow tools and everyday gear. Listings can be free or priced per day in INR. Owners can add up to five photos, edit listings, and manage their visibility. Explore starts with the selected society and offers nearby distance, search, category, price, and sort controls.
 
-Explore defaults to the selected society and can expand to approximately 500 m or 1 km using society center coordinates. Search, category, price and sort controls operate on bounded results. Distance is approximate. Active listings are discoverable, but date availability is not checked. The public catalog continues returning only name and category. Photo URLs are available only through authenticated listing queries, though anyone who receives a Convex file URL may share it.
+Borrowers choose 1–30 inclusive calendar days in Asia/Kolkata. For paid listings, they can request the listed price or make one lower offer. The lender can accept the offer, suggest one final price between the offer and the listed price, keep the listed price, or decline the request. The borrower can accept the final price or walk away. Confirmed loans reserve dates and keep their agreed price even if the listing changes. Borrowers can report a return; lenders confirm it. Handover details are visible only to the two participants. No payment is collected.
 
-No new environment variables are required. Run `npx convex dev --once` against a **development** deployment after pulling these changes so the schema and functions are pushed, then `npx convex codegen`. Keep production credentials out of tests. `npm test` covers the backend with `convex-test`; `npm run test:e2e` runs public browser tests and runs authenticated marketplace tests only when the isolated test Clerk/Convex environment variables in [development setup](docs/DEVELOPMENT.md) are set.
+## Development
 
-The Rizvi Oak CHSL development society has [synthetic demo neighbors and eight photographed listings](docs/DEVELOPMENT.md#rizvi-oak-chsl-demo-data).
-
-## Phase 3 borrowing and returns
-
-On an active listing, an onboarded neighbor can request 1–30 inclusive calendar days. Dates use **Asia/Kolkata**; the backend rejects past or invalid ranges. A free listing has a zero total; a paid request snapshots its INR daily rate in paise and the inclusive total. Requests are proposals, not payments. Multiple pending requests can overlap. A lender can approve or decline; a borrower can cancel while pending. Approval atomically checks existing active loans and creates one reservation, so overlapping loans cannot both be approved. Returned loans no longer block dates, and their history remains after listing archive. My Requests and Incoming Requests update through Convex subscriptions.
-
-Approved loans have a participant-only detail page. Borrowers can report a handback; lenders confirm the return and may also mark it returned directly. Overdue is derived from the local end date and unconfirmed return state. Either participant may optionally share a phone, pickup point or instructions; these live in a separate private table and can be cleared. No full address is required. No payment, negotiation, reminders, n8n workflow or admin dashboard is included.
-
-Push the new schema and functions to a **development** Convex deployment with `npx convex dev --once`, then run `npx convex codegen`. No new environment variables are required. For manual verification, sign in as two onboarded users in separate browser sessions: create an active listing as the lender; request dates as the borrower; approve in Incoming; inspect My Requests and the private loan page; report and confirm the return. Repeat with Decline. Run `npm test` for transaction and privacy cases. Authenticated Playwright borrowing tests require two isolated Clerk test accounts (`E2E_CLERK_USER_EMAIL` and `E2E_CLERK_BORROWER_EMAIL`) in the same development Convex deployment.
+See [development setup](docs/DEVELOPMENT.md) for Clerk, Convex, test accounts, and synthetic demo data. After linking a development Convex deployment, run `npx convex dev --once` and `npx convex codegen` to sync functions and types. `npm test` runs backend tests; `npm run test:e2e` runs public browser tests and authenticated flows when isolated Clerk test accounts are configured. Keep production credentials out of tests.
 
 ## Vercel demo deployment
 

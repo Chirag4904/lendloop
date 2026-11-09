@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
-import type { QueryCtx } from "./_generated/server";
+import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import {
   cover,
@@ -23,8 +23,20 @@ const requestView = v.object({
   days: v.number(),
   rateMinor: v.number(),
   totalMinor: v.number(),
+  listedRateMinor: v.number(),
+  borrowerOfferMinor: v.union(v.number(), v.null()),
+  lenderCounterMinor: v.union(v.number(), v.null()),
+  priceDecision: v.union(
+    v.literal("accepted_offer"),
+    v.literal("countered"),
+    v.literal("kept_listed_price"),
+    v.null(),
+  ),
+  lenderRespondedAt: v.union(v.number(), v.null()),
+  borrowerRespondedAt: v.union(v.number(), v.null()),
   status: v.union(
     v.literal("pending"),
+    v.literal("awaiting_borrower"),
     v.literal("approved"),
     v.literal("declined"),
     v.literal("cancelled"),
@@ -92,6 +104,12 @@ async function view(
     days: request.days,
     rateMinor: request.rateMinor,
     totalMinor: request.totalMinor,
+    listedRateMinor: request.listedRateMinor ?? request.rateMinor,
+    borrowerOfferMinor: request.borrowerOfferMinor ?? null,
+    lenderCounterMinor: request.lenderCounterMinor ?? null,
+    priceDecision: request.priceDecision ?? null,
+    lenderRespondedAt: request.respondedAt ?? null,
+    borrowerRespondedAt: request.borrowerRespondedAt ?? null,
     status: request.status,
     loanId: loan?._id ?? null,
     loanStatus: loan?.status ?? null,
@@ -126,7 +144,12 @@ export const availability = query({
 });
 
 export const create = mutation({
-  args: { toolId: v.id("tools"), startDate: v.string(), endDate: v.string() },
+  args: {
+    toolId: v.id("tools"),
+    startDate: v.string(),
+    endDate: v.string(),
+    offerMinor: v.optional(v.number()),
+  },
   returns: v.id("borrowRequests"),
   handler: async (ctx, args) => {
     const me = await currentUser(ctx);
@@ -142,9 +165,15 @@ export const create = mutation({
       )
       .collect();
     for (const r of existing) {
+      if (
+        args.offerMinor !== undefined &&
+        r.borrowerOfferMinor !== undefined &&
+        overlaps(r, args)
+      )
+        throw new Error("You already made an offer for these dates");
       if (r.startDate !== args.startDate || r.endDate !== args.endDate)
         continue;
-      if (r.status === "pending")
+      if (r.status === "pending" || r.status === "awaiting_borrower")
         throw new Error("You already have a request for these dates");
       if (r.status === "approved") {
         const loan = await ctx.db
@@ -157,6 +186,17 @@ export const create = mutation({
     }
     const now = Date.now(),
       rateMinor = tool.pricing?.dailyAmount ?? 0;
+    if (
+      args.offerMinor !== undefined &&
+      (!tool.pricing ||
+        !Number.isSafeInteger(args.offerMinor) ||
+        args.offerMinor <= 0 ||
+        args.offerMinor >= rateMinor ||
+        !Number.isSafeInteger(args.offerMinor * duration))
+    )
+      throw new Error(
+        "Offer must be a positive amount below the listed daily price",
+      );
     return ctx.db.insert("borrowRequests", {
       toolId: tool._id,
       borrowerId: me._id,
@@ -166,6 +206,8 @@ export const create = mutation({
       days: duration,
       rateMinor,
       totalMinor: rateMinor * duration,
+      listedRateMinor: args.offerMinor === undefined ? undefined : rateMinor,
+      borrowerOfferMinor: args.offerMinor,
       currency: "INR",
       status: "pending",
       createdAt: now,
@@ -246,53 +288,159 @@ export const approve = mutation({
       request = await ctx.db.get(requestId);
     if (!request || request.lenderId !== me._id)
       throw new Error("Request unavailable");
-    const tool = await ctx.db.get(request.toolId);
-    if (!tool || tool.ownerId !== me._id)
-      throw new Error("Listing unavailable");
+    if (request.borrowerOfferMinor !== undefined)
+      throw new Error("Use a price decision for this offer");
     if (request.status === "approved") {
-      const loan = await ctx.db
-        .query("loans")
-        .withIndex("by_request", (q) => q.eq("requestId", requestId))
-        .unique();
+      const loan = await loanForRequest(ctx, requestId);
       if (loan) return loan._id;
       throw new Error("Approved loan unavailable");
     }
     requirePending(request.status, "approved");
-    if (!tool.active || tool.archived) throw new Error("Listing unavailable");
-    if (request.startDate < today())
-      throw new Error("Request dates have passed");
+    return confirm(ctx, request, request.rateMinor);
+  },
+});
+
+async function confirm(
+  ctx: MutationCtx,
+  request: Doc<"borrowRequests">,
+  rateMinor: number,
+) {
+  const tool = await ctx.db.get(request.toolId);
+  if (!tool?.active || tool.archived || tool.ownerId !== request.lenderId)
+    throw new Error("Listing unavailable");
+  if (request.startDate < today()) throw new Error("Request dates have passed");
+  if (days(request.startDate, request.endDate) !== request.days)
+    throw new Error("Request dates are invalid");
+  if (
+    !Number.isSafeInteger(rateMinor) ||
+    rateMinor < 0 ||
+    !Number.isSafeInteger(rateMinor * request.days)
+  )
+    throw new Error("Invalid rental price");
+  if (
+    await reservationConflict(
+      ctx,
+      request.toolId,
+      request.startDate,
+      request.endDate,
+    )
+  )
+    throw new Error("These dates are already reserved. Choose other dates.");
+  const now = Date.now(),
+    totalMinor = rateMinor * request.days;
+  const loanId = await ctx.db.insert("loans", {
+    requestId: request._id,
+    toolId: request.toolId,
+    borrowerId: request.borrowerId,
+    lenderId: request.lenderId,
+    startDate: request.startDate,
+    endDate: request.endDate,
+    days: request.days,
+    rateMinor,
+    totalMinor,
+    currency: request.currency,
+    status: "reserved",
+    approvedAt: now,
+    updatedAt: now,
+  });
+  await ctx.db.patch(request._id, {
+    status: "approved",
+    rateMinor,
+    totalMinor,
+    updatedAt: now,
+    ...(request.respondedAt ? {} : { respondedAt: now }),
+    ...(request.borrowerOfferMinor && request.priceDecision
+      ? { borrowerRespondedAt: now }
+      : {}),
+  });
+  return loanId;
+}
+
+export const respondToOffer = mutation({
+  args: {
+    requestId: v.id("borrowRequests"),
+    decision: v.union(
+      v.literal("accepted_offer"),
+      v.literal("countered"),
+      v.literal("kept_listed_price"),
+    ),
+    counterMinor: v.optional(v.number()),
+  },
+  returns: v.union(v.id("loans"), v.null()),
+  handler: async (ctx, { requestId, decision, counterMinor }) => {
+    const me = await currentUser(ctx),
+      request = await ctx.db.get(requestId);
     if (
-      await reservationConflict(
-        ctx,
-        request.toolId,
-        request.startDate,
-        request.endDate,
-      )
+      !request ||
+      request.lenderId !== me._id ||
+      request.borrowerOfferMinor === undefined
+    )
+      throw new Error("Offer unavailable");
+    requirePending(request.status, "answered");
+    const tool = await ctx.db.get(request.toolId);
+    if (!tool?.active || tool.archived || tool.ownerId !== me._id)
+      throw new Error("Listing unavailable");
+    const listed = request.listedRateMinor ?? request.rateMinor;
+    if (
+      decision === "countered"
+        ? !Number.isSafeInteger(counterMinor) ||
+          counterMinor! <= request.borrowerOfferMinor ||
+          counterMinor! >= listed
+        : counterMinor !== undefined
     )
       throw new Error(
-        "These dates are already reserved. Ask the borrower to choose other dates.",
+        "Counteroffer must be between the offered and listed daily prices",
       );
     const now = Date.now();
-    const loanId = await ctx.db.insert("loans", {
-      requestId,
-      toolId: request.toolId,
-      borrowerId: request.borrowerId,
-      lenderId: request.lenderId,
-      startDate: request.startDate,
-      endDate: request.endDate,
-      days: request.days,
-      rateMinor: request.rateMinor,
-      totalMinor: request.totalMinor,
-      currency: "INR",
-      status: "reserved",
-      approvedAt: now,
-      updatedAt: now,
-    });
+    if (decision === "accepted_offer") {
+      const loanId = await confirm(ctx, request, request.borrowerOfferMinor);
+      await ctx.db.patch(requestId, { priceDecision: decision });
+      return loanId;
+    }
     await ctx.db.patch(requestId, {
-      status: "approved",
+      status: "awaiting_borrower",
+      priceDecision: decision,
+      lenderCounterMinor: counterMinor,
       respondedAt: now,
       updatedAt: now,
     });
-    return loanId;
+    return null;
+  },
+});
+
+export const respondToFinalPrice = mutation({
+  args: { requestId: v.id("borrowRequests"), accept: v.boolean() },
+  returns: v.union(v.id("loans"), v.null()),
+  handler: async (ctx, { requestId, accept }) => {
+    const me = await currentUser(ctx),
+      request = await ctx.db.get(requestId);
+    if (
+      !request ||
+      request.borrowerId !== me._id ||
+      request.borrowerOfferMinor === undefined
+    )
+      throw new Error("Offer unavailable");
+    if (
+      request.status !== "awaiting_borrower" ||
+      (request.priceDecision !== "countered" &&
+        request.priceDecision !== "kept_listed_price")
+    )
+      throw new Error("This price decision is no longer available");
+    if (!accept) {
+      const now = Date.now();
+      await ctx.db.patch(requestId, {
+        status: "cancelled",
+        borrowerRespondedAt: now,
+        updatedAt: now,
+      });
+      return null;
+    }
+    return confirm(
+      ctx,
+      request,
+      request.priceDecision === "countered"
+        ? request.lenderCounterMinor!
+        : request.listedRateMinor!,
+    );
   },
 });

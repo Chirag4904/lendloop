@@ -19,10 +19,14 @@ Automation events, reminders and audit logs remain planned. Retention and deleti
 
 ## Phase 3 schema
 
-| Table                 | Contents                                                                                                                                       | Indexes                                               |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `borrowRequests`      | Tool, borrower and lender IDs; inclusive dates; duration, immutable INR paise terms; pending/approved/declined/cancelled status and timestamps | borrower, lender, tool + borrower                     |
-| `loans`               | One approved request, confirmed dates and terms, reserved/return_pending/returned status and return timestamps                                 | request, tool + status + start date, borrower, lender |
-| `loanHandoverDetails` | Optional phone, pickup point and instructions supplied by one loan participant                                                                 | loan + author                                         |
+| Table                 | Contents                                                                                                       | Indexes                                               |
+| --------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `borrowRequests`      | Tool, borrower and lender IDs; inclusive dates; duration, INR paise terms; request status and timestamps       | borrower, lender, tool + borrower                     |
+| `loans`               | One approved request, confirmed dates and terms, reserved/return_pending/returned status and return timestamps | request, tool + status + start date, borrower, lender |
+| `loanHandoverDetails` | Optional phone, pickup point and instructions supplied by one loan participant                                 | loan + author                                         |
 
 Historical loans retain confirmed terms and remain after listing archive. Returned loans are excluded from blocking overlaps. The public catalog remains exactly name and category.
+
+## Phase 4 negotiation fields
+
+`borrowRequests` adds optional `listedRateMinor`, `borrowerOfferMinor`, `lenderCounterMinor`, `priceDecision`, and `borrowerRespondedAt`; optional fields keep existing rows valid. `respondedAt` records the lender decision. A present borrower offer marks a negotiated request. `rateMinor` and `totalMinor` become the agreed terms on approval, while `listedRateMinor` preserves the original listed-rate snapshot. The new `awaiting_borrower` status follows a counteroffer or a decision to keep the listed price. Loans still have one immutable set of agreed INR paise terms and one original request ID. No offer or chat table is needed.

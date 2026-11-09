@@ -296,3 +296,285 @@ test("completed loans allow a fresh request for the same future dates", async ()
   await alice.mutation(api.loans.confirmReturn, { loanId });
   expect(await bob.mutation(api.requests.create, dates)).not.toBe(first);
 });
+
+test("offers require an active paid listing, another borrower, and valid integer paise", async () => {
+  const { t, alice, bob, toolId } = await setup();
+  const args = {
+    toolId,
+    startDate: "2026-11-12",
+    endDate: "2026-11-14",
+    offerMinor: 6000,
+  };
+  await expect(t.mutation(api.requests.create, args)).rejects.toThrow(
+    "Authentication",
+  );
+  await expect(alice.mutation(api.requests.create, args)).rejects.toThrow(
+    "own item",
+  );
+  for (const offerMinor of [
+    0,
+    -1,
+    12550,
+    20000,
+    1.2,
+    Number.NaN,
+    Number.POSITIVE_INFINITY,
+    Number.MAX_SAFE_INTEGER,
+  ])
+    await expect(
+      bob.mutation(api.requests.create, { ...args, offerMinor }),
+    ).rejects.toThrow();
+  const free = await setup(false);
+  await expect(
+    free.bob.mutation(api.requests.create, { ...args, toolId: free.toolId }),
+  ).rejects.toThrow("Offer");
+  const id = await bob.mutation(api.requests.create, args);
+  expect(await t.run((ctx) => ctx.db.get(id))).toMatchObject({
+    status: "pending",
+    rateMinor: 12550,
+    totalMinor: 37650,
+    listedRateMinor: 12550,
+    borrowerOfferMinor: 6000,
+  });
+  await expect(bob.mutation(api.requests.create, args)).rejects.toThrow(
+    "already",
+  );
+  expect((await bob.query(api.requests.mine, {}))[0].borrowerOfferMinor).toBe(
+    6000,
+  );
+});
+
+test("lender accepts one offer at its price and cannot change it after confirmation", async () => {
+  const { t, alice, bob, charlie, toolId } = await setup();
+  const requestId = await bob.mutation(api.requests.create, {
+    toolId,
+    startDate: "2026-11-12",
+    endDate: "2026-11-14",
+    offerMinor: 6000,
+  });
+  await expect(
+    bob.mutation(api.requests.respondToOffer, {
+      requestId,
+      decision: "accepted_offer",
+    }),
+  ).rejects.toThrow("unavailable");
+  await expect(
+    charlie.mutation(api.requests.respondToOffer, {
+      requestId,
+      decision: "accepted_offer",
+    }),
+  ).rejects.toThrow("unavailable");
+  await expect(
+    alice.mutation(api.requests.approve, { requestId }),
+  ).rejects.toThrow("price decision");
+  const loanId = await alice.mutation(api.requests.respondToOffer, {
+    requestId,
+    decision: "accepted_offer",
+  });
+  expect(await t.run((ctx) => ctx.db.get(loanId!))).toMatchObject({
+    rateMinor: 6000,
+    totalMinor: 18000,
+    requestId,
+  });
+  expect(await t.run((ctx) => ctx.db.get(toolId))).toMatchObject({
+    pricing: { dailyAmount: 12550, currency: "INR" },
+  });
+  await t.run((ctx) =>
+    ctx.db.patch(toolId, { pricing: { dailyAmount: 15000, currency: "INR" } }),
+  );
+  expect(await t.run((ctx) => ctx.db.get(loanId!))).toMatchObject({
+    rateMinor: 6000,
+    totalMinor: 18000,
+  });
+  expect(await t.query(api.tools.publicList, {})).toEqual([
+    { name: "Drill", category: "Power Tools" },
+  ]);
+  expect(await charlie.query(api.requests.mine, {})).toEqual([]);
+  expect(await charlie.query(api.requests.incoming, {})).toEqual([]);
+  await expect(
+    alice.mutation(api.requests.respondToOffer, {
+      requestId,
+      decision: "countered",
+      counterMinor: 8000,
+    }),
+  ).rejects.toThrow("pending");
+  await expect(
+    bob.mutation(api.requests.respondToFinalPrice, { requestId, accept: true }),
+  ).rejects.toThrow("no longer");
+  expect(await t.run((ctx) => ctx.db.query("loans").collect())).toHaveLength(1);
+});
+
+test("one counteroffer is final; borrower can accept, walk away, or accept listed price", async () => {
+  const { t, alice, bob, charlie, toolId } = await setup();
+  const make = (startDate: string, endDate: string, who = bob) =>
+    who.mutation(api.requests.create, {
+      toolId,
+      startDate,
+      endDate,
+      offerMinor: 6000,
+    });
+  const requestId = await make("2026-11-12", "2026-11-14");
+  for (const counterMinor of [6000, 12550, 0, 1.5, Number.NaN])
+    await expect(
+      alice.mutation(api.requests.respondToOffer, {
+        requestId,
+        decision: "countered",
+        counterMinor,
+      }),
+    ).rejects.toThrow();
+  await alice.mutation(api.requests.respondToOffer, {
+    requestId,
+    decision: "countered",
+    counterMinor: 8000,
+  });
+  await expect(
+    alice.mutation(api.requests.respondToOffer, {
+      requestId,
+      decision: "countered",
+      counterMinor: 9000,
+    }),
+  ).rejects.toThrow("pending");
+  await expect(
+    bob.mutation(api.requests.create, {
+      toolId,
+      startDate: "2026-11-12",
+      endDate: "2026-11-14",
+      offerMinor: 7000,
+    }),
+  ).rejects.toThrow("already");
+  await expect(
+    charlie.mutation(api.requests.respondToFinalPrice, {
+      requestId,
+      accept: true,
+    }),
+  ).rejects.toThrow("unavailable");
+  const loanId = await bob.mutation(api.requests.respondToFinalPrice, {
+    requestId,
+    accept: true,
+  });
+  expect(await t.run((ctx) => ctx.db.get(loanId!))).toMatchObject({
+    rateMinor: 8000,
+    totalMinor: 24000,
+  });
+  await expect(
+    bob.mutation(api.requests.respondToFinalPrice, { requestId, accept: true }),
+  ).rejects.toThrow("no longer");
+  const walked = await make("2026-11-16", "2026-11-17");
+  await alice.mutation(api.requests.respondToOffer, {
+    requestId: walked,
+    decision: "countered",
+    counterMinor: 8000,
+  });
+  await bob.mutation(api.requests.respondToFinalPrice, {
+    requestId: walked,
+    accept: false,
+  });
+  await expect(
+    bob.mutation(api.requests.respondToFinalPrice, {
+      requestId: walked,
+      accept: true,
+    }),
+  ).rejects.toThrow("no longer");
+  await expect(make("2026-11-16", "2026-11-17")).rejects.toThrow(
+    "already made an offer",
+  );
+  const listed = await make("2026-11-19", "2026-11-20", charlie);
+  await alice.mutation(api.requests.respondToOffer, {
+    requestId: listed,
+    decision: "kept_listed_price",
+  });
+  const listedLoan = await charlie.mutation(api.requests.respondToFinalPrice, {
+    requestId: listed,
+    accept: true,
+  });
+  expect(await t.run((ctx) => ctx.db.get(listedLoan!))).toMatchObject({
+    rateMinor: 12550,
+    totalMinor: 25100,
+  });
+  expect(await t.run((ctx) => ctx.db.query("loans").collect())).toHaveLength(2);
+});
+
+test("a one-paise price gap has no valid counteroffer", async () => {
+  const { alice, bob, toolId } = await setup();
+  const requestId = await bob.mutation(api.requests.create, {
+    toolId,
+    startDate: "2026-11-12",
+    endDate: "2026-11-12",
+    offerMinor: 12549,
+  });
+  await expect(
+    alice.mutation(api.requests.respondToOffer, {
+      requestId,
+      decision: "countered",
+      counterMinor: 12549,
+    }),
+  ).rejects.toThrow("between");
+  await expect(
+    alice.mutation(api.requests.respondToOffer, {
+      requestId,
+      decision: "countered",
+      counterMinor: 12550,
+    }),
+  ).rejects.toThrow("between");
+});
+
+test("declines, cancellations, and overlapping final acceptances cannot create loans", async () => {
+  const { t, alice, bob, charlie, toolId } = await setup();
+  const args = {
+    toolId,
+    startDate: "2026-11-12",
+    endDate: "2026-11-14",
+    offerMinor: 6000,
+  };
+  const declined = await bob.mutation(api.requests.create, args);
+  await alice.mutation(api.requests.decline, { requestId: declined });
+  await expect(
+    alice.mutation(api.requests.respondToOffer, {
+      requestId: declined,
+      decision: "accepted_offer",
+    }),
+  ).rejects.toThrow("pending");
+  const cancelled = await bob.mutation(api.requests.create, {
+    ...args,
+    startDate: "2026-11-16",
+    endDate: "2026-11-17",
+  });
+  await bob.mutation(api.requests.cancel, { requestId: cancelled });
+  await expect(
+    alice.mutation(api.requests.respondToOffer, {
+      requestId: cancelled,
+      decision: "accepted_offer",
+    }),
+  ).rejects.toThrow("pending");
+  const a = await bob.mutation(api.requests.create, {
+    ...args,
+    startDate: "2026-11-18",
+    endDate: "2026-11-20",
+  });
+  const b = await charlie.mutation(api.requests.create, {
+    ...args,
+    startDate: "2026-11-19",
+    endDate: "2026-11-21",
+  });
+  await alice.mutation(api.requests.respondToOffer, {
+    requestId: a,
+    decision: "kept_listed_price",
+  });
+  await alice.mutation(api.requests.respondToOffer, {
+    requestId: b,
+    decision: "kept_listed_price",
+  });
+  const results = await Promise.allSettled([
+    bob.mutation(api.requests.respondToFinalPrice, {
+      requestId: a,
+      accept: true,
+    }),
+    charlie.mutation(api.requests.respondToFinalPrice, {
+      requestId: b,
+      accept: true,
+    }),
+  ]);
+  expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
+  expect(results.filter((r) => r.status === "rejected")).toHaveLength(1);
+  expect(await t.run((ctx) => ctx.db.query("loans").collect())).toHaveLength(1);
+});

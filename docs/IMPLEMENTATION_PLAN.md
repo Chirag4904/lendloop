@@ -13,13 +13,17 @@ Project setup, design tokens and landing page; Clerk/Convex integration code; mi
 
 ## Later phases, pending review
 
-After Phase 3 review, design one-round negotiation, notification adapters and n8n workflows, retention/deletion processes, and eventually payments and AI.
+After Phase 4 review, consider notification adapters and n8n workflows, retention/deletion processes, and eventually payments and AI.
 
 ## Completed in Phase 2
 
 Listing creation and editing, Convex File Storage photo pipeline, in-app camera and native capture fallback, listing management, authenticated discovery with approximate society-center radius, tool detail gallery, backend authorization and privacy tests are implemented. CI retains formatting, lint, typecheck, Vitest, build and Playwright gates. Authenticated browser tests require a separate test Clerk account and development Convex deployment. Hardware camera capture still needs a manual Android/iOS check when available.
 
-Phase 3 adds borrowing requests, owner approval/decline, transactional date reservations, loan returns and optional participant-only handover details. Negotiation, payments, n8n workflows, AI and society-admin roles remain deferred.
+Phase 3 adds borrowing requests, owner approval/decline, transactional date reservations, loan returns and optional participant-only handover details. Phase 4 adds one-round price negotiation. Payments, n8n workflows, AI and society-admin roles remain deferred.
+
+## Completed in Phase 4
+
+Paid listings offer a standard request or one borrower offer. The owner can accept, counter once, keep the listed price, or decline the request. The borrower can accept the final price or walk away. All confirmed paths reuse the Phase 3 reservation transaction; request and loan prices are snapshotted in integer INR paise. My Requests and Incoming Requests show live price decisions and a compact timeline. Backend tests cover pricing, authorization, state changes and conflicting final acceptances. Authenticated browser tests require isolated development accounts.
 
 ## Completed in Phase 3
 

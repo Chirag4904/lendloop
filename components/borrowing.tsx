@@ -14,6 +14,11 @@ const money = (minor: number) =>
         style: "currency",
         currency: "INR",
       }).format(minor / 100);
+const minorFromRupees = (value: string) => {
+  if (!/^\d+(?:\.\d{1,2})?$/.test(value)) return 0;
+  const [rupees, paise = ""] = value.split(".");
+  return Number(rupees) * 100 + Number(paise.padEnd(2, "0"));
+};
 const localToday = () =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Kolkata",
@@ -38,6 +43,7 @@ const statusLabel = (status: string, overdue = false) =>
     : ((
         {
           pending: "Pending",
+          awaiting_borrower: "Your decision",
           approved: "Approved",
           declined: "Declined",
           cancelled: "Cancelled",
@@ -73,23 +79,37 @@ export function RequestForm({
   const dialog = useRef<HTMLDialogElement>(null);
   const create = useMutation(api.requests.create);
   const [open, setOpen] = useState(false),
+    [mode, setMode] = useState<"standard" | "offer">("standard"),
+    [offer, setOffer] = useState(""),
     [startDate, setStart] = useState(""),
     [endDate, setEnd] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
   const count = rentalDays(startDate, endDate);
   const valid = startDate >= localToday() && count >= 1 && count <= 30;
+  const offerMinor = minorFromRupees(offer);
+  const validOffer =
+    dailyAmount !== null &&
+    Number.isSafeInteger(offerMinor) &&
+    offerMinor > 0 &&
+    offerMinor < dailyAmount;
   const available = useQuery(
     api.requests.availability,
     open && valid ? { toolId, startDate, endDate } : "skip",
   );
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!valid || available !== true) return;
+    if (!valid || available !== true || (mode === "offer" && !validOffer))
+      return;
     setBusy(true);
     setError("");
     try {
-      await create({ toolId, startDate, endDate });
+      await create({
+        toolId,
+        startDate,
+        endDate,
+        offerMinor: mode === "offer" ? offerMinor : undefined,
+      });
       router.push("/dashboard/requests");
     } catch (err) {
       setError((err as Error).message);
@@ -98,16 +118,33 @@ export function RequestForm({
   }
   return (
     <section className="borrow-panel" aria-label="Borrow this item">
-      <button
-        type="button"
-        className="button-primary"
-        onClick={() => {
-          dialog.current?.showModal();
-          setOpen(true);
-        }}
-      >
-        Request to Borrow
-      </button>
+      <div className="borrow-choices">
+        <button
+          type="button"
+          className="button-primary"
+          onClick={() => {
+            setMode("standard");
+            dialog.current?.showModal();
+            setOpen(true);
+          }}
+        >
+          {dailyAmount === null
+            ? "Request to Borrow"
+            : "Request at Listed Price"}
+        </button>
+        {dailyAmount !== null && (
+          <button
+            type="button"
+            onClick={() => {
+              setMode("offer");
+              dialog.current?.showModal();
+              setOpen(true);
+            }}
+          >
+            Make an Offer
+          </button>
+        )}
+      </div>
       <dialog
         ref={dialog}
         className="borrow-dialog"
@@ -117,7 +154,9 @@ export function RequestForm({
         {open && (
           <form id="request-form" onSubmit={submit} className="borrow-form">
             <div className="borrow-form-heading">
-              <h2 id="request-title">Request to Borrow</h2>
+              <h2 id="request-title">
+                {mode === "offer" ? "Make an Offer" : "Request to Borrow"}
+              </h2>
               <button
                 type="button"
                 aria-label="Close request"
@@ -126,6 +165,32 @@ export function RequestForm({
                 ×
               </button>
             </div>
+            {mode === "offer" && (
+              <>
+                <label className="offer-field">
+                  Your daily offer in rupees
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={offer}
+                    onChange={(e) => setOffer(e.target.value)}
+                    placeholder="e.g. 600"
+                    aria-describedby="offer-help"
+                    required
+                  />
+                </label>
+                <p id="offer-help">
+                  Offer less than {money(dailyAmount!)} per day. The lender may
+                  accept, suggest one final price, or keep the listed price.
+                </p>
+                {offer && !validOffer && (
+                  <p role="alert" className="form-message error">
+                    Enter a positive offer below {money(dailyAmount!)} using at
+                    most two decimal places.
+                  </p>
+                )}
+              </>
+            )}
             <div className="borrow-item">
               {coverUrl && <img src={coverUrl} alt="" />}
               <div>
@@ -166,14 +231,20 @@ export function RequestForm({
                 />
               </label>
             </div>
-            {count > 0 && (
+            {count > 0 && (mode !== "offer" || validOffer) && (
               <p className="borrow-total">
                 <strong>
                   {count} {count === 1 ? "day" : "days"} ·{" "}
-                  {money((dailyAmount ?? 0) * count)}
+                  {money(
+                    (mode === "offer" && validOffer
+                      ? offerMinor
+                      : (dailyAmount ?? 0)) * count,
+                  )}
                 </strong>
                 <span>
-                  Estimated at the listed rate. No payment is collected.
+                  {mode === "offer"
+                    ? "Your proposed total. The lender has not agreed yet."
+                    : "Estimated at the listed rate. No payment is collected."}
                 </span>
               </p>
             )}
@@ -190,9 +261,18 @@ export function RequestForm({
             <button
               type="submit"
               className="button-primary"
-              disabled={!valid || available !== true || busy}
+              disabled={
+                !valid ||
+                available !== true ||
+                busy ||
+                (mode === "offer" && !validOffer)
+              }
             >
-              {busy ? "Sending…" : "Send request"}
+              {busy
+                ? "Sending…"
+                : mode === "offer"
+                  ? "Send Offer"
+                  : "Send request"}
             </button>
           </form>
         )}
@@ -208,9 +288,21 @@ export function RequestList({ incoming }: { incoming: boolean }) {
   );
   const approve = useMutation(api.requests.approve),
     decline = useMutation(api.requests.decline),
-    cancel = useMutation(api.requests.cancel);
+    cancel = useMutation(api.requests.cancel),
+    respond = useMutation(api.requests.respondToOffer),
+    finalPrice = useMutation(api.requests.respondToFinalPrice);
   const [busy, setBusy] = useState<string | null>(null),
-    [error, setError] = useState("");
+    [error, setError] = useState(""),
+    [counterId, setCounterId] = useState<Id<"borrowRequests"> | null>(null),
+    [counter, setCounter] = useState("");
+  const counterDialog = useRef<HTMLDialogElement>(null);
+  const counterRow = rows?.find((row) => row.id === counterId);
+  const counterMinor = minorFromRupees(counter);
+  const counterValid =
+    !!counterRow?.borrowerOfferMinor &&
+    Number.isSafeInteger(counterMinor) &&
+    counterMinor > counterRow.borrowerOfferMinor &&
+    counterMinor < counterRow.listedRateMinor;
   async function act(
     id: Id<"borrowRequests">,
     action: "approve" | "decline" | "cancel",
@@ -228,6 +320,33 @@ export function RequestList({ incoming }: { incoming: boolean }) {
       if (action === "approve") await approve({ requestId: id });
       else if (action === "decline") await decline({ requestId: id });
       else await cancel({ requestId: id });
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  }
+  async function priceAction(
+    id: Id<"borrowRequests">,
+    decision:
+      | "accepted_offer"
+      | "countered"
+      | "kept_listed_price"
+      | "accept_final"
+      | "decline_final",
+    counterAmount?: number,
+  ) {
+    setBusy(id);
+    setError("");
+    try {
+      if (decision === "accept_final" || decision === "decline_final")
+        await finalPrice({
+          requestId: id,
+          accept: decision === "accept_final",
+        });
+      else
+        await respond({ requestId: id, decision, counterMinor: counterAmount });
+      if (decision === "countered") counterDialog.current?.close();
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -288,7 +407,9 @@ export function RequestList({ incoming }: { incoming: boolean }) {
                     className={`request-status status-${row.status === "approved" && row.loanStatus !== "returned" && row.endDate < localToday() ? "overdue" : requestState(row.status, row.loanStatus)}`}
                   >
                     {statusLabel(
-                      requestState(row.status, row.loanStatus),
+                      row.status === "awaiting_borrower" && incoming
+                        ? "Waiting for borrower"
+                        : requestState(row.status, row.loanStatus),
                       row.status === "approved" &&
                         row.loanStatus !== "returned" &&
                         row.endDate < localToday(),
@@ -311,9 +432,87 @@ export function RequestList({ incoming }: { incoming: boolean }) {
                 </p>
                 <p>
                   {row.days} {row.days === 1 ? "day" : "days"} ·{" "}
-                  {money(row.totalMinor)}{" "}
+                  {money(
+                    (row.status === "pending" && row.borrowerOfferMinor !== null
+                      ? row.borrowerOfferMinor
+                      : row.status === "awaiting_borrower"
+                        ? (row.lenderCounterMinor ?? row.listedRateMinor)
+                        : row.rateMinor) * row.days,
+                  )}{" "}
                   {row.status === "approved" ? "agreed" : "proposed"}
                 </p>
+                {row.borrowerOfferMinor !== null && (
+                  <section
+                    className="negotiation-timeline"
+                    aria-label="Price conversation"
+                  >
+                    <strong>Price conversation</strong>
+                    <ol>
+                      <li>
+                        Borrower offered {money(row.borrowerOfferMinor)} / day{" "}
+                        <time dateTime={new Date(row.createdAt).toISOString()}>
+                          {new Date(row.createdAt).toLocaleString("en-IN")}
+                        </time>
+                      </li>
+                      {row.priceDecision === "accepted_offer" && (
+                        <li>
+                          Lender accepted the offer ·{" "}
+                          {new Date(row.lenderRespondedAt!).toLocaleString(
+                            "en-IN",
+                          )}
+                        </li>
+                      )}
+                      {row.priceDecision === "countered" && (
+                        <li>
+                          Lender suggested {money(row.lenderCounterMinor!)} /
+                          day ·{" "}
+                          {new Date(row.lenderRespondedAt!).toLocaleString(
+                            "en-IN",
+                          )}
+                        </li>
+                      )}
+                      {row.priceDecision === "kept_listed_price" && (
+                        <li>
+                          Lender kept the listed price of{" "}
+                          {money(row.listedRateMinor)} / day ·{" "}
+                          {new Date(row.lenderRespondedAt!).toLocaleString(
+                            "en-IN",
+                          )}
+                        </li>
+                      )}
+                      {row.status === "approved" && row.borrowerRespondedAt && (
+                        <li>
+                          Borrower accepted {money(row.rateMinor)} / day ·{" "}
+                          {new Date(row.borrowerRespondedAt).toLocaleString(
+                            "en-IN",
+                          )}
+                        </li>
+                      )}
+                      {row.status === "approved" && (
+                        <li>
+                          Rental confirmed · {money(row.totalMinor)} total
+                        </li>
+                      )}
+                      {row.status === "cancelled" && (
+                        <li>Negotiation closed</li>
+                      )}
+                    </ol>
+                    {row.status === "pending" && (
+                      <p>
+                        {incoming
+                          ? `Listed at ${money(row.listedRateMinor)} / day · ${row.days} days · ${money(row.borrowerOfferMinor * row.days)} offered`
+                          : "Waiting for lender to respond."}
+                      </p>
+                    )}
+                    {row.status === "awaiting_borrower" && (
+                      <p>
+                        {incoming
+                          ? "Waiting for the borrower’s decision."
+                          : `${row.priceDecision === "kept_listed_price" ? `The lender would prefer to keep the original price of ${money(row.listedRateMinor)} / day. You can still proceed if that works for you. ` : ""}Listed ${money(row.listedRateMinor)} / day · offered ${money(row.borrowerOfferMinor)} / day · final ${money(row.lenderCounterMinor ?? row.listedRateMinor)} / day · ${money((row.lenderCounterMinor ?? row.listedRateMinor) * row.days)} total`}
+                      </p>
+                    )}
+                  </section>
+                )}
                 {row.conflict && (
                   <p className="request-conflict" role="status">
                     These dates overlap another confirmed loan. This request
@@ -322,7 +521,8 @@ export function RequestList({ incoming }: { incoming: boolean }) {
                 )}
                 {row.status === "declined" && !incoming && (
                   <p>
-                    This request was declined. You can explore another item.
+                    This request couldn’t be accommodated. You can explore
+                    another item.
                   </p>
                 )}
                 <div className="request-actions">
@@ -334,17 +534,79 @@ export function RequestList({ incoming }: { incoming: boolean }) {
                       View loan
                     </Link>
                   )}
+                  {row.status === "awaiting_borrower" && !incoming && (
+                    <>
+                      <button
+                        type="button"
+                        className="button-primary"
+                        disabled={!!busy}
+                        onClick={() => void priceAction(row.id, "accept_final")}
+                      >
+                        {row.priceDecision === "countered"
+                          ? `Accept ${money(row.lenderCounterMinor!)} / day`
+                          : `Continue at ${money(row.listedRateMinor)} / day`}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!!busy}
+                        onClick={() =>
+                          void priceAction(row.id, "decline_final")
+                        }
+                      >
+                        Not Right Now
+                      </button>
+                    </>
+                  )}
                   {row.status === "pending" &&
                     (incoming ? (
                       <>
-                        <button
-                          type="button"
-                          className="button-primary"
-                          disabled={!!busy || row.conflict}
-                          onClick={() => void act(row.id, "approve")}
-                        >
-                          Approve Request
-                        </button>
+                        {row.borrowerOfferMinor !== null ? (
+                          <>
+                            <button
+                              type="button"
+                              className="button-primary"
+                              disabled={!!busy || row.conflict}
+                              onClick={() =>
+                                void priceAction(row.id, "accepted_offer")
+                              }
+                            >
+                              Accept Offer
+                            </button>
+                            <button
+                              type="button"
+                              disabled={
+                                !!busy ||
+                                row.listedRateMinor - row.borrowerOfferMinor <=
+                                  1
+                              }
+                              onClick={() => {
+                                setCounterId(row.id);
+                                setCounter("");
+                                counterDialog.current?.showModal();
+                              }}
+                            >
+                              Suggest Another Price
+                            </button>
+                            <button
+                              type="button"
+                              disabled={!!busy}
+                              onClick={() =>
+                                void priceAction(row.id, "kept_listed_price")
+                              }
+                            >
+                              Keep Listed Price
+                            </button>
+                          </>
+                        ) : (
+                          <button
+                            type="button"
+                            className="button-primary"
+                            disabled={!!busy || row.conflict}
+                            onClick={() => void act(row.id, "approve")}
+                          >
+                            Approve Request
+                          </button>
+                        )}
                         <button
                           type="button"
                           disabled={!!busy}
@@ -368,6 +630,68 @@ export function RequestList({ incoming }: { incoming: boolean }) {
           ))}
         </div>
       )}
+      <dialog
+        ref={counterDialog}
+        className="borrow-dialog"
+        aria-labelledby="counter-title"
+        onClose={() => setCounterId(null)}
+      >
+        {counterRow && (
+          <form
+            className="borrow-form"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (counterValid)
+                void priceAction(counterRow.id, "countered", counterMinor);
+            }}
+          >
+            <div className="borrow-form-heading">
+              <h2 id="counter-title">Suggest Another Price</h2>
+              <button
+                type="button"
+                aria-label="Close counteroffer"
+                onClick={() => counterDialog.current?.close()}
+              >
+                ×
+              </button>
+            </div>
+            <p>
+              Borrower offered {money(counterRow.borrowerOfferMinor!)} / day.
+              Listed price is {money(counterRow.listedRateMinor)} / day. This is
+              your one final counteroffer.
+            </p>
+            <label className="offer-field">
+              Your final daily price in rupees
+              <input
+                type="text"
+                inputMode="decimal"
+                value={counter}
+                onChange={(e) => setCounter(e.target.value)}
+                required
+              />
+            </label>
+            {counter && !counterValid && (
+              <p role="alert" className="form-message error">
+                Enter a price strictly between the offer and listed price, to
+                two decimal places.
+              </p>
+            )}
+            {counterValid && (
+              <p>
+                {counterRow.days} days · {money(counterMinor * counterRow.days)}{" "}
+                total
+              </p>
+            )}
+            <button
+              type="submit"
+              className="button-primary"
+              disabled={!counterValid || !!busy}
+            >
+              Send final price
+            </button>
+          </form>
+        )}
+      </dialog>
     </section>
   );
 }

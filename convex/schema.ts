@@ -95,8 +95,20 @@ export default defineSchema({
     rateMinor: v.number(),
     totalMinor: v.number(),
     currency: v.literal("INR"),
+    listedRateMinor: v.optional(v.number()),
+    borrowerOfferMinor: v.optional(v.number()),
+    lenderCounterMinor: v.optional(v.number()),
+    priceDecision: v.optional(
+      v.union(
+        v.literal("accepted_offer"),
+        v.literal("countered"),
+        v.literal("kept_listed_price"),
+      ),
+    ),
+    borrowerRespondedAt: v.optional(v.number()),
     status: v.union(
       v.literal("pending"),
+      v.literal("awaiting_borrower"),
       v.literal("approved"),
       v.literal("declined"),
       v.literal("cancelled"),

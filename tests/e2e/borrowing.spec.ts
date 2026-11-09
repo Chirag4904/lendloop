@@ -25,7 +25,7 @@ async function asUser(browser: Browser, emailAddress: string) {
   return { context, page };
 }
 
-async function listDrill(page: Page) {
+async function listDrill(page: Page, dailyRate?: string) {
   const name = `Borrowing drill ${Date.now()}`;
   await page.goto("/dashboard/listings/new");
   await page.getByLabel("Item name").fill(name);
@@ -33,6 +33,10 @@ async function listDrill(page: Page) {
     .getByLabel("Description")
     .fill("A cordless drill for small repairs.");
   await page.getByLabel("Category").selectOption("Power Tools");
+  if (dailyRate) {
+    await page.getByLabel("Paid rental").check();
+    await page.getByLabel("Daily rate in INR").fill(dailyRate);
+  }
   await page.getByRole("button", { name: "Preview listing" }).click();
   await page.getByRole("button", { name: "Publish listing" }).click();
   await expect(page).toHaveURL(/\/dashboard\/listings$/);
@@ -45,6 +49,152 @@ async function listDrill(page: Page) {
   expect(href).toBeTruthy();
   return { name, href: href! };
 }
+
+async function sendOffer(page: Page, href: string) {
+  const { start, end } = dates();
+  await page.goto(href);
+  await page.getByRole("button", { name: "Make an Offer" }).click();
+  await page.getByLabel("Your daily offer in rupees").fill("600");
+  await page.getByLabel("Start date").fill(start);
+  await page.getByLabel("End date").fill(end);
+  for (const width of [360, 390, 768, 1280]) {
+    await page.setViewportSize({ width, height: 800 });
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await expect(
+      page.getByRole("button", { name: "Send Offer" }),
+    ).toBeEnabled();
+  }
+  await page.getByRole("button", { name: "Send Offer" }).click();
+  await expect(page).toHaveURL(/\/dashboard\/requests$/);
+}
+
+for (const response of [
+  "accept",
+  "counter",
+  "listed",
+  "walk",
+  "decline",
+] as const) {
+  test(`paid offer: lender ${response}`, async ({ browser }) => {
+    const lender = await asUser(browser, process.env.E2E_CLERK_USER_EMAIL!);
+    const borrower = await asUser(
+      browser,
+      process.env.E2E_CLERK_BORROWER_EMAIL!,
+    );
+    try {
+      const { name, href } = await listDrill(lender.page, "1000");
+      await sendOffer(borrower.page, href);
+      await lender.page.goto("/dashboard/incoming");
+      const incoming = lender.page
+        .getByRole("article")
+        .filter({ has: lender.page.getByRole("heading", { name }) });
+      await expect(incoming.getByText("Borrower offered")).toBeVisible();
+      if (response === "accept")
+        await incoming.getByRole("button", { name: "Accept Offer" }).click();
+      else if (response === "decline") {
+        lender.page.once("dialog", (dialog) => dialog.accept());
+        await incoming.getByRole("button", { name: "Decline Request" }).click();
+      } else if (response === "listed")
+        await incoming
+          .getByRole("button", { name: "Keep Listed Price" })
+          .click();
+      else {
+        await incoming
+          .getByRole("button", { name: "Suggest Another Price" })
+          .click();
+        await lender.page
+          .getByLabel("Your final daily price in rupees")
+          .fill("800");
+        await lender.page
+          .getByRole("button", { name: "Send final price" })
+          .click();
+      }
+      const own = borrower.page
+        .getByRole("article")
+        .filter({ has: borrower.page.getByRole("heading", { name }) });
+      if (response === "counter" || response === "listed")
+        await own
+          .getByRole("button", {
+            name:
+              response === "counter"
+                ? /Accept.*800.*day/
+                : /Continue at.*1,000.*day/,
+          })
+          .click();
+      if (response === "walk")
+        await own.getByRole("button", { name: "Not Right Now" }).click();
+      if (response === "walk" || response === "decline") {
+        await expect(own.getByRole("link", { name: "View loan" })).toHaveCount(
+          0,
+        );
+      } else {
+        await expect(
+          own.getByRole("link", { name: "View loan" }),
+        ).toBeVisible();
+        await own.getByRole("link", { name: "View loan" }).click();
+        await expect(borrower.page.locator(".loan-hero")).toContainText(
+          `${response === "accept" ? "₹600.00" : response === "counter" ? "₹800.00" : "₹1,000.00"} / day`,
+        );
+        await borrower.page.goto(href);
+        await expect(borrower.page.getByText("₹1,000")).toBeVisible();
+      }
+    } finally {
+      await lender.context.close();
+      await borrower.context.close();
+    }
+  });
+}
+
+test("overlapping final acceptances explain the conflict", async ({
+  browser,
+}) => {
+  test.skip(
+    !process.env.E2E_CLERK_THIRD_EMAIL,
+    "Requires a third isolated Clerk test account",
+  );
+  const lender = await asUser(browser, process.env.E2E_CLERK_USER_EMAIL!);
+  const first = await asUser(browser, process.env.E2E_CLERK_BORROWER_EMAIL!);
+  const second = await asUser(browser, process.env.E2E_CLERK_THIRD_EMAIL!);
+  try {
+    const { name, href } = await listDrill(lender.page, "1000");
+    await sendOffer(first.page, href);
+    await sendOffer(second.page, href);
+    await lender.page.goto("/dashboard/incoming");
+    const cards = lender.page
+      .getByRole("article")
+      .filter({ has: lender.page.getByRole("heading", { name }) });
+    await expect(cards).toHaveCount(2);
+    for (const card of await cards.all())
+      await card.getByRole("button", { name: "Keep Listed Price" }).click();
+    const own = (page: Page) =>
+      page
+        .getByRole("article")
+        .filter({ has: page.getByRole("heading", { name }) });
+    await own(first.page)
+      .getByRole("button", { name: /Continue at/ })
+      .click();
+    await expect(
+      own(first.page).getByRole("link", { name: "View loan" }),
+    ).toBeVisible();
+    await own(second.page)
+      .getByRole("button", { name: /Continue at/ })
+      .click();
+    await expect(second.page.getByRole("alert")).toContainText(
+      "already reserved",
+    );
+    await expect(
+      own(second.page).getByRole("link", { name: "View loan" }),
+    ).toHaveCount(0);
+  } finally {
+    await lender.context.close();
+    await first.context.close();
+    await second.context.close();
+  }
+});
 
 function dates() {
   const date = new Date(Date.now() + 7 * 86_400_000);
