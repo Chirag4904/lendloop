@@ -189,11 +189,20 @@ test("touch scrolling and changing motion preferences preserve the story", async
   const page = await context.newPage();
   await page.goto("/");
   const cdp = await context.newCDPSession(page);
-  await cdp.send("Input.synthesizeScrollGesture", {
-    x: 190,
-    y: 700,
-    yDistance: -700,
-    gestureSourceType: "touch",
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [{ x: 190, y: 700 }],
+  });
+  for (let y = 650; y >= 200; y -= 50) {
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x: 190, y }],
+    });
+    await new Promise((resolve) => setTimeout(resolve, 16));
+  }
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchEnd",
+    touchPoints: [],
   });
   await expect
     .poll(() => page.evaluate(() => window.scrollY))

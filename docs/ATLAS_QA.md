@@ -4,7 +4,7 @@ The Neighborhood Edit × Atlas redesign reuses the existing query/mutation surfa
 
 ## Screenshots
 
-Actual Chromium captures of the real React components with synthetic data are in [`../artifacts/atlas/`](../artifacts/atlas/). Every image is labeled as a visual QA fixture. Each of `explore`, `listings`, `requests`, `incoming`, `detail`, `notifications`, `profile` and `admin` has captures at **360, 390, 768, 1280 and 1440px**, named `<view>-<width>.png`.
+Chromium captures of the real React components with synthetic data can be regenerated locally in the ignored `artifacts/atlas/` directory by running `node tests/visual/atlas-qa.mjs` with the development server running. Every image is labeled as a visual QA fixture. Each of `explore`, `listings`, `requests`, `incoming`, `detail`, `notifications`, `profile` and `admin` has captures at **360, 390, 768, 1280 and 1440px**, named `<view>-<width>.png`.
 
 Desktop/mobile captures were visually reviewed across the major screens. Iteration tightened mobile category controls, ensured photos finish loading for screenshots, corrected native filter labels, removed old blue request accents, and fixed lender-facing “Your decision” wording. Fixed bottom navigation appears partway down full-page screenshots because it remains attached to the viewport; page content can scroll beneath it with bottom clearance.
 

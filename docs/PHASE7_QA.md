@@ -27,7 +27,7 @@ The public catalog rendered actual connected demo listings during local inspecti
 
 ## Screenshots and visual review
 
-Actual Chromium captures are in [`../artifacts/phase7/`](../artifacts/phase7/). Both `desktop-` (1280×900) and `mobile-` (390×844) prefixes are available for:
+Chromium captures were saved locally in the ignored `artifacts/phase7/` directory and are not included in the repository. Both `desktop-` (1280×900) and `mobile-` (390×844) prefixes are available for:
 
 - `hero.png`
 - `nearby.png`
