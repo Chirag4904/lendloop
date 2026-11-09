@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useRef, type ReactNode } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { CustomEase } from "gsap/CustomEase";
 import { useGSAP } from "@gsap/react";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { DrillArtwork } from "./drill";
-import { SceneArt } from "./scene-art";
+import { SceneArt, HAND_POSES } from "./scene-art";
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
+gsap.registerPlugin(useGSAP, ScrollTrigger, CustomEase);
+const HAND_EASE = CustomEase.create("handover", "0.77,0,0.175,1");
 
 // Keep in sync with the stacked story media query in globals.css.
 const STACKED_QUERY = "(max-width: 760px), (max-aspect-ratio: 1249/1000)";
@@ -20,6 +22,8 @@ const CANVAS_H = 900;
 const DESKTOP_CHAPTER = 150;
 const STACKED_CHAPTER = 75;
 const STACKED_STAGE = 46;
+// Extra scroll room for reach → shared hold → release; mirrored in globals.css.
+const HANDOVER_EXTRA = 100;
 const INK = "#152d3b";
 const PAPER = "#f6f2e9";
 
@@ -34,6 +38,7 @@ const poses: Pose[] = [
   { x: 930, y: 493, w: 240, r: 0 },
   { x: 625, y: 87, w: 170, r: 0 },
 ];
+const receivedPose = { ...poses[3], x: poses[3].x + 90, y: poses[3].y - 25 };
 // The final chapter carries the drill along the loop back to flat 4B.
 const homeward: Pose[] = [
   { x: 471, y: 114, w: 170, r: -6 },
@@ -211,6 +216,8 @@ export function ScrollStory() {
         const canvas = el.querySelector<HTMLElement>(".stage-canvas")!;
         const drill = el.querySelector<HTMLElement>(".traveling-drill")!;
         const tag = el.querySelector<HTMLElement>(".journey-tag")!;
+        const handoverStatus =
+          tag.querySelector<HTMLElement>(".handover-status")!;
         // A scene can span several layers (scene 4 draws a grip above the drill).
         const layers = poses.map((_, index) =>
           gsap.utils.toArray<HTMLElement>(
@@ -225,6 +232,9 @@ export function ScrollStory() {
           const { fx, fy, s } = cameras[index];
           return stacked
             ? {
+                // Reset GSAP's percentage inference from the CSS fallback offset.
+                xPercent: 0,
+                yPercent: 0,
                 x: () => -(fx - CANVAS_W / 2) * unit() * s,
                 y: () => -(fy - CANVAS_H / 2) * unit() * s,
                 scale: s,
@@ -240,15 +250,28 @@ export function ScrollStory() {
         const cleanup = () => {
           el.classList.remove("is-enhanced");
           stage.dataset.step = "1";
+          handoverStatus.textContent = "Handed over";
         };
 
         if (reduce) {
+          gsap.set(".handover-receiver", { x: 5, y: -15 });
+          gsap.set(".handover-lender", { x: -130, y: 65 });
+          gsap.set([".handover-receiver-open", ".handover-lender-grip"], {
+            opacity: 0,
+          });
+          gsap.set([".handover-receiver-grip", ".handover-lender-open"], {
+            opacity: 1,
+          });
           // Still scenes: cut between chapters without moving anything.
           let current = 0;
           const show = (index: number) => {
             current = index;
             const pose =
-              index === 5 ? homeward[homeward.length - 1] : poses[index];
+              index === 5
+                ? homeward[homeward.length - 1]
+                : index === 3
+                  ? receivedPose
+                  : poses[index];
             layers.forEach((layer, n) =>
               gsap.set(layer, { opacity: n === index ? 1 : 0 }),
             );
@@ -282,7 +305,17 @@ export function ScrollStory() {
         // Scroll distance over which the next chapter slides into place.
         const slide = stacked ? 100 - STACKED_STAGE : 100;
         const total =
-          (stacked ? STACKED_STAGE : 0) + sections.length * chapter - 100;
+          (stacked ? STACKED_STAGE : 0) +
+          sections.length * chapter -
+          100 +
+          HANDOVER_EXTRA;
+        const handoverStart = 3 * chapter;
+        const handoverDuration = chapter - slide + HANDOVER_EXTRA;
+        gsap.set(".handover-receiver-open", { opacity: 0 });
+        gsap.set(".handover-receiver-grip", {
+          attr: { d: HAND_POSES.receiverOpen },
+          opacity: 1,
+        });
         const base = poses[0];
         const drillAt = (pose: Pose) => ({
           x: () => (pose.x - base.x) * unit(),
@@ -327,6 +360,12 @@ export function ScrollStory() {
             const time = timeline.time();
             const step = 1 + midpoints.filter((m) => time >= m).length;
             if (setStep(step)) swing.restart();
+            const status =
+              time >= handoverStart + handoverDuration * 0.64
+                ? "Handed over"
+                : "Handing over";
+            if (handoverStatus.textContent !== status)
+              handoverStatus.textContent = status;
           },
         });
         timeline.set({}, {}, total);
@@ -338,7 +377,8 @@ export function ScrollStory() {
         );
 
         for (let index = 1; index < sections.length; index++) {
-          const start = index * chapter - slide;
+          const start =
+            index * chapter - slide + (index > 3 ? HANDOVER_EXTRA : 0);
           const closer = zooms[index - 1] === "in";
           midpoints.push(start + slide * 0.5);
           // Some flights arc over the incoming copy instead of crossing it.
@@ -364,9 +404,12 @@ export function ScrollStory() {
           else
             timeline.fromTo(
               drill,
-              drillAt(poses[index - 1]),
-              { ...drillAt(poses[index]), duration: slide * 0.8 },
-              start + slide * 0.1,
+              drillAt(index === 4 ? receivedPose : poses[index - 1]),
+              {
+                ...drillAt(poses[index]),
+                duration: slide * (index === 4 ? 0.65 : 0.8),
+              },
+              start + slide * (index === 4 ? 0.25 : 0.1),
             );
           timeline
             .fromTo(
@@ -374,10 +417,10 @@ export function ScrollStory() {
               { opacity: 1, scale: 1 },
               {
                 opacity: 0,
-                scale: closer ? 1.08 : 0.94,
-                duration: slide * 0.4,
+                scale: index === 4 ? 1 : closer ? 1.08 : 0.94,
+                duration: slide * (index === 4 ? 0.15 : 0.4),
               },
-              start + slide * 0.15,
+              start + slide * (index === 4 ? 0.05 : 0.15),
             )
             .fromTo(
               layers[index],
@@ -405,6 +448,70 @@ export function ScrollStory() {
             );
         }
 
+        // One opaque silhouette per hand; both grips overlap before release.
+        timeline
+          .fromTo(
+            ".handover-receiver",
+            { x: 0, y: 0 },
+            {
+              x: -85,
+              y: 10,
+              duration: handoverDuration * 0.32,
+              ease: HAND_EASE,
+            },
+            handoverStart,
+          )
+          .to(
+            ".handover-receiver-grip",
+            {
+              attr: { d: HAND_POSES.receiverClosed },
+              duration: handoverDuration * 0.26,
+              ease: HAND_EASE,
+            },
+            handoverStart + handoverDuration * 0.14,
+          )
+          .to(
+            ".handover-lender-grip",
+            {
+              attr: { d: HAND_POSES.lenderOpen },
+              duration: handoverDuration * 0.15,
+              ease: HAND_EASE,
+            },
+            handoverStart + handoverDuration * 0.49,
+          )
+          .fromTo(
+            ".handover-lender",
+            { x: 0, y: 0 },
+            {
+              x: -130,
+              y: 65,
+              duration: handoverDuration * 0.26,
+              ease: HAND_EASE,
+            },
+            handoverStart + handoverDuration * 0.64,
+          )
+          .fromTo(
+            ".handover-receiver",
+            { x: -85, y: 10 },
+            {
+              x: 5,
+              y: -15,
+              duration: handoverDuration * 0.27,
+              ease: HAND_EASE,
+            },
+            handoverStart + handoverDuration * 0.68,
+          )
+          .fromTo(
+            drill,
+            drillAt(poses[3]),
+            {
+              ...drillAt(receivedPose),
+              duration: handoverDuration * 0.27,
+              ease: HAND_EASE,
+            },
+            handoverStart + handoverDuration * 0.68,
+          );
+
         // The thread finds the neighbor while chapter 2 settles.
         timeline.fromTo(
           ".thread-reveal",
@@ -415,7 +522,7 @@ export function ScrollStory() {
           },
           chapter - slide * 0.5,
         );
-        const finale = (sections.length - 1) * chapter;
+        const finale = (sections.length - 1) * chapter + HANDOVER_EXTRA;
         timeline.fromTo(
           ".loop-path",
           { strokeDashoffset: 1 },
@@ -463,7 +570,14 @@ export function ScrollStory() {
             <span className="tag-status">
               Status
               {statuses.map((status) => (
-                <b key={status}>{status}</b>
+                <b
+                  key={status}
+                  className={
+                    status === "Handed over" ? "handover-status" : undefined
+                  }
+                >
+                  {status}
+                </b>
               ))}
             </span>
           </div>

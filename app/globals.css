@@ -3581,6 +3581,11 @@ textarea:focus-visible {
   position: relative;
   min-height: 150svh;
 }
+@media (prefers-reduced-motion: no-preference) {
+  .scroll-story.is-enhanced #handover {
+    min-height: 250svh;
+  }
+}
 .chapter-pin {
   position: sticky;
   top: 0;
@@ -3808,6 +3813,15 @@ textarea:focus-visible {
   .story-chapter {
     min-height: 75svh;
     scroll-margin-top: 46svh;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-story.is-enhanced #handover {
+      min-height: 175svh;
+    }
+    .scroll-story.is-enhanced #handover .chapter-pin {
+      position: sticky;
+      top: 46svh;
+    }
   }
   .chapter-pin {
     position: static;

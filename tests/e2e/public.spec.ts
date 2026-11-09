@@ -83,6 +83,14 @@ for (const width of [360, 390, 768, 1280, 1600]) {
       .evaluate((el) =>
         el.scrollIntoView({ behavior: "instant", block: "start" }),
       );
+    await expect
+      .poll(() =>
+        page.locator(".stage-canvas").evaluate((el) => {
+          const bounds = el.getBoundingClientRect();
+          return Math.abs(bounds.left + bounds.width / 2 - innerWidth / 2);
+        }),
+      )
+      .toBeLessThan(2);
     await page.screenshot({
       path: testInfo.outputPath(`handover-${width}.png`),
     });
@@ -106,6 +114,127 @@ for (const width of [360, 390, 768, 1280, 1600]) {
     await page.screenshot({
       path: testInfo.outputPath(`discovery-${width}.png`),
     });
+  });
+}
+
+for (const width of [360, 1440]) {
+  test(`handover holds before release and reverses at ${width}px`, async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(page.locator(".scroll-story")).toHaveClass(/is-enhanced/);
+    await page.evaluate(() => document.fonts.ready);
+    const seek = async (progress: number) => {
+      await page.evaluate((progress) => {
+        const section = document.querySelector<HTMLElement>("#handover")!;
+        const stage = document.querySelector<HTMLElement>(".story-stage")!;
+        const stacked = stage.offsetHeight < innerHeight;
+        const stageOffset = stacked ? stage.offsetHeight : 0;
+        const start =
+          section.getBoundingClientRect().top + scrollY - stageOffset;
+        const distance = section.offsetHeight - innerHeight + stageOffset;
+        window.scrollTo({
+          top: start + distance * progress,
+          behavior: "instant",
+        });
+        return new Promise<void>((resolve) =>
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve())),
+        );
+      }, progress);
+    };
+    const grip = page.locator(".handover-receiver-grip");
+    const lender = page.locator(".handover-lender-grip");
+    const drill = page.locator(".traveling-drill");
+    await seek(0);
+    await expect(grip).toHaveCSS("opacity", "1");
+    await expect(lender).toHaveCSS("opacity", "1");
+    const initialDrill = await drill.boundingBox();
+    const openOutline = await grip.getAttribute("d");
+    const closedLender = await lender.getAttribute("d");
+    await expect(page.locator(".handover-receiver-open")).toHaveCSS(
+      "opacity",
+      "0",
+    );
+    await expect(grip).toHaveAttribute(
+      "d",
+      (await page.locator(".handover-receiver-open").getAttribute("d"))!,
+    );
+    await seek(0.27);
+    const halfwayOutline = await grip.getAttribute("d");
+    expect(halfwayOutline).not.toBe(openOutline);
+    await expect(grip).toHaveCSS("opacity", "1");
+    await seek(0.44);
+    const closedOutline = await grip.getAttribute("d");
+    expect(closedOutline).not.toBe(halfwayOutline);
+    await expect(lender).toHaveAttribute("d", closedLender!);
+    await expect(grip).toHaveCSS("opacity", "1");
+    await expect(lender).toHaveCSS("opacity", "1");
+    await expect(page.locator(".handover-status")).toHaveText("Handing over");
+    const sharedGrip = await grip.boundingBox();
+    const sharedDrill = await drill.boundingBox();
+    expect(Math.abs(sharedDrill!.x - initialDrill!.x)).toBeLessThan(1);
+    await page.screenshot({
+      path: testInfo.outputPath(`shared-hold-${width}.png`),
+    });
+    await seek(0.65);
+    await expect(lender).toHaveCSS("opacity", "1");
+    await expect(grip).toHaveAttribute("d", closedOutline!);
+    await expect(lender).toHaveAttribute(
+      "d",
+      (await page.locator(".handover-lender-open").getAttribute("d"))!,
+    );
+    await expect(page.locator(".handover-lender-open")).toHaveCSS(
+      "opacity",
+      "0",
+    );
+    await seek(0.96);
+    await expect
+      .poll(async () => (await drill.boundingBox())!.x)
+      .toBeGreaterThan(sharedDrill!.x + 20);
+    const carriedGrip = await grip.boundingBox();
+    const carriedDrill = await drill.boundingBox();
+    for (const axis of ["x", "y"] as const) {
+      expect(
+        Math.abs(
+          carriedGrip![axis] -
+            sharedGrip![axis] -
+            (carriedDrill![axis] - sharedDrill![axis]),
+        ),
+      ).toBeLessThan(1);
+    }
+    await expect(page.locator(".handover-status")).toHaveText("Handed over");
+    await page.screenshot({
+      path: testInfo.outputPath(`received-${width}.png`),
+    });
+    await seek(0.44);
+    await expect(lender).toHaveAttribute("d", closedLender!);
+    await expect(grip).toHaveAttribute("d", closedOutline!);
+    await expect(lender).toHaveCSS("opacity", "1");
+    await expect(grip).toHaveCSS("opacity", "1");
+    await seek(0);
+    await expect(grip).toHaveCSS("opacity", "1");
+    await expect(grip).toHaveAttribute("d", openOutline!);
+    await expect(page.locator(".handover-receiver-open")).toHaveCSS(
+      "opacity",
+      "0",
+    );
+    await expect
+      .poll(async () =>
+        Math.abs((await drill.boundingBox())!.x - initialDrill!.x),
+      )
+      .toBeLessThan(1);
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.locator("#handover").scrollIntoViewIfNeeded();
+    await expect(grip).toHaveCSS("opacity", "1");
+    await expect(lender).toHaveCSS("opacity", "0");
+    await expect(grip).toHaveAttribute("d", closedOutline!);
+    await expect(drill).toHaveCSS("transform", "none");
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await seek(0);
+    await expect(grip).toHaveCSS("opacity", "1");
+    await expect(grip).toHaveAttribute("d", openOutline!);
+    await expect(lender).toHaveAttribute("d", closedLender!);
   });
 }
 
