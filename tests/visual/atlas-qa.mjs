@@ -9,6 +9,11 @@ const bundle = await build({
   write: false,
   format: "iife",
   jsx: "automatic",
+  // PublicCatalog renders its connected path only when these are present.
+  define: {
+    "process.env.NEXT_PUBLIC_CONVEX_URL": '"https://fixture.invalid"',
+    "process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY": '"pk_test_fixture"',
+  },
   plugins: [
     {
       name: "fixtures",
@@ -491,6 +496,38 @@ assert.equal(await page.getByLabel("Item name").inputValue(), "A useful drill");
 await page.goto("http://localhost:3000/__atlas-qa?view=listing-edit");
 assert.equal(await page.getByLabel("Item name").inputValue(), "Cordless drill");
 assert(await page.getByAltText("Listing cover preview").isVisible());
+assert.deepEqual(errors, []);
+for (const width of [390, 1440]) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto("http://localhost:3000/__atlas-qa?view=shelf");
+  const track = page.locator(".shelf-track");
+  await track.waitFor();
+  assert.equal(await page.locator(".shelf-track > li").count(), 7);
+  assert(await page.getByRole("link", { name: "List an item" }).isVisible());
+  await page.locator("#tools").scrollIntoViewIfNeeded();
+  await page.screenshot({ path: `artifacts/atlas/shelf-${width}.png` });
+  if (width === 390) {
+    // Native swipe carousel on narrow screens.
+    assert(await track.evaluate((el) => el.scrollWidth > el.clientWidth + 100));
+  } else {
+    // Vertical scroll inside the pinned section moves the track sideways.
+    const before = await track.evaluate((el) => el.getBoundingClientRect().x);
+    await page.evaluate(() => {
+      const section = document.querySelector(".shelf-gallery");
+      window.scrollTo({
+        top: section.offsetTop + section.offsetHeight / 2 - innerHeight / 2,
+        behavior: "instant",
+      });
+    });
+    await page.waitForTimeout(200);
+    const after = await track.evaluate((el) => el.getBoundingClientRect().x);
+    assert(
+      after < before - 200,
+      `Shelf track did not move (${before} → ${after})`,
+    );
+    await page.screenshot({ path: `artifacts/atlas/shelf-${width}-mid.png` });
+  }
+}
 assert.deepEqual(errors, []);
 console.log(
   "70 viewport/page renders + edit form and sharing checks passed. Fixture UI only.",

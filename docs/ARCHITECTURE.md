@@ -54,7 +54,7 @@ An optional borrower offer on the existing request distinguishes negotiation fro
 
 ## Phase 7 frontend boundary
 
-`app/page.tsx` composes the marketing shell, homepage-only `ScrollStory` client component, `SocietyShowcase` client control and existing `PublicCatalog`. The story uses GSAP, ScrollTrigger and `@gsap/react`; one SVG instance moves through coordinated scene layers, with scoped contexts and media cleanup. CSS sticky positioning retains native scrolling; mobile reduces the stage to 260px. All narrative copy is server-rendered and remains available without animation. Reduced-motion mode does not create a timeline.
+`app/page.tsx` composes the marketing shell, homepage-only `ScrollStory` client component, `SocietyShowcase` client control and existing `PublicCatalog`. The story uses GSAP, ScrollTrigger and `@gsap/react`; one SVG instance moves through coordinated scene layers, with scoped contexts and media cleanup. CSS sticky positioning retains native scrolling; stacked layouts reduce the stage to a 46svh block. All narrative copy is server-rendered and remains available without animation. Reduced-motion mode does not create a timeline.
 
 `components/auth-nav.tsx` keeps the sign-in link visible during Clerk loading and switches to the dashboard for authenticated users. Server-rendered `/journal` and `/for-communities` share the editorial shell. Shared tokens and `next/font` update the restrained authenticated UI; no Convex APIs, permissions, transaction state or deployment configuration changed. Public catalog privacy remains the explicit name/category projection. See [design system](DESIGN_SYSTEM.md) and [QA](PHASE7_QA.md).
 

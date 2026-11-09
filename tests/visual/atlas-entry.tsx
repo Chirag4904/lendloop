@@ -6,6 +6,7 @@ import { ToolDetail } from "../../components/marketplace";
 import { ListingForm } from "../../components/listing-form";
 import { Admin } from "../../components/admin";
 import { LoanDetail } from "../../components/borrowing";
+import { PublicCatalog } from "../../components/public-catalog";
 const view = new URLSearchParams(location.search).get("view") || "explore";
 createRoot(document.getElementById("root")!).render(
   <>
@@ -19,7 +20,30 @@ createRoot(document.getElementById("root")!).render(
     >
       Visual QA fixture · synthetic data · no live account or mutations
     </div>
-    {view === "admin" || view === "admin-listings" ? (
+    {view === "shelf" ? (
+      // Spacers give the pinned gallery a page to scroll through.
+      <main>
+        <div style={{ height: "60vh", background: "#152d3b" }} />
+        <section id="tools" className="catalog-section">
+          <PublicCatalog
+            heading={
+              <div className="shell section-heading">
+                <div>
+                  <span className="kicker">THE NEIGHBORHOOD SHELF</span>
+                  <h2>
+                    Find your next
+                    <br />
+                    <em>“just what I needed.”</em>
+                  </h2>
+                </div>
+                <p>Synthetic catalog fixture.</p>
+              </div>
+            }
+          />
+        </section>
+        <div style={{ height: "100vh" }} />
+      </main>
+    ) : view === "admin" || view === "admin-listings" ? (
       <Admin section={view === "admin" ? "overview" : "listings"} />
     ) : (
       <DashboardShell>
