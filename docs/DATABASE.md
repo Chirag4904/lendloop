@@ -15,7 +15,7 @@ Phase 5 automation tables are described below. A retention and deletion policy f
 
 ## Phase 2 schema additions
 
-`tools` now has `by_owner`, optional `archived`, and optional ordered `photoIds` for compatibility with existing rows. Conditions include Like New (`likeNew`) and Well Used (`wellUsed`); legacy `new` remains readable. `pricing.dailyAmount` is integer INR paise, or absent for free. `listingPhotos` contains `ownerId`, optional `toolId`, `storageId`, and creation time, with owner, owner+tool, tool and storage indexes. `uploadTickets` contains `ownerId`, a SHA-256 fingerprint and creation time, indexed for expiration cleanup. Photos are removed from storage when detached from a listing. Archived listings remain in the database and cannot be relisted. Future transaction tables can reference them.
+`tools` has `by_owner`, optional `archived`, and optional ordered `photoIds` for compatibility with existing rows. Conditions include Like New (`likeNew`) and Well Used (`wellUsed`); legacy `new` remains readable. `pricing.dailyAmount` is integer INR paise, or absent for free. `listingPhotos` contains `ownerId`, optional `toolId`, `storageId`, and creation time, with owner, owner+tool, tool and storage indexes. `uploadTickets` contains `ownerId`, a SHA-256 fingerprint and creation time, indexed for expiration cleanup. Photos are removed from storage when detached from a listing. Archived listings remain in the database and cannot be relisted; existing loans and requests keep their references.
 
 ## Phase 3 schema
 
@@ -41,3 +41,7 @@ Historical loans retain confirmed terms and remain after listing archive. Return
 | `automationNonces` | Accepted inbound service nonces for replay rejection                                                                                                   | nonce, creation time                      |
 
 `loans.by_end_date` supports bounded overdue pagination across reserved and return-pending loans. Returned loans are filtered from each page. Convex prunes accepted nonces after one day; n8n prunes execution data after 14 days. Outbox, notifications and reminders remain for user-visible history pending a production retention decision.
+
+## Phase 6 additions
+
+`users.by_role` supports a one-time first-admin guard; existing `role` and independent trust flags remain unchanged. `societySuggestions.societyId` is optional and records the active directory entry associated on approval. `borrowRequests.by_status`, `loans.by_status_and_end_date`, and `automationEvents.by_status` support bounded overview counts. `adminAudit` stores an optional acting admin ID (absent for deployment-operator provisioning), action, target type/ID, optional short safe detail, and server timestamp. Existing rows remain schema-compatible. Admin lists use Convex cursor pagination; overview reads are capped at 1,001 to expose saturation without an unbounded scan. Society writes check normalized name, city, and locality within a capped directory and fail closed beyond the cap.

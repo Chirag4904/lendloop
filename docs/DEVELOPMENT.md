@@ -19,7 +19,7 @@ In Convex, create and link a **development** deployment with `npx convex dev`. T
 
 Convex does not receive Clerk's secret key. Clerk stays the identity system; Convex uses its Clerk JWT integration and stores only the Clerk subject, a display name, and onboarding/admin flags. Use separate Clerk and Convex development instances for testing. **Never put production credentials in CI or E2E tests.**
 
-Active societies must be entered by an authorized LendLoop operator using the Convex Dashboard or a controlled migration. There is no public create/approve mutation. Source the society's city, locality, latitude, and longitude independently for LendLoop's own directory. Until an active society exists, onboarding shows a clear empty state and lets users submit a suggestion.
+Active societies can be entered by a provisioned LendLoop admin through `/admin/societies` or by a deployment operator through a controlled migration. Normal users cannot create or approve societies. Source city, locality, latitude, and longitude independently for LendLoop's own directory. Until an active society exists, onboarding shows a clear empty state and lets users submit a suggestion.
 
 For a development preview, seed four fictional Pune societies, four synthetic neighbor profiles, and eight sample tools. The profiles are Convex sample rows, not Clerk sign-in accounts. Names are prefixed `Demo ·`, and the catalog labels their tools as sample listings. Enable the seed only on your Convex development deployment, then run it once (re-running is safe):
 
@@ -66,9 +66,9 @@ Backend tests use `convex-test` in memory. Public browser checks run without ser
 
 Next.js App Router serves the public pages and protects dashboard and onboarding routes with Clerk. Convex functions enforce access to data, independent of UI navigation. The public catalog query returns only `name` and `category`. A user record is keyed by Clerk `subject`; users can change only their own display name and select an active society. Society suggestions are pending until an operator reviews them. Optional phone numbers and pickup details are stored separately after loan approval and shown only to participants. We do not require private addresses or collect GPS history or payment data. See [security and privacy](docs/SECURITY_AND_PRIVACY.md) and [architecture](docs/ARCHITECTURE.md).
 
-| Implemented through Phase 3                                                                                                       | Planned later                                                      |
-| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Public catalog, Clerk auth, society onboarding, listings, photos, nearby discovery, requests, loans, returns and private handover | Negotiation, n8n workflows, payments, AI and full admin management |
+| Implemented through Phase 6                                                                                                                                                               | Planned later   |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------- |
+| Public catalog, Clerk auth, society onboarding, listings, photos, nearby discovery, requests, loans, returns, private handover, negotiation, n8n workflows, and LendLoop admin management | Payments and AI |
 
 The current society search checks the first 200 active records. Add a dedicated search index when the directory grows. See [implementation plan](docs/IMPLEMENTATION_PLAN.md) for the next steps.
 
@@ -83,3 +83,7 @@ npx convex run demoRizvi:seed '{"societyId":"j576c7743fr9d6jghg3wjer7yd8hvkz3"}'
 ```
 
 `demoRizvi:preparePhotos` creates upload URLs for listings without photos; upload the local JPEGs to those URLs and call `demoRizvi:attachPhotos` with their returned storage IDs. The live development dataset already has all eight images attached. Keep this seed flag disabled in production.
+
+## Admin browser tests
+
+On an isolated development Clerk/Convex pair, provision the test admin using the README operator procedure. Set `E2E_CLERK_ADMIN_EMAIL` for the admin smoke and responsive checks. The trust scenario also needs `E2E_ADMIN_TARGET_DISPLAY_NAME` for a uniquely named normal test account; the suggestion scenario needs `E2E_CLERK_SUGGESTER_EMAIL` for a fresh account that has not selected a society. Listing and loan scenarios reuse `E2E_CLERK_USER_EMAIL` and `E2E_CLERK_BORROWER_EMAIL`. Playwright skips these scenarios when the relevant variables are absent. Never point these tests at production: they create and moderate synthetic records.

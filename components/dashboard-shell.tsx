@@ -60,6 +60,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <nav className="desktop-nav" aria-label="Dashboard navigation">
             {navigation}
           </nav>
+          {profile.role === "admin" && (
+            <Link className="text-link" href="/admin">
+              Admin
+            </Link>
+          )}
           <UserButton />
         </div>
       </header>

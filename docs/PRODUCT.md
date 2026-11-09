@@ -13,3 +13,7 @@ A signed-in, onboarded neighbor can list a tool, preview it, add up to five phot
 ## Implemented in Phase 3
 
 Any onboarded user may borrow or lend. Borrowers request 1–30 inclusive Kolkata calendar days at a listing’s free or INR daily rate. The owner approves or declines. Pending requests do not reserve dates; approved requests do. My Requests and Incoming Requests show live status. The borrower can report a return and the lender confirms it; the lender can also record a return directly. Participants may share optional handover details after approval. Completed loans remain in history. No money is collected.
+
+## Phase 6 administration
+
+LendLoop has only `user` and platform `admin` roles. LendLoop admins can review all loan statuses and prices without participant contact details, archive any listing, manually grant or revoke Trusted Lender and Trusted Borrower independently, manage the curated society directory, moderate suggestions, inspect an audit trail, and view automation delivery states. Badges denote an administrator assignment, not identity or residency verification. Users keep their own listing, borrowing, negotiation, return, and society-choice permissions. An archived listing leaves confirmed loan history intact. Inactive societies remain linked to historical records but cannot be newly selected. Suggestion approval never automatically moves a submitter into the society.

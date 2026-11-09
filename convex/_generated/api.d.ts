@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as admin from "../admin.js";
 import type * as automation from "../automation.js";
 import type * as automationDispatch from "../automationDispatch.js";
 import type * as automationFixture from "../automationFixture.js";
@@ -32,6 +33,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  admin: typeof admin;
   automation: typeof automation;
   automationDispatch: typeof automationDispatch;
   automationFixture: typeof automationFixture;

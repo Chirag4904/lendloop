@@ -19,3 +19,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## LendLoop Phase 5 conventions
 
 `convex/automation.ts` owns transactional outbox state, overdue eligibility, reminder claims, and participant-only activity queries. `convex/automationDispatch.ts` is the replaceable n8n delivery action; `convex/http.ts` exposes signed service endpoints and `convex/signing.ts` defines their canonical HMAC format. Keep external calls out of mutations, keep handover details out of automation payloads, and keep n8n from deciding borrowing or overdue state. The only active overdue schedule is the n8n 09:00 Asia/Kolkata workflow; Convex's automation cron only recovers stale leases and prunes nonces.
+
+## LendLoop Phase 6 conventions
+
+`convex/admin.ts` owns LendLoop-only admin checks, bounded admin reads, trust and moderation mutations, society validation, first-admin provisioning, and transactional audit writes. The first-admin mutation stays internal and requires deployment-operator credentials. Admin loan projections never return `loanHandoverDetails`; public catalog output remains exactly name and category. Society deactivation and listing archiving preserve historical relationships. Keep the dashboard independent of n8n availability. Search and filters currently operate on loaded pages, and overview counts are capped at 1,000 until aggregates are introduced.

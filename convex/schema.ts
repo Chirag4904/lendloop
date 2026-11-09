@@ -24,6 +24,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_clerk_user", ["clerkUserId"])
+    .index("by_role", ["role"])
     .index("by_society", ["societyId"]),
   societies: defineTable({
     name: v.string(),
@@ -47,6 +48,7 @@ export default defineSchema({
     ),
     createdAt: v.number(),
     updatedAt: v.number(),
+    societyId: v.optional(v.id("societies")),
   })
     .index("by_user", ["suggestingUserId"])
     .index("by_status", ["status"]),
@@ -118,6 +120,7 @@ export default defineSchema({
     respondedAt: v.optional(v.number()),
   })
     .index("by_borrower", ["borrowerId"])
+    .index("by_status", ["status"])
     .index("by_lender", ["lenderId"])
     .index("by_tool_and_borrower", ["toolId", "borrowerId"]),
   loans: defineTable({
@@ -143,6 +146,7 @@ export default defineSchema({
   })
     .index("by_request", ["requestId"])
     .index("by_end_date", ["endDate"])
+    .index("by_status_and_end_date", ["status", "endDate"])
     .index("by_tool_and_status_and_start_date", [
       "toolId",
       "status",
@@ -185,6 +189,7 @@ export default defineSchema({
     deliveredAt: v.optional(v.number()),
   })
     .index("by_request", ["requestId"])
+    .index("by_status", ["status"])
     .index("by_loan", ["loanId"])
     .index("by_recipient", ["recipientId"]),
   notifications: defineTable({
@@ -218,4 +223,12 @@ export default defineSchema({
   automationNonces: defineTable({ nonce: v.string(), createdAt: v.number() })
     .index("by_nonce", ["nonce"])
     .index("by_created_at", ["createdAt"]),
+  adminAudit: defineTable({
+    actorId: v.optional(v.id("users")),
+    action: v.string(),
+    targetType: v.string(),
+    targetId: v.string(),
+    detail: v.optional(v.string()),
+    createdAt: v.number(),
+  }).index("by_actor", ["actorId"]),
 });

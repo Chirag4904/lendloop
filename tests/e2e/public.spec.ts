@@ -40,6 +40,8 @@ for (const width of [360, 390, 768, 1280]) {
 test("protected routes require sign-in", async ({ page }) => {
   await page.goto("/dashboard");
   await expect(page).toHaveURL(/\/sign-in/);
+  await page.goto("/admin");
+  await expect(page).toHaveURL(/\/sign-in/);
 });
 
 test("stable landing screenshots", async ({ page }) => {

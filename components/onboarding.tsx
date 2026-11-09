@@ -21,6 +21,7 @@ export function Onboarding() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const societies = useQuery(api.societies.search, { term });
+  const suggestions = useQuery(api.suggestions.mine, profile ? {} : "skip");
   const select = useMutation(api.users.selectSociety);
   const suggest = useMutation(api.suggestions.create);
 
@@ -191,6 +192,22 @@ export function Onboarding() {
               </p>
             </form>
           </details>
+          {suggestions && suggestions.length > 0 && (
+            <section
+              className="suggestion-box"
+              aria-label="Your society suggestions"
+            >
+              <h3>Your suggestions</h3>
+              {suggestions.map((item, index) => (
+                <p key={`${item.name}-${index}`}>
+                  {item.name}: <strong>{item.status}</strong>
+                  {item.societyName
+                    ? ` — ${item.societyName} is now available to choose`
+                    : ""}
+                </p>
+              ))}
+            </section>
+          )}
         </div>
       </div>
     </main>
