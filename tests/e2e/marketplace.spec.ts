@@ -66,9 +66,12 @@ test("create, edit, discover, unlist and relist a listing", async ({
   await page.getByLabel("Search tools").fill(`${name} updated`);
   await page.getByRole("button", { name: "Power Tools", exact: true }).click();
   await page
-    .getByRole("combobox", { name: "Price", exact: true })
-    .selectOption("paid");
-  await page.getByRole("button", { name: "Within 500 m" }).click();
+    .getByRole("group", { name: "Price" })
+    .getByRole("button", { name: "Paid" })
+    .click();
+  await page
+    .getByRole("combobox", { name: "Search distance" })
+    .selectOption("500");
   await expect(
     page.getByRole("heading", { name: `${name} updated` }),
   ).toBeVisible();

@@ -4717,71 +4717,215 @@ textarea:focus-visible {
   background: var(--brand-lime);
   color: var(--ink);
 }
+/* Explore search bar and filters: one rounded bar, then price, categories and sort. */
 .explore-page .explore-toolbar {
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  padding: 20px;
+  background: none;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
   margin: 0 0 32px;
 }
-.shelf-search-filters {
-  display: flex;
-  align-items: end;
-  gap: 18px;
-}
-.shelf-search-filters .search-row {
-  flex: 1;
-  max-width: none;
-}
-.shelf-search-filters .search-row input {
-  background: var(--cream);
-}
-.shelf-search-filters .inline-filters {
-  margin: 0;
-  flex: none;
-}
-.shelf-search-filters .inline-filters select {
-  min-width: 160px;
-}
-.shelf-discovery {
-  border-top: 1px solid var(--line);
-  margin-top: 18px;
-  padding-top: 16px;
+.shelf-bar {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 6px;
+  min-height: 72px;
+  padding: 7px 7px 7px 24px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  box-shadow: 0 10px 30px -18px rgb(21 45 59 / 35%);
+}
+.shelf-bar:has(.shelf-query input:focus-visible) {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.shelf-query {
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+}
+.shelf-query input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-size: 16px;
+}
+.shelf-query input:focus-visible {
+  outline: none;
+}
+/* Native selects sit invisibly over a styled summary so keyboard and picker behavior stay native. */
+.shelf-where,
+.shelf-sort {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+}
+.shelf-where select,
+.shelf-sort select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+.shelf-where:has(select:focus-visible),
+.shelf-sort:has(select:focus-visible) {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+.shelf-picker-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shelf-where {
+  flex: none;
+  min-height: 56px;
+  padding: 0 18px;
+  border-radius: 999px;
+}
+.shelf-where::before {
+  content: "";
+  position: absolute;
+  left: -4px;
+  top: 14px;
+  bottom: 14px;
+  width: 1px;
+  background: var(--line);
+}
+.shelf-where:hover {
+  background: var(--cream);
+}
+.shelf-where .shelf-picker-text {
+  display: grid;
+}
+.shelf-where small {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  line-height: 14px;
+  text-transform: uppercase;
+}
+.shelf-where b {
+  font-size: 15px;
+  line-height: 20px;
+}
+.shelf-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 56px;
+  padding: 0 26px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--cream);
+  font-weight: 700;
+}
+.shelf-submit:hover {
+  background: var(--blue-dark);
+}
+.shelf-filters {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
   min-width: 0;
 }
-.shelf-discovery .scope-tabs {
-  padding: 0;
+.shelf-seg {
   flex: none;
+  display: flex;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
 }
-.shelf-discovery .scope-tabs > svg {
-  display: none;
+.shelf-seg button {
+  min-height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
 }
-.shelf-discovery .category-chips {
+.shelf-seg button:hover:not([aria-pressed="true"]) {
+  background: var(--cream);
+}
+.shelf-seg button[aria-pressed="true"],
+.shelf-chips button[aria-pressed="true"] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--cream);
+}
+.shelf-divider {
+  flex: none;
+  width: 1px;
+  height: 28px;
+  background: var(--line);
+}
+/* Padding keeps focus rings inside the scroll clip; the mask hints at more chips. */
+.shelf-chips {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-wrap: nowrap;
+  gap: 8px;
+  margin: -6px;
+  padding: 6px 48px 6px 6px;
   overflow-x: auto;
-  gap: 7px;
-  margin: 0;
-  padding: 2px 0;
   scrollbar-width: thin;
+  mask-image: linear-gradient(to right, #000 calc(100% - 64px), transparent);
 }
-.shelf-discovery .category-chips button {
+.shelf-chips button {
   flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   min-height: 44px;
+  padding: 0 16px;
   border: 1px solid var(--line);
-  border-radius: 30px;
-  padding: 8px 15px;
+  border-radius: 999px;
+  background: var(--paper);
   color: var(--ink);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
 }
-.shelf-discovery .category-chips button[aria-pressed="true"] {
-  background: var(--brand-lime);
-  border-color: var(--brand-lime);
-  box-shadow: none;
+.shelf-chips button:hover:not([aria-pressed="true"]) {
+  border-color: var(--border-strong);
+}
+.explore-toolbar
+  :is(.shelf-submit, .shelf-seg button, .shelf-chips button):focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
+}
+.shelf-sort {
+  flex: none;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 14px;
+  font-weight: 600;
+}
+.shelf-sort-prefix {
+  color: var(--muted);
+  font-weight: 500;
+}
+.explore-toolbar .reset-filters {
+  margin-top: 10px;
 }
 .explore-page .results-heading {
   display: flex;
@@ -4835,26 +4979,20 @@ textarea:focus-visible {
   margin: 10px 0 0;
 }
 @media (max-width: 1050px) {
-  .shelf-discovery {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+  /* Categories take their own full-width line so they are not squeezed between price and sort. */
+  .shelf-filters {
+    flex-wrap: wrap;
+    row-gap: 14px;
   }
-  .shelf-search-filters {
-    align-items: start;
-    flex-direction: column;
+  .shelf-divider {
+    display: none;
   }
-  .shelf-search-filters .search-row {
-    width: 100%;
+  .shelf-sort {
+    margin-left: auto;
   }
-  .shelf-search-filters .inline-filters {
-    width: 100%;
-  }
-  .shelf-search-filters .inline-filters label {
-    flex: 1;
-  }
-  .shelf-search-filters .inline-filters select {
-    width: 100%;
+  .shelf-chips {
+    order: 1;
+    flex: 1 0 calc(100% + 12px);
   }
   .explore-page .tool-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -4874,30 +5012,82 @@ textarea:focus-visible {
     max-width: 55%;
     line-height: 1.4;
   }
+  /* The bar and filter row dissolve into one grid: search, where + sort, price, categories. */
   .explore-page .explore-toolbar {
-    padding: 16px;
-    border-radius: 14px;
-    margin-bottom: 24px;
-  }
-  .shelf-search-filters {
-    gap: 12px;
-  }
-  .shelf-search-filters .inline-filters {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 24px;
   }
-  .shelf-search-filters .inline-filters select {
+  .shelf-bar,
+  .shelf-filters {
+    display: contents;
+  }
+  .shelf-query {
+    grid-area: 1 / 1 / 2 / 3;
+    min-height: 54px;
+    padding: 0 60px 0 18px;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+  }
+  .shelf-query:focus-within {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 2px var(--ink);
+  }
+  .shelf-submit {
+    grid-area: 1 / 2 / 2 / 3;
+    justify-self: end;
+    align-self: center;
+    width: 44px;
+    min-height: 44px;
+    margin-right: 5px;
+    padding: 0;
+    justify-content: center;
+  }
+  .shelf-submit span,
+  .shelf-sort-prefix,
+  .shelf-where > svg:first-child,
+  .shelf-sort > svg:first-child,
+  .shelf-divider,
+  .shelf-where::before {
+    display: none;
+  }
+  .shelf-where,
+  .shelf-sort {
     min-width: 0;
+    min-height: 52px;
+    gap: 6px;
+    padding: 0 14px;
+    justify-content: space-between;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 999px;
   }
-  .shelf-discovery {
-    gap: 12px;
+  .shelf-where {
+    grid-area: 2 / 1;
   }
-  .shelf-discovery .scope-tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
+  .shelf-where b,
+  .shelf-sort {
+    font-size: 14px;
   }
-  .shelf-discovery .scope-tabs button {
-    flex: none;
+  .shelf-sort {
+    grid-area: 2 / 2;
+    margin-left: 0;
+  }
+  .shelf-seg {
+    grid-area: 3 / 1 / 4 / 3;
+  }
+  .shelf-seg button {
+    flex: 1;
+  }
+  .shelf-chips {
+    grid-area: 4 / 1 / 5 / 3;
+  }
+  .explore-toolbar .reset-filters {
+    grid-area: 5 / 1 / 6 / 3;
+    justify-self: start;
+    margin-top: 0;
   }
   .explore-page .tool-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

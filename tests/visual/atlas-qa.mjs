@@ -199,13 +199,13 @@ assert(
     .isVisible(),
 );
 assert.equal(await page.locator(".explore-page .tool-card").count(), 6);
-await page.getByRole("button", { name: "Within 500 m" }).click();
+await page
+  .getByRole("combobox", { name: "Search distance" })
+  .selectOption("500");
 assert.equal(await page.evaluate(() => window.__atlasExploreArgs.scope), "500");
 assert.equal(
-  await page
-    .getByRole("button", { name: "Within 500 m" })
-    .getAttribute("aria-pressed"),
-  "true",
+  await page.getByRole("combobox", { name: "Search distance" }).inputValue(),
+  "500",
 );
 await page.getByRole("button", { name: "Garden", exact: true }).click();
 assert.equal(await page.locator(".explore-page .tool-card").count(), 1);
@@ -216,18 +216,17 @@ assert.equal(
 );
 await page.getByRole("button", { name: "Reset filters" }).click();
 assert.equal(
-  await page
-    .getByRole("button", { name: "My Society" })
-    .getAttribute("aria-pressed"),
-  "true",
+  await page.getByRole("combobox", { name: "Search distance" }).inputValue(),
+  "society",
 );
 assert.equal(
   await page.getByRole("combobox", { name: "Sort by" }).inputValue(),
   "nearest",
 );
 await page
-  .getByRole("combobox", { name: "Price", exact: true })
-  .selectOption("free");
+  .getByRole("group", { name: "Price" })
+  .getByRole("button", { name: "Free" })
+  .click();
 assert.equal(await page.locator(".tool-card").count(), 1);
 await page.getByRole("button", { name: "Reset filters" }).click();
 await page.getByLabel("Search tools").fill("drill");

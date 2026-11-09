@@ -1,10 +1,28 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { MapPin, PackageOpen, Pencil, Plus, Search } from "lucide-react";
+import {
+  ArrowUpDown,
+  ChefHat,
+  ChevronDown,
+  Drill,
+  Dumbbell,
+  LayoutGrid,
+  MapPin,
+  Package,
+  PackageOpen,
+  Pencil,
+  Plug,
+  Plus,
+  Search,
+  SprayCan,
+  Sprout,
+  Tent,
+  type LucideIcon,
+} from "lucide-react";
 import { categories, conditions } from "./listing-form";
 import { useCurrentProfile } from "./use-current-profile";
 import { RequestForm } from "./borrowing";
@@ -34,6 +52,26 @@ const relation = (distance: number) =>
     : distance < 0
       ? "Nearby society"
       : `About ${Math.round(distance)} m away`;
+const categoryIcons: Record<string, LucideIcon> = {
+  "": LayoutGrid,
+  "Power Tools": Drill,
+  Garden: Sprout,
+  Kitchen: ChefHat,
+  Electronics: Plug,
+  "Camping & Outdoors": Tent,
+  "Sports & Fitness": Dumbbell,
+  "Home & Cleaning": SprayCan,
+};
+const scopeOptions = [
+  ["society", "My Society"],
+  ["500", "Within 500 m"],
+  ["1000", "Within 1 km"],
+] as const;
+const sortOptions = [
+  ["nearest", "Nearest first"],
+  ["newest", "Newest first"],
+  ["price", "Lowest price"],
+] as const;
 
 export function ToolCard({
   tool,
@@ -95,6 +133,7 @@ export function ExploreTools() {
     [category, setCategory] = useState(""),
     [cost, setCost] = useState<"all" | "free" | "paid">("all"),
     [sort, setSort] = useState<"nearest" | "newest" | "price">("nearest");
+  const searchInput = useRef<HTMLInputElement>(null);
   const tools = useQuery(api.tools.explore, {
     scope,
     text,
@@ -129,86 +168,107 @@ export function ExploreTools() {
       </div>
       <div className="explore-layout">
         <div className="explore-toolbar">
-          <div className="shelf-search-filters">
-            <div className="search-row">
-              <Search className="search-icon" size={19} aria-hidden="true" />
+          {/* Results update as filters change; submit only dismisses the mobile keyboard. */}
+          <form
+            className="shelf-bar"
+            role="search"
+            onSubmit={(e) => {
+              e.preventDefault();
+              searchInput.current?.blur();
+            }}
+          >
+            <div className="shelf-query">
+              <Search size={19} aria-hidden="true" />
               <label className="sr-only" htmlFor="tool-search">
                 Search tools
               </label>
               <input
                 id="tool-search"
-                className="text-input"
+                ref={searchInput}
                 type="search"
                 placeholder="Search tools, categories, details…"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
               />
             </div>
-            <div className="inline-filters">
-              <label>
-                Price
-                <select
-                  className="text-input"
-                  value={cost}
-                  onChange={(e) => setCost(e.target.value as typeof cost)}
-                >
-                  <option value="all">All prices</option>
-                  <option value="free">Free</option>
-                  <option value="paid">Paid</option>
-                </select>
-              </label>
-              <label>
-                Sort by
-                <select
-                  className="text-input"
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as typeof sort)}
-                >
-                  <option value="nearest">Nearest first</option>
-                  <option value="newest">Newest first</option>
-                  <option value="price">Lowest price</option>
-                </select>
-              </label>
+            <div className="shelf-where">
+              <MapPin size={18} aria-hidden="true" />
+              <span className="shelf-picker-text" aria-hidden="true">
+                <small>Where</small>
+                <b>{scopeOptions.find(([v]) => v === scope)?.[1]}</b>
+              </span>
+              <ChevronDown size={16} aria-hidden="true" />
+              <select
+                aria-label="Search distance"
+                value={scope}
+                onChange={(e) => setScope(e.target.value as typeof scope)}
+              >
+                {scopeOptions.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </div>
-          </div>
-          <div className="shelf-discovery">
-            <div
-              className="scope-tabs"
-              role="group"
-              aria-label="Search distance"
-            >
-              <MapPin size={16} aria-hidden="true" />
+            <button type="submit" className="shelf-submit" aria-label="Search">
+              <Search size={18} aria-hidden="true" />
+              <span aria-hidden="true">Search</span>
+            </button>
+          </form>
+          <div className="shelf-filters">
+            <div className="shelf-seg" role="group" aria-label="Price">
               {(
                 [
-                  ["society", "My Society"],
-                  ["500", "Within 500 m"],
-                  ["1000", "Within 1 km"],
+                  ["all", "Any price"],
+                  ["free", "Free"],
+                  ["paid", "Paid"],
                 ] as const
               ).map(([value, label]) => (
                 <button
                   key={value}
                   type="button"
-                  aria-pressed={scope === value}
-                  onClick={() => setScope(value)}
+                  aria-pressed={cost === value}
+                  onClick={() => setCost(value)}
                 >
                   {label}
                 </button>
               ))}
             </div>
-            <div
-              className="category-chips"
-              role="group"
-              aria-label="Categories"
-            >
-              {["", ...categories].map((c) => (
-                <button
-                  key={c}
-                  aria-pressed={category === c}
-                  onClick={() => setCategory(c)}
-                >
-                  {c || "All items"}
-                </button>
-              ))}
+            <span className="shelf-divider" aria-hidden="true" />
+            <div className="shelf-chips" role="group" aria-label="Categories">
+              {["", ...categories].map((c) => {
+                const Icon = categoryIcons[c] ?? Package;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    aria-pressed={category === c}
+                    onClick={() => setCategory(c)}
+                  >
+                    <Icon size={16} aria-hidden="true" />
+                    {c || "All items"}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="shelf-sort">
+              <ArrowUpDown size={16} aria-hidden="true" />
+              <span className="shelf-picker-text" aria-hidden="true">
+                <span className="shelf-sort-prefix">Sort:</span>{" "}
+                {sortOptions.find(([v]) => v === sort)?.[1]}
+              </span>
+              <ChevronDown size={16} aria-hidden="true" />
+              <select
+                aria-label="Sort by"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as typeof sort)}
+              >
+                {sortOptions.map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           {(text ||
