@@ -21,7 +21,7 @@ createRoot(document.getElementById("root")!).render(
       <Admin section={view === "admin" ? "overview" : "listings"} />
     ) : (
       <DashboardShell>
-        {view === "detail" ? (
+        {view === "detail" || view === "detail-multi" ? (
           <ToolDetail toolId={"tool0" as never} />
         ) : (
           <DashboardView

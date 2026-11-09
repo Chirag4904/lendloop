@@ -113,90 +113,103 @@ export function ExploreTools() {
     <section className="explore-page">
       <div className="market-heading explore-heading">
         <div className="app-heading">
-          <span className="kicker">
-            THE NEIGHBORHOOD EDIT{society ? ` · ${society.name}` : ""}
-          </span>
-          <h1>Good things, closer than you think.</h1>
-          <p>
-            Discover useful things shared by people around you. Your society is
-            the starting point.
-          </p>
+          <span className="local-shelf-label">Local Shelf</span>
+          <h1>Your neighborhood shelf.</h1>
+          <p>Borrow, share, and make better use of what’s around you.</p>
         </div>
-        <Link className="button-primary" href="/dashboard/listings/new">
-          <Plus size={17} aria-hidden="true" /> List an item
-        </Link>
+        <div className="shelf-heading-actions">
+          <span className="shelf-location">
+            <MapPin size={17} aria-hidden="true" />
+            {society?.name ?? "Your society"}
+          </span>
+          <Link className="button-primary" href="/dashboard/listings/new">
+            <Plus size={17} aria-hidden="true" /> List an item
+          </Link>
+        </div>
       </div>
       <div className="explore-layout">
         <div className="explore-toolbar">
-          <div className="search-row">
-            <Search className="search-icon" size={19} aria-hidden="true" />
-            <label className="sr-only" htmlFor="tool-search">
-              Search tools
-            </label>
-            <input
-              id="tool-search"
-              className="text-input"
-              type="search"
-              placeholder="Search tools, categories, details…"
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-            />
-          </div>
-          <div className="scope-tabs" role="group" aria-label="Search distance">
-            <MapPin size={16} aria-hidden="true" />
-            {(
-              [
-                ["society", "My Society"],
-                ["500", "Within 500 m"],
-                ["1000", "Within 1 km"],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                aria-pressed={scope === value}
-                onClick={() => setScope(value)}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div className="inline-filters">
-            <label>
-              Price
-              <select
+          <div className="shelf-search-filters">
+            <div className="search-row">
+              <Search className="search-icon" size={19} aria-hidden="true" />
+              <label className="sr-only" htmlFor="tool-search">
+                Search tools
+              </label>
+              <input
+                id="tool-search"
                 className="text-input"
-                value={cost}
-                onChange={(e) => setCost(e.target.value as typeof cost)}
-              >
-                <option value="all">Free and paid</option>
-                <option value="free">Free</option>
-                <option value="paid">Paid</option>
-              </select>
-            </label>
-            <label>
-              Sort by
-              <select
-                className="text-input"
-                value={sort}
-                onChange={(e) => setSort(e.target.value as typeof sort)}
-              >
-                <option value="nearest">Nearest first</option>
-                <option value="newest">Newest first</option>
-                <option value="price">Lowest price</option>
-              </select>
-            </label>
+                type="search"
+                placeholder="Search tools, categories, details…"
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+              />
+            </div>
+            <div className="inline-filters">
+              <label>
+                Price
+                <select
+                  className="text-input"
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value as typeof cost)}
+                >
+                  <option value="all">All prices</option>
+                  <option value="free">Free</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </label>
+              <label>
+                Sort by
+                <select
+                  className="text-input"
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value as typeof sort)}
+                >
+                  <option value="nearest">Nearest first</option>
+                  <option value="newest">Newest first</option>
+                  <option value="price">Lowest price</option>
+                </select>
+              </label>
+            </div>
           </div>
-          <div className="category-chips" role="group" aria-label="Categories">
-            {["", ...categories].map((c) => (
-              <button
-                key={c}
-                aria-pressed={category === c}
-                onClick={() => setCategory(c)}
-              >
-                {c || "All items"}
-              </button>
-            ))}
+          <div className="shelf-discovery">
+            <div
+              className="scope-tabs"
+              role="group"
+              aria-label="Search distance"
+            >
+              <MapPin size={16} aria-hidden="true" />
+              {(
+                [
+                  ["society", "My Society"],
+                  ["500", "Within 500 m"],
+                  ["1000", "Within 1 km"],
+                ] as const
+              ).map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  aria-pressed={scope === value}
+                  onClick={() => setScope(value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div
+              className="category-chips"
+              role="group"
+              aria-label="Categories"
+            >
+              {["", ...categories].map((c) => (
+                <button
+                  key={c}
+                  aria-pressed={category === c}
+                  onClick={() => setCategory(c)}
+                >
+                  {c || "All items"}
+                </button>
+              ))}
+            </div>
           </div>
           {(text ||
             category ||
@@ -216,14 +229,12 @@ export function ExploreTools() {
           ) : tools.length ? (
             <>
               <div className="results-heading" aria-live="polite">
-                <h2>
-                  {tools.length} {tools.length === 1 ? "tool" : "tools"} to
-                  explore
-                </h2>
+                <h2>Available to explore</h2>
+                <span>
+                  {tools.length} {tools.length === 1 ? "item" : "items"}
+                </span>
               </div>
-              <div
-                className={`tool-grid ${tools[0]?.photos[0]?.url && tools.length >= 3 ? "editorial-grid" : ""}`}
-              >
+              <div className="tool-grid">
                 {tools.map((tool) => (
                   <ToolCard key={tool.id} tool={tool} />
                 ))}
@@ -355,52 +366,94 @@ export function ToolDetail({ toolId }: { toolId: Id<"tools"> }) {
       </div>
     );
   return (
-    <article className="detail-layout">
-      <div>
-        <div className="detail-image">
-          {tool.photos[selected]?.url ? (
-            <img
-              src={tool.photos[selected].url!}
-              alt={`${tool.name}, photo ${selected + 1}`}
-            />
+    <article className="detail-page">
+      <nav className="detail-breadcrumb" aria-label="Breadcrumb">
+        <Link href="/dashboard">Explore</Link>
+        <span aria-hidden="true"> / </span>
+        <span>{tool.category}</span>
+      </nav>
+      <div className="detail-layout">
+        <div className="detail-editorial">
+          <div className="detail-image">
+            {tool.photos[selected]?.url ? (
+              <img
+                src={tool.photos[selected].url!}
+                alt={`${tool.name}, photo ${selected + 1}`}
+              />
+            ) : (
+              <PackageOpen size={64} strokeWidth={1.2} />
+            )}
+          </div>
+          {tool.photos.length > 1 && (
+            <div className="thumb-row" aria-label="Listing photos">
+              {tool.photos.map((photo, index) => (
+                <button
+                  type="button"
+                  aria-label={`Show photo ${index + 1}`}
+                  aria-pressed={selected === index}
+                  onClick={() => setSelected(index)}
+                  key={photo.id}
+                >
+                  {photo.url && <img src={photo.url} alt="" />}
+                </button>
+              ))}
+            </div>
+          )}
+          <section className="detail-about">
+            <h2>About this item</h2>
+            <p>{tool.description}</p>
+            <dl className="detail-facts">
+              <div>
+                <dt>Condition</dt>
+                <dd>{conditions[tool.condition]}</dd>
+              </div>
+              <div>
+                <dt>Category</dt>
+                <dd>{tool.category}</dd>
+              </div>
+            </dl>
+          </section>
+          <section className="detail-lender" aria-label="Lender">
+            <span className="lender-avatar" aria-hidden="true">
+              {tool.ownerName.slice(0, 1).toLocaleUpperCase()}
+            </span>
+            <div>
+              <span>Shared by</span>
+              <strong>{tool.ownerName}</strong>
+            </div>
+            {tool.trustedLender && (
+              <span className="lender-badge">Trusted Lender</span>
+            )}
+          </section>
+          <section className="detail-how">
+            <h2>How borrowing works</h2>
+            <ol>
+              <li>
+                <strong>Request</strong>
+                <span>Choose dates and ask to borrow.</span>
+              </li>
+              <li>
+                <strong>Get confirmation</strong>
+                <span>The owner reviews your request.</span>
+              </li>
+              <li>
+                <strong>Borrow &amp; return</strong>
+                <span>Coordinate, use and return the item.</span>
+              </li>
+            </ol>
+            <p>LendLoop does not collect payments.</p>
+          </section>
+        </div>
+        <div className="detail-copy">
+          <span className="catalog-category">{tool.category}</span>
+          <h1>{tool.name}</h1>
+          <p className="detail-proximity">{relation(tool.distanceMeters)}</p>
+          {tool.active && !tool.archived && !tool.isOwner ? (
+            <RequestForm toolId={tool.id} dailyAmount={tool.dailyAmount} />
           ) : (
-            <PackageOpen size={64} strokeWidth={1.2} />
+            <p className="detail-price">{price(tool.dailyAmount)}</p>
           )}
         </div>
-        {tool.photos.length > 1 && (
-          <div className="thumb-row">
-            {tool.photos.map((p, i) => (
-              <button
-                type="button"
-                aria-label={`Show photo ${i + 1}`}
-                aria-pressed={selected === i}
-                onClick={() => setSelected(i)}
-                key={p.id}
-              >
-                {p.url && <img src={p.url} alt="" />}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <div className="detail-copy">
-        <Link href="/dashboard" className="text-link">
-          ← Explore tools
-        </Link>
-        <span className="catalog-category">
-          {tool.category} · {conditions[tool.condition]}
-        </span>
-        <h1>{tool.name}</h1>
-        <p className="detail-price">{price(tool.dailyAmount)}</p>
-        <p>
-          {relation(tool.distanceMeters)} · Shared by {tool.ownerName}
-          {tool.trustedLender ? " · Trusted Lender" : ""}
-        </p>
-        <h2>About this item</h2>
-        <p>{tool.description}</p>
-        {tool.active && !tool.archived && !tool.isOwner && (
-          <RequestForm toolId={tool.id} dailyAmount={tool.dailyAmount} />
-        )}
       </div>
     </article>
   );

@@ -21,7 +21,7 @@ async function asUser(browser: Browser, emailAddress: string) {
   await clerk.signIn({ page, emailAddress });
   await page.goto("/dashboard");
   await expect(
-    page.getByRole("heading", { name: "Good things, closer than you think." }),
+    page.getByRole("heading", { name: "Your neighborhood shelf." }),
   ).toBeVisible();
   return { context, page };
 }

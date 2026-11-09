@@ -113,7 +113,8 @@ export function useQuery(ref: never, args?: Record<string, unknown>) {
         city: "Demo city",
       },
     ];
-  if (name === "tools:explore")
+  if (name === "tools:explore") {
+    Object.assign(window, { __atlasExploreArgs: args });
     return items.filter(
       (x) =>
         (!args?.text ||
@@ -122,9 +123,23 @@ export function useQuery(ref: never, args?: Record<string, unknown>) {
         (args?.price !== "free" || x.dailyAmount === null) &&
         (args?.price !== "paid" || x.dailyAmount !== null),
     );
+  }
   if (name === "tools:mine")
     return items.map((x, i) => ({ ...x, isOwner: true, active: i !== 2 }));
-  if (name === "tools:detail") return items[0];
+  if (name === "tools:detail")
+    return new URLSearchParams(location.search).get("view") === "detail-multi"
+      ? {
+          ...items[0],
+          photos: [
+            items[0].photos[0],
+            {
+              ...items[0].photos[0],
+              id: "photo-second",
+              url: "/images/demo-rizvi/ladder.jpg",
+            },
+          ],
+        }
+      : items[0];
   if (name === "requests:availability") return true;
   if (name === "requests:reservedDates")
     return args?.month === "2026-11"

@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function BorrowCalendar({
   toolId,
@@ -19,6 +19,25 @@ export function BorrowCalendar({
   end: string;
   onSelect: (date: string) => void;
 }) {
+  const details = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    function dismiss(event: PointerEvent) {
+      if (details.current && !details.current.contains(event.target as Node))
+        details.current.open = false;
+    }
+    function escape(event: KeyboardEvent) {
+      if (event.key === "Escape" && details.current?.open) {
+        details.current.open = false;
+        details.current.querySelector("summary")?.focus();
+      }
+    }
+    document.addEventListener("pointerdown", dismiss);
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("pointerdown", dismiss);
+      document.removeEventListener("keydown", escape);
+    };
+  }, []);
   const [month, setMonth] = useState(() => today.slice(0, 7));
   const reserved = useQuery(api.requests.reservedDates, { toolId, month });
   const [year, monthNumber] = month.split("-").map(Number);
@@ -30,9 +49,15 @@ export function BorrowCalendar({
     setMonth(next.toISOString().slice(0, 7));
   }
   return (
-    <details className="borrow-calendar">
+    <details className="borrow-calendar" ref={details}>
       <summary>
-        Choose dates on a calendar <span aria-hidden="true">⌄</span>
+        <CalendarDays size={18} aria-hidden="true" />
+        <span>
+          {start
+            ? `${new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${start}T00:00:00Z`))}${end ? ` – ${new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(`${end}T00:00:00Z`))}` : " – Choose end date"}`
+            : "Choose dates on a calendar"}
+        </span>
+        <span aria-hidden="true">⌄</span>
       </summary>
       <div className="calendar-content">
         <div className="calendar-heading">
@@ -89,7 +114,13 @@ export function BorrowCalendar({
                       ? "in-range"
                       : ""
                 }
-                onClick={() => onSelect(date)}
+                onClick={() => {
+                  onSelect(date);
+                  if (start && !end && date >= start && details.current) {
+                    details.current.open = false;
+                    details.current.querySelector("summary")?.focus();
+                  }
+                }}
               >
                 {i + 1}
               </button>
@@ -106,6 +137,18 @@ export function BorrowCalendar({
             ? "Select a start date, then an end date."
             : "Now select an end date. Select the same day for a one-day borrow."}
         </p>
+        <button
+          type="button"
+          className="calendar-done"
+          onClick={() => {
+            if (details.current) {
+              details.current.open = false;
+              details.current.querySelector("summary")?.focus();
+            }
+          }}
+        >
+          Done
+        </button>
       </div>
     </details>
   );

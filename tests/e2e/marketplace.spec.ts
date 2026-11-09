@@ -19,7 +19,7 @@ test.beforeEach(async ({ page }) => {
   await clerk.signIn({ page, emailAddress: process.env.E2E_CLERK_USER_EMAIL! });
   await page.goto("/dashboard");
   await expect(
-    page.getByRole("heading", { name: "Good things, closer than you think." }),
+    page.getByRole("heading", { name: "Your neighborhood shelf." }),
   ).toBeVisible();
 });
 
@@ -233,7 +233,7 @@ for (const width of [360, 390, 768, 1280, 1440]) {
     await page.goto("/dashboard");
     await expect(
       page.getByRole("heading", {
-        name: "Good things, closer than you think.",
+        name: "Your neighborhood shelf.",
       }),
     ).toBeVisible();
     expect(

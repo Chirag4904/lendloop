@@ -84,9 +84,55 @@ for (const width of [360, 390, 768, 1280, 1440]) {
       path: `artifacts/atlas/${view}-${width}.png`,
       fullPage: true,
     });
+    if (view === "detail" && width === 390) {
+      await page.getByText("Choose dates on a calendar").click();
+      const box = await page.locator(".calendar-content").boundingBox();
+      assert(
+        box &&
+          box.x >= 0 &&
+          box.x + box.width <= width &&
+          box.y >= 0 &&
+          box.y + box.height <= 1000,
+      );
+      await page.screenshot({
+        path: "artifacts/atlas/borrow-calendar-mobile.png",
+      });
+    }
   }
 }
 await page.goto("http://localhost:3000/__atlas-qa?view=explore");
+assert(
+  await page
+    .getByRole("heading", { name: "Your neighborhood shelf." })
+    .isVisible(),
+);
+assert.equal(await page.locator(".explore-page .tool-card").count(), 6);
+await page.getByRole("button", { name: "Within 500 m" }).click();
+assert.equal(await page.evaluate(() => window.__atlasExploreArgs.scope), "500");
+assert.equal(
+  await page
+    .getByRole("button", { name: "Within 500 m" })
+    .getAttribute("aria-pressed"),
+  "true",
+);
+await page.getByRole("button", { name: "Garden", exact: true }).click();
+assert.equal(await page.locator(".explore-page .tool-card").count(), 1);
+await page.getByRole("combobox", { name: "Sort by" }).selectOption("price");
+assert.equal(
+  await page.evaluate(() => window.__atlasExploreArgs.sort),
+  "price",
+);
+await page.getByRole("button", { name: "Reset filters" }).click();
+assert.equal(
+  await page
+    .getByRole("button", { name: "My Society" })
+    .getAttribute("aria-pressed"),
+  "true",
+);
+assert.equal(
+  await page.getByRole("combobox", { name: "Sort by" }).inputValue(),
+  "nearest",
+);
 await page
   .getByRole("combobox", { name: "Price", exact: true })
   .selectOption("free");
@@ -94,6 +140,14 @@ assert.equal(await page.locator(".tool-card").count(), 1);
 await page.getByRole("button", { name: "Reset filters" }).click();
 await page.getByLabel("Search tools").fill("drill");
 assert.equal(await page.locator(".tool-card").count(), 1);
+await page.getByLabel("Search tools").fill("no matching item");
+assert(
+  await page
+    .getByRole("heading", { name: "Nothing here just yet." })
+    .isVisible(),
+);
+await page.getByRole("button", { name: "Clear filters" }).click();
+assert.equal(await page.locator(".explore-page .tool-card").count(), 6);
 await page.goto("http://localhost:3000/__atlas-qa?view=requests");
 await page.getByRole("button", { name: "Completed returns" }).click();
 assert.equal(await page.locator(".request-card").count(), 1);
@@ -111,6 +165,17 @@ assert.equal(
     .filter({ hasText: "Waiting for borrower" })
     .count(),
   1,
+);
+await page.goto("http://localhost:3000/__atlas-qa?view=detail");
+assert.equal(await page.locator(".thumb-row").count(), 0);
+await page.goto("http://localhost:3000/__atlas-qa?view=detail-multi");
+assert.equal(await page.getByRole("button", { name: /Show photo/ }).count(), 2);
+await page.getByRole("button", { name: "Show photo 2" }).click();
+assert.equal(
+  await page
+    .getByRole("button", { name: "Show photo 2" })
+    .getAttribute("aria-pressed"),
+  "true",
 );
 await page.goto("http://localhost:3000/__atlas-qa?view=detail");
 assert.equal(await page.locator("input[type=date]").count(), 0);
@@ -133,17 +198,32 @@ await page.screenshot({
 const day = page.locator(".calendar-grid button:not(:disabled)").first();
 await day.click();
 const selectedStart = await page
-  .locator(".borrow-date-summary dd")
-  .first()
+  .locator(".borrow-calendar summary")
   .textContent();
 assert(selectedStart);
 await day.click();
-assert.equal(
-  await page.locator(".borrow-date-summary dd").last().textContent(),
+assert.notEqual(
+  await page.locator(".borrow-calendar summary").textContent(),
   selectedStart,
 );
+assert.equal(
+  await page.locator(".borrow-calendar").evaluate((el) => el.open),
+  false,
+);
+await page.locator(".borrow-calendar summary").click();
 await page.getByRole("button", { name: "Next month" }).click();
 await page.getByRole("button", { name: "Previous month" }).click();
+await page.keyboard.press("Escape");
+assert.equal(
+  await page.locator(".borrow-calendar").evaluate((el) => el.open),
+  false,
+);
+await page.locator(".borrow-calendar summary").click();
+await page.getByRole("button", { name: "Done", exact: true }).click();
+assert.equal(
+  await page.locator(".borrow-calendar").evaluate((el) => el.open),
+  false,
+);
 
 assert(await page.getByRole("button", { name: "Send request" }).isEnabled());
 await page.getByRole("button", { name: "Make an Offer" }).click();

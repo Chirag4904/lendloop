@@ -108,13 +108,9 @@ export function RequestForm({
   return (
     <section className="borrow-panel" aria-label="Borrow this item">
       <div className="borrow-panel-intro">
-        <div>
-          <span className="borrow-eyebrow">PLAN YOUR BORROW</span>
-          <h2>Make it yours for a while.</h2>
-        </div>
         <div className="borrow-rate">
           <strong>{dailyAmount === null ? "Free" : money(dailyAmount)}</strong>
-          <span>{dailyAmount === null ? "to borrow" : "per day"}</span>
+          <span>{dailyAmount === null ? "to borrow" : "/ day"}</span>
         </div>
       </div>
       <div className="borrow-choices" role="group" aria-label="Request type">
@@ -142,12 +138,6 @@ export function RequestForm({
         )}
       </div>
       <form id="request-form" onSubmit={submit} className="borrow-form">
-        <div className="borrow-form-heading">
-          <div>
-            <h3>When do you need it?</h3>
-            <p>Choose up to 30 days. Both dates are included.</p>
-          </div>
-        </div>
         {mode === "offer" && (
           <>
             <label className="offer-field">
@@ -186,20 +176,16 @@ export function RequestForm({
             } else setEnd(date);
           }}
         />
-        <dl className="borrow-date-summary" aria-live="polite">
-          <div>
-            <dt>Start date</dt>
-            <dd>{startDate ? dateLabel(startDate) : "Select a date"}</dd>
-          </div>
-          <div>
-            <dt>End date</dt>
-            <dd>{endDate ? dateLabel(endDate) : "Select a date"}</dd>
-          </div>
-        </dl>
         {count > 0 && (mode !== "offer" || validOffer) && (
           <p className="borrow-total">
             <strong>
-              {count} {count === 1 ? "day" : "days"} ·{" "}
+              {count} {count === 1 ? "day" : "days"} ×{" "}
+              {money(
+                mode === "offer" && validOffer
+                  ? offerMinor
+                  : (dailyAmount ?? 0),
+              )}{" "}
+              / day ·{" "}
               {money(
                 (mode === "offer" && validOffer
                   ? offerMinor
