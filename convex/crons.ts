@@ -13,4 +13,16 @@ crons.daily(
   internal.photos.cleanupTickets,
   {},
 );
+crons.interval(
+  "Prune automation nonces",
+  { minutes: 5 },
+  internal.automation.pruneNonces,
+  {},
+);
+crons.interval(
+  "Recover stale reminder leases",
+  { minutes: 5 },
+  internal.automation.recoverReminders,
+  {},
+);
 export default crons;

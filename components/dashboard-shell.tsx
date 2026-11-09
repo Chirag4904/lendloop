@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { UserButton } from "@clerk/nextjs";
-import { Compass, Inbox, Package, UserRound, Wrench } from "lucide-react";
+import { Bell, Compass, Inbox, Package, UserRound, Wrench } from "lucide-react";
 import { useCurrentProfile } from "@/components/use-current-profile";
 
 const items = [
@@ -12,6 +12,7 @@ const items = [
   { href: "/dashboard/listings", label: "My Listings", icon: Package },
   { href: "/dashboard/requests", label: "Requests", icon: Compass },
   { href: "/dashboard/incoming", label: "Incoming", icon: Inbox },
+  { href: "/dashboard/notifications", label: "Updates", icon: Bell },
   { href: "/dashboard/profile", label: "Profile", icon: UserRound },
 ];
 

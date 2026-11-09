@@ -2068,3 +2068,55 @@ textarea:focus-visible {
   line-height: 1;
   padding: 4px 8px;
 }
+.notification-page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px 100px;
+}
+.automation-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  gap: 10px;
+}
+.automation-list li {
+  background: #f7f6f2;
+  border: 1px solid #d7d9df;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  color: #202938;
+  min-width: 0;
+}
+.automation-list strong {
+  flex: 1 1 190px;
+  overflow-wrap: anywhere;
+  font-size: 0.93rem;
+}
+.automation-list time {
+  flex-basis: 100%;
+  color: #475569;
+  font-size: 0.82rem;
+}
+.automation-state {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #e8edf9;
+  color: #2854c5;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.state-failed {
+  background: #fde4df;
+  color: #8a2f23;
+}
+.state-retry_pending,
+.state-processing {
+  background: #ffe3bd;
+  color: #70410c;
+}

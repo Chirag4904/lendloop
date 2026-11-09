@@ -15,3 +15,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## LendLoop Phase 3 conventions
 
 `convex/requests.ts` owns request creation, transitions and the transactional overlap check. `convex/loans.ts` owns returns and private handover details; `convex/borrowing.ts` owns Kolkata calendar-day helpers and participant identity. Pending requests do not reserve dates. Keep public catalog output at name and category, and keep private handover data out of request/listing read models. No negotiation, payment or n8n workflow in Phase 3.
+
+## LendLoop Phase 5 conventions
+
+`convex/automation.ts` owns transactional outbox state, overdue eligibility, reminder claims, and participant-only activity queries. `convex/automationDispatch.ts` is the replaceable n8n delivery action; `convex/http.ts` exposes signed service endpoints and `convex/signing.ts` defines their canonical HMAC format. Keep external calls out of mutations, keep handover details out of automation payloads, and keep n8n from deciding borrowing or overdue state. The only active overdue schedule is the n8n 09:00 Asia/Kolkata workflow; Convex's automation cron only recovers stale leases and prunes nonces.

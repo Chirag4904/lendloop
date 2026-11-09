@@ -1,6 +1,7 @@
 import { RequestList } from "@/components/borrowing";
 import { Compass, Inbox, Package, UserRound } from "lucide-react";
 import { ExploreTools, MyListings } from "@/components/marketplace";
+import { Notifications } from "@/components/notifications";
 
 const pages = {
   listings: {
@@ -21,6 +22,12 @@ const pages = {
     icon: Inbox,
     empty: "All quiet for now.",
   },
+  notifications: {
+    title: "Notifications",
+    description: "Updates about your lending activity.",
+    icon: Inbox,
+    empty: "No notifications yet.",
+  },
   profile: {
     title: "Profile",
     description: "Your LendLoop account and neighborhood.",
@@ -34,6 +41,7 @@ export function DashboardView({ section }: { section?: keyof typeof pages }) {
   if (section === "listings") return <MyListings />;
   if (section === "requests") return <RequestList incoming={false} />;
   if (section === "incoming") return <RequestList incoming />;
+  if (section === "notifications") return <Notifications />;
   const page = pages[section];
   const Icon = page.icon;
   return (

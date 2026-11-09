@@ -1,0 +1,279 @@
+{
+  "id": "lendloop-request-notification",
+  "name": "LendLoop Request Notification",
+  "active": false,
+  "nodes": [
+    {
+      "id": "lendloop-request-notification-1",
+      "name": "Signed Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "lendloop-request",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lendloop-request",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      }
+    },
+    {
+      "id": "lendloop-request-notification-2",
+      "name": "Verify signature",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const crypto = require('crypto');\nconst input = $input.first().json;\nconst headers = input.headers || {};\nconst raw = $input.first().binary?.data ? (await this.helpers.getBinaryDataBuffer(0, 'data')).toString('utf8') : null;\nconst timestamp = headers['x-lendloop-timestamp'];\nconst nonce = headers['x-lendloop-nonce'];\nconst signature = headers['x-lendloop-signature'];\nconst secret = $env.LENDLOOP_OUTBOUND_SECRET;\nif (!secret) throw new Error('Missing outbound secret');\nlet valid = !!raw && /^\\d{13}$/.test(timestamp || '') && Math.abs(Date.now()-Number(timestamp)) <= 300000 && /^[a-f0-9-]{16,100}$/i.test(nonce || '') && /^[a-f0-9]{64}$/i.test(signature || '');\nif (valid) {\n  const expected = crypto.createHmac('sha256', secret).update('POST\\n/webhook/lendloop-request\\n' + timestamp + '\\n' + nonce + '\\n' + raw,'utf8').digest();\n  valid = crypto.timingSafeEqual(expected, Buffer.from(signature,'hex'));\n}\nif (!valid) return [{json:{valid:false}}];\nlet event;\ntry { event = JSON.parse(raw); } catch { return [{json:{valid:false}}]; }\nconst messages = {\n  'borrow_request.created': 'A neighbor requested your item',\n  'borrower.offer': 'A neighbor made an offer for your item',\n  'borrow_request.approved': 'Your borrowing request was approved',\n  'borrow_request.declined': 'Your borrowing request was declined',\n  'borrow_request.cancelled': 'A borrowing request was cancelled',\n  'lender.offer_accepted': 'Your offer was accepted',\n  'lender.countered': 'The lender sent a counteroffer',\n  'lender.kept_listed_price': 'The lender kept the listed price',\n  'borrower.final_accepted': 'The borrower accepted the final price',\n  'borrower.walked_away': 'The borrower declined the final price',\n  'return.initiated': 'The borrower reported returning your item',\n  'return.confirmed': 'Your return was confirmed'\n};\nif (!messages[event.type] || typeof event.eventId !== 'string' || typeof event.lease !== 'string' || typeof event.toolName !== 'string' || event.toolName.length > 120) return [{json:{valid:false}}];\nreturn [{json:{valid:true,eventId:event.eventId,lease:event.lease,message:messages[event.type] + ': ' + event.toolName + '.'}}];"
+      }
+    },
+    {
+      "id": "lendloop-request-notification-3",
+      "name": "Authenticated",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [440, 0],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "Authenticated-condition",
+              "leftValue": "={{$json.valid}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "lendloop-request-notification-4",
+      "name": "Sign delivery acknowledgement",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -100],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const path = '/automation/events/complete';\nconst method = 'POST';\nconst body = JSON.stringify({eventId:$input.first().json.eventId,lease:$input.first().json.lease,message:$input.first().json.message});\nconst crypto = require('crypto');\nconst secret = $env.LENDLOOP_INBOUND_SECRET;\nconst base = $env.LENDLOOP_CONVEX_SITE_URL;\nif (!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url = new URL(path, base);\nconst timestamp = String(Date.now());\nconst nonce = crypto.randomUUID();\nconst signature = crypto.createHmac('sha256', secret).update(method + '\\n' + url.pathname + url.search + '\\n' + timestamp + '\\n' + nonce + '\\n' + body, 'utf8').digest('hex');\nreturn [{json:{url:url.toString(),body,timestamp,nonce,signature}}];"
+      }
+    },
+    {
+      "id": "lendloop-request-notification-5",
+      "name": "Record notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [880, -100],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-LendLoop-Timestamp",
+              "value": "={{$json.timestamp}}"
+            },
+            {
+              "name": "X-LendLoop-Nonce",
+              "value": "={{$json.nonce}}"
+            },
+            {
+              "name": "X-LendLoop-Signature",
+              "value": "={{$json.signature}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{$json.body}}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "lendloop-request-notification-6",
+      "name": "Recorded",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1100, -100],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "Recorded-condition",
+              "leftValue": "={{$json.completed}}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "lendloop-request-notification-7",
+      "name": "Delivered",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1320, -160],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": {
+          "delivered": true
+        },
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "id": "lendloop-request-notification-8",
+      "name": "Invalid signature",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 140],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": {
+          "error": "unauthorized"
+        },
+        "options": {
+          "responseCode": 401
+        }
+      }
+    },
+    {
+      "id": "lendloop-request-notification-9",
+      "name": "Delivery unavailable",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1320, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": {
+          "error": "delivery_unavailable"
+        },
+        "options": {
+          "responseCode": 503
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Signed Request": {
+      "main": [
+        [
+          {
+            "node": "Verify signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify signature": {
+      "main": [
+        [
+          {
+            "node": "Authenticated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Authenticated": {
+      "main": [
+        [
+          {
+            "node": "Sign delivery acknowledgement",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Invalid signature",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign delivery acknowledgement": {
+      "main": [
+        [
+          {
+            "node": "Record notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record notification": {
+      "main": [
+        [
+          {
+            "node": "Recorded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recorded": {
+      "main": [
+        [
+          {
+            "node": "Delivered",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Delivery unavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "lendloop-error-handler"
+  },
+  "pinData": {},
+  "staticData": null,
+  "tags": []
+}

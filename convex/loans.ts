@@ -1,6 +1,7 @@
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import { cover, currentUser, today } from "./borrowing";
+import { enqueue } from "./automation";
 
 const privateDetails = v.object({
   authorId: v.id("users"),
@@ -107,6 +108,13 @@ export const reportReturn = mutation({
       returnReportedAt: now,
       updatedAt: now,
     });
+    await enqueue(
+      ctx,
+      "return.initiated",
+      loan.requestId,
+      loan.lenderId,
+      loanId,
+    );
     return null;
   },
 });
@@ -125,6 +133,13 @@ export const confirmReturn = mutation({
       returnedAt: now,
       updatedAt: now,
     });
+    await enqueue(
+      ctx,
+      "return.confirmed",
+      loan.requestId,
+      loan.borrowerId,
+      loanId,
+    );
     return null;
   },
 });

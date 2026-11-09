@@ -5,9 +5,30 @@
 - **Backend:** Convex owns the schema and functions. `ConvexProviderWithClerk` sends Clerk tokens. Mutations and protected queries derive the user from the verified Clerk subject.
 - **Public catalog:** `tools.publicList` returns only tool name and category. No private data is delivered and hidden tools are excluded.
 - **Onboarding:** `users.ensureCurrent` creates a minimal user; `societies.search` reads active society names; `users.selectSociety` verifies the selected society; `suggestions.create` stores only a pending suggestion.
-- **Deployment:** Next.js is prepared for Vercel. Convex and Clerk require their own development and production configurations. Local n8n is separate Docker Compose infrastructure and has no workflows yet.
+- **Deployment:** Next.js is prepared for Vercel. Convex and Clerk require their own development and production configurations. Local n8n runs separately through Docker Compose and uses an HTTPS webhook tunnel for Convex Cloud dispatches.
 
-The authenticated dashboard now includes listing creation, management, discovery and detail routes. Requests, loans, returns and optional participant-only handover details are implemented; automation remains later. See [database](DATABASE.md) and [security and privacy](SECURITY_AND_PRIVACY.md).
+The authenticated dashboard includes listing, request, loan and notification views. See [database](DATABASE.md) and [security and privacy](SECURITY_AND_PRIVACY.md).
+
+## Phase 5 automation
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant C as Convex
+  participant N as n8n
+  U->>C: Request or loan transition
+  C->>C: Commit domain state and outbox event
+  C->>N: Signed webhook (internal action)
+  N->>N: Verify signature; prepare mock message
+  N->>C: Signed acknowledgement
+  C->>C: Idempotently record notification and delivery
+  N->>C: 09:00 IST signed overdue page request
+  C->>N: Bounded eligible loan IDs
+  N->>C: Signed claim and completion
+  C->>C: Unique daily reminder and sent status
+```
+
+`convex/automation.ts` owns outbox state, participant-only activity reads, overdue eligibility and reminder claims. `convex/automationDispatch.ts` is the replaceable delivery adapter; only its action calls n8n. `convex/http.ts` exposes narrow signed service endpoints. `convex/signing.ts` defines the shared canonical HMAC format. n8n has no Clerk session and no database credential. It cannot approve loans or determine overdue eligibility. The in-app notification record is the Phase 5 mock delivery result, and both the notification center and loan activity query it reactively.
 
 ## Phase 2 marketplace architecture
 

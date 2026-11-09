@@ -11,7 +11,7 @@ Convex schema is defined in `convex/schema.ts` with validators and indexes.
 
 The eight tool categories are Power Tools, Garden, Kitchen, Electronics, Camping & Outdoors, Sports & Fitness, Home & Cleaning, and Other. Public clients can only call the read-only `tools.publicList`; there is no Phase 1 tool write function. Only the Convex Dashboard or a controlled operator migration can add active societies. Users cannot set their own role or trust flags.
 
-Automation events, reminders and audit logs remain planned. Retention and deletion policy needs a separate review before production launch.
+Phase 5 automation tables are described below. A retention and deletion policy for user-visible operational history needs review before production launch.
 
 ## Phase 2 schema additions
 
@@ -30,3 +30,14 @@ Historical loans retain confirmed terms and remain after listing archive. Return
 ## Phase 4 negotiation fields
 
 `borrowRequests` adds optional `listedRateMinor`, `borrowerOfferMinor`, `lenderCounterMinor`, `priceDecision`, and `borrowerRespondedAt`; optional fields keep existing rows valid. `respondedAt` records the lender decision. A present borrower offer marks a negotiated request. `rateMinor` and `totalMinor` become the agreed terms on approval, while `listedRateMinor` preserves the original listed-rate snapshot. The new `awaiting_borrower` status follows a counteroffer or a decision to keep the listed price. Loans still have one immutable set of agreed INR paise terms and one original request ID. No offer or chat table is needed.
+
+## Phase 5 automation tables
+
+| Table              | Contents                                                                                                                                               | Indexed reads                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| `automationEvents` | Minimal transition type, request/optional loan ID, recipient, delivery status, attempt count, next attempt, lease, sanitized error code and timestamps | request, loan, recipient                  |
+| `notifications`    | One delivered mock message per outbox event                                                                                                            | event, recipient                          |
+| `overdueReminders` | Unique daily loan/date key, borrower, lease, processing/sent/failed state and timestamps                                                               | key, loan, recipient, status + claim time |
+| `automationNonces` | Accepted inbound service nonces for replay rejection                                                                                                   | nonce, creation time                      |
+
+`loans.by_end_date` supports bounded overdue pagination across reserved and return-pending loans. Returned loans are filtered from each page. Convex prunes accepted nonces after one day; n8n prunes execution data after 14 days. Outbox, notifications and reminders remain for user-visible history pending a production retention decision.

@@ -1,0 +1,357 @@
+{
+  "id": "lendloop-overdue-reminders",
+  "name": "LendLoop Overdue Reminders",
+  "active": false,
+  "nodes": [
+    {
+      "id": "lendloop-overdue-reminders-1",
+      "name": "Daily 09:00 IST",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "days",
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-2",
+      "name": "First page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [200, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "return [{json:{cursor:null}}];"
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-3",
+      "name": "Sign overdue page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [400, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const cursor = $input.first().json.cursor;\nconst path = '/automation/overdue-loans' + (cursor ? '?cursor=' + encodeURIComponent(cursor) : '');\nconst method = 'GET';\nconst body = '';\nconst crypto = require('crypto');\nconst secret = $env.LENDLOOP_INBOUND_SECRET;\nconst base = $env.LENDLOOP_CONVEX_SITE_URL;\nif (!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url = new URL(path, base);\nconst timestamp = String(Date.now());\nconst nonce = crypto.randomUUID();\nconst signature = crypto.createHmac('sha256', secret).update(method + '\\n' + url.pathname + url.search + '\\n' + timestamp + '\\n' + nonce + '\\n' + body, 'utf8').digest('hex');\nreturn [{json:{url:url.toString(),body,timestamp,nonce,signature}}];"
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-4",
+      "name": "Fetch overdue loans",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [600, 0],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "GET",
+        "url": "={{$json.url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-LendLoop-Timestamp",
+              "value": "={{$json.timestamp}}"
+            },
+            {
+              "name": "X-LendLoop-Nonce",
+              "value": "={{$json.nonce}}"
+            },
+            {
+              "name": "X-LendLoop-Signature",
+              "value": "={{$json.signature}}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-5",
+      "name": "Expand page",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [800, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const page=$input.first().json; if(!Array.isArray(page.loans)) throw new Error('Invalid overdue page'); return [...page.loans.map(x=>({json:{kind:'loan',loanId:x.loanId}})),...(page.cursor?[{json:{kind:'page',cursor:page.cursor}}]:[])];"
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-6",
+      "name": "More pages",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1000, 0],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "more-pages",
+              "leftValue": "={{$json.kind}}",
+              "rightValue": "page",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-7",
+      "name": "Sign reminder claim",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 100],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const crypto=require('crypto');\nconst secret=$env.LENDLOOP_INBOUND_SECRET, base=$env.LENDLOOP_CONVEX_SITE_URL;\nif(!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url=new URL('/automation/reminders/claim',base);\nreturn $input.all().map(x=>x.json).filter(row=>true).map(row=>{\n  const body=JSON.stringify({loanId:row.loanId,lease:crypto.randomUUID()});\n  const timestamp=String(Date.now()), nonce=crypto.randomUUID();\n  const signature=crypto.createHmac('sha256',secret).update('POST\\n'+url.pathname+url.search+'\\n'+timestamp+'\\n'+nonce+'\\n'+body,'utf8').digest('hex');\n  return {json:{url:url.toString(),body,timestamp,nonce,signature}};\n});"
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-8",
+      "name": "Claim reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1400, 100],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-LendLoop-Timestamp",
+              "value": "={{$json.timestamp}}"
+            },
+            {
+              "name": "X-LendLoop-Nonce",
+              "value": "={{$json.nonce}}"
+            },
+            {
+              "name": "X-LendLoop-Signature",
+              "value": "={{$json.signature}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{$json.body}}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-9",
+      "name": "Sign mock delivery",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1600, 100],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const crypto=require('crypto');\nconst secret=$env.LENDLOOP_INBOUND_SECRET, base=$env.LENDLOOP_CONVEX_SITE_URL;\nif(!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url=new URL('/automation/reminders/complete',base);\nreturn $input.all().map(x=>x.json).filter(row=>!!row.claim).map(row=>{\n  const body=JSON.stringify({key:row.claim.key,lease:row.claim.lease,success:true});\n  const timestamp=String(Date.now()), nonce=crypto.randomUUID();\n  const signature=crypto.createHmac('sha256',secret).update('POST\\n'+url.pathname+url.search+'\\n'+timestamp+'\\n'+nonce+'\\n'+body,'utf8').digest('hex');\n  return {json:{url:url.toString(),body,timestamp,nonce,signature}};\n});"
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-10",
+      "name": "Record reminder sent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1800, 100],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "parameters": {
+        "method": "POST",
+        "url": "={{$json.url}}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-LendLoop-Timestamp",
+              "value": "={{$json.timestamp}}"
+            },
+            {
+              "name": "X-LendLoop-Nonce",
+              "value": "={{$json.nonce}}"
+            },
+            {
+              "name": "X-LendLoop-Signature",
+              "value": "={{$json.signature}}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{$json.body}}",
+        "options": {
+          "timeout": 30000
+        }
+      }
+    },
+    {
+      "id": "lendloop-overdue-reminders-11",
+      "name": "Confirm recorded",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2000, 100],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "if(!$input.first().json.completed) throw new Error('Reminder acknowledgement rejected'); return [{json:{sent:true}}];"
+      }
+    }
+  ],
+  "connections": {
+    "Daily 09:00 IST": {
+      "main": [
+        [
+          {
+            "node": "First page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "First page": {
+      "main": [
+        [
+          {
+            "node": "Sign overdue page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign overdue page": {
+      "main": [
+        [
+          {
+            "node": "Fetch overdue loans",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch overdue loans": {
+      "main": [
+        [
+          {
+            "node": "Expand page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Expand page": {
+      "main": [
+        [
+          {
+            "node": "More pages",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "More pages": {
+      "main": [
+        [
+          {
+            "node": "Sign overdue page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sign reminder claim",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign reminder claim": {
+      "main": [
+        [
+          {
+            "node": "Claim reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claim reminder": {
+      "main": [
+        [
+          {
+            "node": "Sign mock delivery",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sign mock delivery": {
+      "main": [
+        [
+          {
+            "node": "Record reminder sent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Record reminder sent": {
+      "main": [
+        [
+          {
+            "node": "Confirm recorded",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "errorWorkflow": "lendloop-error-handler"
+  },
+  "pinData": {},
+  "staticData": null,
+  "tags": []
+}

@@ -13,13 +13,17 @@ Project setup, design tokens and landing page; Clerk/Convex integration code; mi
 
 ## Later phases, pending review
 
-After Phase 4 review, consider notification adapters and n8n workflows, retention/deletion processes, and eventually payments and AI.
+After Phase 5 review, decide the production retention/deletion policy and whether to configure production n8n. Payments and AI remain later work.
 
 ## Completed in Phase 2
 
 Listing creation and editing, Convex File Storage photo pipeline, in-app camera and native capture fallback, listing management, authenticated discovery with approximate society-center radius, tool detail gallery, backend authorization and privacy tests are implemented. CI retains formatting, lint, typecheck, Vitest, build and Playwright gates. Authenticated browser tests require a separate test Clerk account and development Convex deployment. Hardware camera capture still needs a manual Android/iOS check when available.
 
-Phase 3 adds borrowing requests, owner approval/decline, transactional date reservations, loan returns and optional participant-only handover details. Phase 4 adds one-round price negotiation. Payments, n8n workflows, AI and society-admin roles remain deferred.
+Phase 3 adds borrowing requests, owner approval/decline, transactional date reservations, loan returns and optional participant-only handover details. Phase 4 adds one-round price negotiation. Phase 5 adds n8n automation. Payments, AI and society-admin roles remain deferred.
+
+## Completed in Phase 5
+
+Successful request, negotiation and return transitions now insert transactional outbox events and schedule signed n8n delivery. The importable request, overdue and error workflows, signed Convex HTTP actions, nonce replay protection, bounded retries, daily reminder claims, notification center, loan activity, and pinned local Compose configuration are implemented. Convex retains the business rules and can later swap the n8n delivery action and daily trigger. Live workflow import/execution and an HTTPS tunnel require local operator configuration; no production n8n secrets or webhook were activated.
 
 ## Completed in Phase 4
 

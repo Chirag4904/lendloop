@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
+import { enqueue } from "./automation";
 import {
   cover,
   currentUser,
@@ -197,7 +198,7 @@ export const create = mutation({
       throw new Error(
         "Offer must be a positive amount below the listed daily price",
       );
-    return ctx.db.insert("borrowRequests", {
+    const requestId = await ctx.db.insert("borrowRequests", {
       toolId: tool._id,
       borrowerId: me._id,
       lenderId: tool.ownerId,
@@ -213,6 +214,15 @@ export const create = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    await enqueue(
+      ctx,
+      args.offerMinor === undefined
+        ? "borrow_request.created"
+        : "borrower.offer",
+      requestId,
+      tool.ownerId,
+    );
+    return requestId;
   },
 });
 
@@ -257,6 +267,7 @@ export const cancel = mutation({
       status: "cancelled",
       updatedAt: Date.now(),
     });
+    await enqueue(ctx, "borrow_request.cancelled", requestId, request.lenderId);
     return null;
   },
 });
@@ -276,6 +287,12 @@ export const decline = mutation({
       respondedAt: now,
       updatedAt: now,
     });
+    await enqueue(
+      ctx,
+      "borrow_request.declined",
+      requestId,
+      request.borrowerId,
+    );
     return null;
   },
 });
@@ -353,6 +370,17 @@ async function confirm(
       ? { borrowerRespondedAt: now }
       : {}),
   });
+  await enqueue(
+    ctx,
+    request.borrowerOfferMinor === undefined
+      ? "borrow_request.approved"
+      : request.priceDecision
+        ? "borrower.final_accepted"
+        : "lender.offer_accepted",
+    request._id,
+    request.priceDecision ? request.lenderId : request.borrowerId,
+    loanId,
+  );
   return loanId;
 }
 
@@ -404,6 +432,14 @@ export const respondToOffer = mutation({
       respondedAt: now,
       updatedAt: now,
     });
+    await enqueue(
+      ctx,
+      decision === "countered"
+        ? "lender.countered"
+        : "lender.kept_listed_price",
+      requestId,
+      request.borrowerId,
+    );
     return null;
   },
 });
@@ -433,6 +469,7 @@ export const respondToFinalPrice = mutation({
         borrowerRespondedAt: now,
         updatedAt: now,
       });
+      await enqueue(ctx, "borrower.walked_away", requestId, request.lenderId);
       return null;
     }
     return confirm(

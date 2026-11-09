@@ -1,6 +1,7 @@
 services:
   n8n:
-    image: n8nio/n8n:latest
+    image: n8nio/n8n:2.46.5
+    restart: unless-stopped
     ports:
       - "127.0.0.1:5678:5678"
     environment:
@@ -8,7 +9,31 @@ services:
       N8N_PORT: 5678
       N8N_PROTOCOL: http
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?Set N8N_ENCRYPTION_KEY in .env.n8n}
-      WEBHOOK_URL: http://localhost:5678/
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:-http://localhost:5678/}
+      GENERIC_TIMEZONE: ${GENERIC_TIMEZONE:-Asia/Kolkata}
+      TZ: ${GENERIC_TIMEZONE:-Asia/Kolkata}
+      NODE_FUNCTION_ALLOW_BUILTIN: crypto
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      LENDLOOP_OUTBOUND_SECRET: ${LENDLOOP_OUTBOUND_SECRET:?Set LENDLOOP_OUTBOUND_SECRET}
+      LENDLOOP_INBOUND_SECRET: ${LENDLOOP_INBOUND_SECRET:?Set LENDLOOP_INBOUND_SECRET}
+      LENDLOOP_CONVEX_SITE_URL: ${LENDLOOP_CONVEX_SITE_URL:?Set LENDLOOP_CONVEX_SITE_URL}
+      EXECUTIONS_DATA_SAVE_ON_SUCCESS: none
+      EXECUTIONS_DATA_SAVE_ON_ERROR: all
+      EXECUTIONS_DATA_SAVE_MANUAL_EXECUTIONS: "false"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: 336
+      EXECUTIONS_DATA_PRUNE_MAX_COUNT: 1000
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "require('http').get('http://localhost:5678/healthz', r => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
     volumes:
       - n8n_data:/home/node/.n8n
 

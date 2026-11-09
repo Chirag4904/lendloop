@@ -311,6 +311,54 @@ test("lender can decline a request without creating a loan", async ({
   }
 });
 
+test("notification center updates live and loan automation fits mobile widths", async ({
+  browser,
+}) => {
+  const lender = await asUser(browser, process.env.E2E_CLERK_USER_EMAIL!);
+  const borrower = await asUser(browser, process.env.E2E_CLERK_BORROWER_EMAIL!);
+  try {
+    const { name, href } = await listDrill(lender.page);
+    await lender.page.goto("/dashboard/notifications");
+    await expect(
+      lender.page.getByRole("heading", { name: "Notifications" }),
+    ).toBeVisible();
+    const before = await lender.page.locator(".automation-list li").count();
+    await request(borrower.page, href);
+    await expect
+      .poll(() => lender.page.locator(".automation-list li").count())
+      .toBeGreaterThan(before);
+    for (const width of [360, 390]) {
+      await lender.page.setViewportSize({ width, height: 800 });
+      expect(
+        await lender.page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    }
+    await lender.page.goto("/dashboard/incoming");
+    const card = lender.page
+      .getByRole("article")
+      .filter({ has: lender.page.getByRole("heading", { name }) });
+    lender.page.once("dialog", (dialog) => dialog.accept());
+    await card.getByRole("button", { name: "Approve Request" }).click();
+    await card.getByRole("link", { name: "View loan" }).click();
+    await expect(
+      lender.page.getByRole("heading", { name: "Automation" }),
+    ).toBeVisible();
+    for (const width of [360, 390]) {
+      await lender.page.setViewportSize({ width, height: 800 });
+      expect(
+        await lender.page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+      ).toBe(true);
+    }
+  } finally {
+    await lender.context.close();
+    await borrower.context.close();
+  }
+});
+
 test("an unrelated signed-in user cannot read or alter a private loan", async ({
   browser,
 }) => {

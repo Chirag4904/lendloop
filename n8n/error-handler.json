@@ -1,0 +1,46 @@
+{
+  "id": "lendloop-error-handler",
+  "name": "LendLoop Automation Errors",
+  "active": false,
+  "nodes": [
+    {
+      "id": "lendloop-error-handler-1",
+      "name": "Workflow failed",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [0, 0],
+      "parameters": {}
+    },
+    {
+      "id": "lendloop-error-handler-2",
+      "name": "Sanitize failure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const x=$input.first().json; let summary=String(x.execution?.error?.message||'workflow failed').replace(/https?:\\/\\/\\S+/g,'[url]'); for(const secret of [$env.LENDLOOP_INBOUND_SECRET,$env.LENDLOOP_OUTBOUND_SECRET]) if(secret) summary=summary.replaceAll(secret,'[redacted]'); summary=summary.replace(/[a-f0-9]{64}/gi,'[digest]').slice(0,160); const record={workflow:String(x.workflow?.name||'unknown').slice(0,80),executionId:String(x.execution?.id||'unknown').slice(0,80),failedAt:new Date().toISOString(),step:String(x.execution?.lastNodeExecuted||'unknown').slice(0,80),summary}; console.error(JSON.stringify(record)); return [{json:record}];"
+      }
+    }
+  ],
+  "connections": {
+    "Workflow failed": {
+      "main": [
+        [
+          {
+            "node": "Sanitize failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata"
+  },
+  "pinData": {},
+  "staticData": null,
+  "tags": []
+}

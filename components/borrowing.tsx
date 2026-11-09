@@ -698,6 +698,7 @@ export function RequestList({ incoming }: { incoming: boolean }) {
 
 export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
   const loan = useQuery(api.loans.detail, { loanId });
+  const automation = useQuery(api.automation.loanActivity, { loanId });
   const report = useMutation(api.loans.reportReturn),
     confirm = useMutation(api.loans.confirmReturn),
     save = useMutation(api.loans.saveHandover);
@@ -907,6 +908,30 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
             </li>
           )}
         </ol>
+        {automation && automation.length > 0 && (
+          <>
+            <h3>Automation</h3>
+            <ol className="automation-list">
+              {automation.map((row) => (
+                <li key={row.id}>
+                  <strong>{row.message}</strong>
+                  <span className={`automation-state state-${row.status}`}>
+                    {row.status === "delivered" || row.status === "sent"
+                      ? "Sent"
+                      : row.status === "retry_pending"
+                        ? "Retry pending"
+                        : row.status}
+                  </span>
+                  <time dateTime={new Date(row.at).toISOString()}>
+                    {new Date(row.at).toLocaleString("en-IN", {
+                      timeZone: "Asia/Kolkata",
+                    })}
+                  </time>
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
       </section>
     </article>
   );

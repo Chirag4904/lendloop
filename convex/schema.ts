@@ -142,6 +142,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_request", ["requestId"])
+    .index("by_end_date", ["endDate"])
     .index("by_tool_and_status_and_start_date", [
       "toolId",
       "status",
@@ -163,5 +164,58 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_owner", ["ownerId"])
+    .index("by_created_at", ["createdAt"]),
+  automationEvents: defineTable({
+    type: v.string(),
+    requestId: v.id("borrowRequests"),
+    loanId: v.optional(v.id("loans")),
+    recipientId: v.id("users"),
+    status: v.union(
+      v.literal("pending"),
+      v.literal("processing"),
+      v.literal("retry_pending"),
+      v.literal("delivered"),
+      v.literal("failed"),
+    ),
+    attemptCount: v.number(),
+    nextAttemptAt: v.number(),
+    lease: v.optional(v.string()),
+    lastErrorCode: v.optional(v.string()),
+    createdAt: v.number(),
+    deliveredAt: v.optional(v.number()),
+  })
+    .index("by_request", ["requestId"])
+    .index("by_loan", ["loanId"])
+    .index("by_recipient", ["recipientId"]),
+  notifications: defineTable({
+    eventId: v.id("automationEvents"),
+    recipientId: v.id("users"),
+    loanId: v.optional(v.id("loans")),
+    message: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_event", ["eventId"])
+    .index("by_recipient", ["recipientId"]),
+  overdueReminders: defineTable({
+    key: v.string(),
+    loanId: v.id("loans"),
+    recipientId: v.id("users"),
+    date: v.string(),
+    status: v.union(
+      v.literal("processing"),
+      v.literal("sent"),
+      v.literal("failed"),
+    ),
+    lease: v.string(),
+    claimedAt: v.number(),
+    sentAt: v.optional(v.number()),
+    lastErrorCode: v.optional(v.string()),
+  })
+    .index("by_key", ["key"])
+    .index("by_loan", ["loanId"])
+    .index("by_recipient", ["recipientId"])
+    .index("by_status_and_claimed_at", ["status", "claimedAt"]),
+  automationNonces: defineTable({ nonce: v.string(), createdAt: v.number() })
+    .index("by_nonce", ["nonce"])
     .index("by_created_at", ["createdAt"]),
 });

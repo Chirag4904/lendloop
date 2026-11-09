@@ -1,7 +1,13 @@
 import { notFound } from "next/navigation";
 import { DashboardView } from "@/components/dashboard-view";
 
-const sections = ["listings", "requests", "incoming", "profile"] as const;
+const sections = [
+  "listings",
+  "requests",
+  "incoming",
+  "notifications",
+  "profile",
+] as const;
 export default async function SectionPage({
   params,
 }: {
