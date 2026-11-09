@@ -3,6 +3,15 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  CalendarDays,
+  Check,
+  ClipboardList,
+  ArrowDownLeft,
+  ArrowUpRight,
+  LockKeyhole,
+  RotateCcw,
+} from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { BorrowCalendar } from "./borrow-calendar";
@@ -326,13 +335,11 @@ export function RequestList({ incoming }: { incoming: boolean }) {
         <span className="kicker">
           {incoming ? "YOUR SHELF" : "YOUR BORROWING"}
         </span>
-        <h1>
-          {incoming ? "Your lending inbox." : "A little give. A little borrow."}
-        </h1>
+        <h1>My activity</h1>
         <p>
           {incoming
             ? "Respond to neighbors who want to borrow your items."
-            : "Follow your requests and return borrowed items."}
+            : "Everything you’re borrowing, all in one place."}
         </p>
       </div>
       <nav className="activity-tabs" aria-label="Activity views">
@@ -340,13 +347,13 @@ export function RequestList({ incoming }: { incoming: boolean }) {
           href="/dashboard/requests"
           aria-current={!incoming ? "page" : undefined}
         >
-          Things I’m borrowing
+          <ArrowDownLeft size={18} /> Things I’m borrowing
         </Link>
         <Link
           href="/dashboard/incoming"
           aria-current={incoming ? "page" : undefined}
         >
-          Requests for my items
+          <ArrowUpRight size={18} /> Requests for my items
         </Link>
       </nav>
       <div className="activity-controls">
@@ -467,51 +474,96 @@ export function RequestList({ incoming }: { incoming: boolean }) {
                     className="negotiation-timeline"
                     aria-label="Price conversation"
                   >
-                    <strong>Price conversation</strong>
+                    <div className="negotiation-heading">
+                      <span className="negotiation-icon">₹</span>
+                      <div>
+                        <strong>Price conversation</strong>
+                        <p>Offers and responses, in order</p>
+                      </div>
+                    </div>
                     <ol>
                       <li>
-                        Borrower offered {money(row.borrowerOfferMinor)} / day{" "}
+                        <span>
+                          Borrower offered{" "}
+                          <strong>{money(row.borrowerOfferMinor)} / day</strong>
+                        </span>
                         <time dateTime={new Date(row.createdAt).toISOString()}>
                           {new Date(row.createdAt).toLocaleString("en-IN")}
                         </time>
                       </li>
                       {row.priceDecision === "accepted_offer" && (
                         <li>
-                          Lender accepted the offer ·{" "}
-                          {new Date(row.lenderRespondedAt!).toLocaleString(
-                            "en-IN",
-                          )}
+                          <span>Lender accepted the offer</span>
+                          <time
+                            dateTime={new Date(
+                              row.lenderRespondedAt!,
+                            ).toISOString()}
+                          >
+                            {new Date(row.lenderRespondedAt!).toLocaleString(
+                              "en-IN",
+                            )}
+                          </time>
                         </li>
                       )}
                       {row.priceDecision === "countered" && (
                         <li>
-                          Lender suggested {money(row.lenderCounterMinor!)} /
-                          day ·{" "}
-                          {new Date(row.lenderRespondedAt!).toLocaleString(
-                            "en-IN",
-                          )}
+                          <span>
+                            Lender suggested{" "}
+                            <strong>
+                              {money(row.lenderCounterMinor!)} / day
+                            </strong>
+                          </span>
+                          <time
+                            dateTime={new Date(
+                              row.lenderRespondedAt!,
+                            ).toISOString()}
+                          >
+                            {new Date(row.lenderRespondedAt!).toLocaleString(
+                              "en-IN",
+                            )}
+                          </time>
                         </li>
                       )}
                       {row.priceDecision === "kept_listed_price" && (
                         <li>
-                          Lender kept the listed price of{" "}
-                          {money(row.listedRateMinor)} / day ·{" "}
-                          {new Date(row.lenderRespondedAt!).toLocaleString(
-                            "en-IN",
-                          )}
+                          <span>
+                            Lender kept the listed price of{" "}
+                            <strong>{money(row.listedRateMinor)} / day</strong>
+                          </span>
+                          <time
+                            dateTime={new Date(
+                              row.lenderRespondedAt!,
+                            ).toISOString()}
+                          >
+                            {new Date(row.lenderRespondedAt!).toLocaleString(
+                              "en-IN",
+                            )}
+                          </time>
                         </li>
                       )}
                       {row.status === "approved" && row.borrowerRespondedAt && (
                         <li>
-                          Borrower accepted {money(row.rateMinor)} / day ·{" "}
-                          {new Date(row.borrowerRespondedAt).toLocaleString(
-                            "en-IN",
-                          )}
+                          <span>
+                            Borrower accepted{" "}
+                            <strong>{money(row.rateMinor)} / day</strong>
+                          </span>
+                          <time
+                            dateTime={new Date(
+                              row.borrowerRespondedAt,
+                            ).toISOString()}
+                          >
+                            {new Date(row.borrowerRespondedAt).toLocaleString(
+                              "en-IN",
+                            )}
+                          </time>
                         </li>
                       )}
                       {row.status === "approved" && (
                         <li>
-                          Rental confirmed · {money(row.totalMinor)} total
+                          <span>
+                            Rental confirmed ·{" "}
+                            <strong>{money(row.totalMinor)} total</strong>
+                          </span>
                         </li>
                       )}
                       {row.status === "cancelled" && (
@@ -720,12 +772,25 @@ export function RequestList({ incoming }: { incoming: boolean }) {
 export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
   const loan = useQuery(api.loans.detail, { loanId });
   const automation = useQuery(api.automation.loanActivity, { loanId });
+  const savedDetails = useQuery(api.handover.mine);
   const report = useMutation(api.loans.reportReturn),
     confirm = useMutation(api.loans.confirmReturn),
     save = useMutation(api.loans.saveHandover);
   const [phone, setPhone] = useState(""),
     [pickupPoint, setPickupPoint] = useState(""),
     [instructions, setInstructions] = useState(""),
+    [returnInstructions, setReturnInstructions] = useState(""),
+    [selected, setSelected] = useState<string[] | null>(null),
+    [sharedSnapshot, setSharedSnapshot] = useState<{
+      values: {
+        phone: string;
+        pickupPoint: string;
+        instructions: string;
+        returnInstructions: string;
+      };
+      previousUpdatedAt: number | null;
+    } | null>(null),
+    [sharedNotice, setSharedNotice] = useState(""),
     [editing, setEditing] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
@@ -738,6 +803,39 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
       </div>
     );
   const mine = loan.details.find((d) => d.isMine);
+  const keys = [
+    "phone",
+    "pickupPoint",
+    "instructions",
+    "returnInstructions",
+  ] as const;
+  const baseline = (sharedSnapshot &&
+  sharedSnapshot.previousUpdatedAt === (mine?.updatedAt ?? null)
+    ? sharedSnapshot.values
+    : null) ?? {
+    phone: mine?.phone ?? "",
+    pickupPoint: mine?.pickupPoint ?? "",
+    instructions: mine?.instructions ?? "",
+    returnInstructions: mine?.returnInstructions ?? "",
+  };
+  const checked =
+    selected ??
+    keys.filter(
+      (key) => !!savedDetails?.[key] && savedDetails[key] === baseline[key],
+    );
+  const proposed = {
+    phone: checked.includes("phone") ? (savedDetails?.phone ?? "") : "",
+    pickupPoint: checked.includes("pickupPoint")
+      ? (savedDetails?.pickupPoint ?? "")
+      : "",
+    instructions: checked.includes("instructions")
+      ? (savedDetails?.instructions ?? "")
+      : "",
+    returnInstructions: checked.includes("returnInstructions")
+      ? (savedDetails?.returnInstructions ?? "")
+      : "",
+  };
+  const hasChanges = keys.some((key) => proposed[key] !== baseline[key]);
   async function action(kind: "report" | "confirm" | "save") {
     setBusy(true);
     setMessage("");
@@ -745,7 +843,18 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
       if (kind === "report") await report({ loanId });
       else if (kind === "confirm") await confirm({ loanId });
       else {
-        await save({ loanId, phone, pickupPoint, instructions });
+        await save({
+          loanId,
+          phone,
+          pickupPoint,
+          instructions,
+          returnInstructions,
+        });
+        setSharedSnapshot(null);
+        setSelected(null);
+        setSharedNotice(
+          "Your handover details have been updated for this loan.",
+        );
         setEditing(false);
       }
     } catch (err) {
@@ -765,14 +874,18 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
       <div className="loan-hero">
         {loan.coverUrl && <img src={loan.coverUrl} alt="" />}
         <div>
-          <span className="kicker">CONFIRMED LOAN</span>
+          <span className="kicker">
+            CONFIRMED LOAN ·{" "}
+            {loan.isLender ? "YOU ARE THE LENDER" : "YOU ARE THE BORROWER"}
+          </span>
           <h1>{loan.toolName}</h1>
           <span
             className={`request-status status-${loan.overdue ? "overdue" : loan.status}`}
           >
             {statusLabel(loan.status, loan.overdue)}
           </span>
-          <p>
+          <p className="loan-date-line">
+            <CalendarDays size={16} />
             {dateLabel(loan.startDate)} – {dateLabel(loan.endDate)} ·{" "}
             {loan.days} {loan.days === 1 ? "day" : "days"}
           </p>
@@ -792,8 +905,16 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
         </p>
       )}
       <div className="loan-columns">
-        <section className="loan-card">
-          <h2>Return</h2>
+        <section className="loan-card loan-return-card">
+          <div className="loan-card-heading">
+            <span className="loan-heading-icon">
+              <RotateCcw size={20} />
+            </span>
+            <div>
+              <span className="loan-card-eyebrow">THE NEXT STEP</span>
+              <h2>Return</h2>
+            </div>
+          </div>
           {loan.status === "returned" ? (
             <p>Return confirmed. This loan is complete.</p>
           ) : loan.isLender ? (
@@ -832,12 +953,25 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
             </>
           )}
         </section>
-        <section className="loan-card">
-          <h2>Handover details</h2>
+        <section className="loan-card loan-handover-card">
+          <div className="loan-card-heading">
+            <span className="loan-heading-icon">
+              <LockKeyhole size={20} />
+            </span>
+            <div>
+              <span className="loan-card-eyebrow">JUST BETWEEN YOU TWO</span>
+              <h2>Handover details</h2>
+            </div>
+          </div>
           <p>
             Only you and the other participant can see details shared here. A
             pickup point is enough; a home address is optional.
           </p>
+          {sharedNotice && (
+            <p className="handover-success" role="status">
+              <Check size={17} /> {sharedNotice}
+            </p>
+          )}
           {loan.details.length ? (
             loan.details.map((d) => (
               <div className="handover-entry" key={d.authorId}>
@@ -845,18 +979,98 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
                 {d.phone && <p>Phone: {d.phone}</p>}
                 {d.pickupPoint && <p>Pickup point: {d.pickupPoint}</p>}
                 {d.instructions && <p>Instructions: {d.instructions}</p>}
+                {d.returnInstructions && (
+                  <p>Return instructions: {d.returnInstructions}</p>
+                )}
               </div>
             ))
           ) : (
-            <p>No details shared yet. Agree on a convenient handover point.</p>
+            <div className="handover-empty">
+              <strong>Nothing shared yet</strong>
+              <p>Share a way to connect or a convenient pickup point.</p>
+            </div>
           )}
+          {!editing &&
+            savedDetails &&
+            Object.values(savedDetails).some(Boolean) && (
+              <div className="share-saved-details">
+                <h3>Share your saved details</h3>
+                <p>
+                  Choose what to share with{" "}
+                  {loan.isLender ? loan.borrowerName : loan.lenderName} for this
+                  loan. Saving replaces your previously shared details.
+                </p>
+                {(
+                  [
+                    ["phone", "Contact phone"],
+                    ["pickupPoint", "Pickup point"],
+                    ["instructions", "Pickup instructions"],
+                    ["returnInstructions", "Return instructions"],
+                  ] as const
+                ).map(
+                  ([key, label]) =>
+                    savedDetails[key] && (
+                      <label key={key} className="share-detail-option">
+                        <input
+                          type="checkbox"
+                          disabled={busy}
+                          checked={checked.includes(key)}
+                          onChange={(e) => {
+                            setSharedNotice("");
+                            setSelected(
+                              e.target.checked
+                                ? [...checked, key]
+                                : checked.filter((item) => item !== key),
+                            );
+                          }}
+                        />
+                        <span>
+                          <strong>{label}</strong>
+                          <small>{savedDetails[key]}</small>
+                        </span>
+                      </label>
+                    ),
+                )}
+                <button
+                  type="button"
+                  className="button-primary"
+                  disabled={busy || !hasChanges}
+                  onClick={() => {
+                    setBusy(true);
+                    setMessage("");
+                    void save({ loanId, ...proposed })
+                      .then(() => {
+                        setSharedSnapshot({
+                          values: proposed,
+                          previousUpdatedAt: mine?.updatedAt ?? null,
+                        });
+                        setSharedNotice(
+                          checked.length
+                            ? `Shared with ${loan.isLender ? loan.borrowerName : loan.lenderName} for this loan.`
+                            : "Your details are no longer shared for this loan.",
+                        );
+                      })
+                      .catch((err: Error) => setMessage(err.message))
+                      .finally(() => setBusy(false));
+                  }}
+                >
+                  {busy
+                    ? "Saving…"
+                    : mine || sharedSnapshot
+                      ? "Update shared details"
+                      : "Share selected details"}
+                </button>
+              </div>
+            )}
           {!editing ? (
             <button
               type="button"
+              className="handover-edit-button"
               onClick={() => {
                 setPhone(mine?.phone ?? "");
                 setPickupPoint(mine?.pickupPoint ?? "");
                 setInstructions(mine?.instructions ?? "");
+                setReturnInstructions(mine?.returnInstructions ?? "");
                 setEditing(true);
               }}
             >
@@ -874,6 +1088,7 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
                 Contact phone (optional)
                 <input
                   type="tel"
+                  placeholder="e.g. +91 98765 43210"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   maxLength={20}
@@ -882,78 +1097,126 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
               <label>
                 Pickup point (optional)
                 <input
+                  placeholder="e.g. Main lobby or security desk"
                   value={pickupPoint}
                   onChange={(e) => setPickupPoint(e.target.value)}
                   maxLength={200}
                 />
               </label>
               <label>
-                Pickup and return instructions (optional)
+                Pickup instructions (optional)
                 <textarea
+                  placeholder="e.g. Please call when you arrive"
                   value={instructions}
                   onChange={(e) => setInstructions(e.target.value)}
                   maxLength={500}
                 />
               </label>
-              <button type="submit" className="button-primary" disabled={busy}>
-                Save details
-              </button>
-              <button type="button" onClick={() => setEditing(false)}>
-                Cancel
-              </button>
+              <label>
+                Return instructions (optional)
+                <textarea
+                  placeholder="e.g. Leave it with the security desk"
+                  value={returnInstructions}
+                  onChange={(e) => setReturnInstructions(e.target.value)}
+                  maxLength={500}
+                />
+              </label>
+              <div className="handover-actions">
+                <button
+                  type="submit"
+                  className="button-primary"
+                  disabled={busy}
+                >
+                  Save details
+                </button>
+                <button type="button" onClick={() => setEditing(false)}>
+                  Cancel
+                </button>
+              </div>
               <p>Clear all fields and save to remove your details.</p>
             </form>
           )}
         </section>
+        <section className="loan-card loan-history">
+          <div className="loan-card-heading">
+            <span className="loan-heading-icon">
+              <ClipboardList size={20} />
+            </span>
+            <div>
+              <span className="loan-card-eyebrow">YOUR LOAN JOURNEY</span>
+              <h2>Activity</h2>
+            </div>
+          </div>
+          <ol>
+            <li>
+              <span className="timeline-dot">
+                <Check size={13} />
+              </span>
+              <strong>Request sent</strong>
+              <time>
+                {new Date(loan.requestCreatedAt).toLocaleString("en-IN")}
+              </time>
+            </li>
+            <li>
+              <span className="timeline-dot">
+                <Check size={13} />
+              </span>
+              <strong>Approved</strong>
+              <time>{new Date(loan.approvedAt).toLocaleString("en-IN")}</time>
+            </li>
+            {loan.returnReportedAt && (
+              <li>
+                <span className="timeline-dot">
+                  <Check size={13} />
+                </span>
+                <strong>Borrower reported return</strong>
+                <time>
+                  {new Date(loan.returnReportedAt).toLocaleString("en-IN")}
+                </time>
+              </li>
+            )}
+            {loan.returnedAt && (
+              <li>
+                <span className="timeline-dot">
+                  <Check size={13} />
+                </span>
+                <strong>Lender confirmed return</strong>
+                <time>{new Date(loan.returnedAt).toLocaleString("en-IN")}</time>
+              </li>
+            )}
+          </ol>
+          {automation && automation.length > 0 && (
+            <>
+              <h3>Notification delivery</h3>
+              <p className="delivery-explanation">
+                These show notification delivery, not the status of your loan or
+                return.
+              </p>
+              <ol className="automation-list">
+                {automation.map((row) => (
+                  <li key={row.id}>
+                    <strong>{row.message}</strong>
+                    <span className={`automation-state state-${row.status}`}>
+                      {row.status === "delivered" || row.status === "sent"
+                        ? "Sent"
+                        : row.status === "retry_pending"
+                          ? "Retry pending"
+                          : row.status === "failed"
+                            ? "Delivery failed"
+                            : row.status}
+                    </span>
+                    <time dateTime={new Date(row.at).toISOString()}>
+                      {new Date(row.at).toLocaleString("en-IN", {
+                        timeZone: "Asia/Kolkata",
+                      })}
+                    </time>
+                  </li>
+                ))}
+              </ol>
+            </>
+          )}
+        </section>
       </div>
-      <section className="loan-card loan-history">
-        <h2>Activity</h2>
-        <ol>
-          <li>
-            Request sent ·{" "}
-            {new Date(loan.requestCreatedAt).toLocaleString("en-IN")}
-          </li>
-          <li>
-            Approved · {new Date(loan.approvedAt).toLocaleString("en-IN")}
-          </li>
-          {loan.returnReportedAt && (
-            <li>
-              Borrower reported return ·{" "}
-              {new Date(loan.returnReportedAt).toLocaleString("en-IN")}
-            </li>
-          )}
-          {loan.returnedAt && (
-            <li>
-              Lender confirmed return ·{" "}
-              {new Date(loan.returnedAt).toLocaleString("en-IN")}
-            </li>
-          )}
-        </ol>
-        {automation && automation.length > 0 && (
-          <>
-            <h3>Automation</h3>
-            <ol className="automation-list">
-              {automation.map((row) => (
-                <li key={row.id}>
-                  <strong>{row.message}</strong>
-                  <span className={`automation-state state-${row.status}`}>
-                    {row.status === "delivered" || row.status === "sent"
-                      ? "Sent"
-                      : row.status === "retry_pending"
-                        ? "Retry pending"
-                        : row.status}
-                  </span>
-                  <time dateTime={new Date(row.at).toISOString()}>
-                    {new Date(row.at).toLocaleString("en-IN", {
-                      timeZone: "Asia/Kolkata",
-                    })}
-                  </time>
-                </li>
-              ))}
-            </ol>
-          </>
-        )}
-      </section>
     </article>
   );
 }

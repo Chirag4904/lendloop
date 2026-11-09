@@ -154,12 +154,20 @@ export default defineSchema({
     ])
     .index("by_borrower", ["borrowerId"])
     .index("by_lender", ["lenderId"]),
+  savedHandoverDetails: defineTable({
+    userId: v.id("users"),
+    phone: v.string(),
+    pickupPoint: v.string(),
+    instructions: v.string(),
+    returnInstructions: v.string(),
+  }).index("by_user", ["userId"]),
   loanHandoverDetails: defineTable({
     loanId: v.id("loans"),
     authorId: v.id("users"),
     phone: v.optional(v.string()),
     pickupPoint: v.optional(v.string()),
     instructions: v.optional(v.string()),
+    returnInstructions: v.optional(v.string()),
     updatedAt: v.number(),
   }).index("by_loan_and_author", ["loanId", "authorId"]),
   uploadTickets: defineTable({

@@ -283,6 +283,53 @@ test("only participants see private handover; borrower reports, lender confirms,
   });
 });
 
+test("saved handover details remain private until selected for a loan", async () => {
+  const { t, alice, bob, charlie, toolId } = await setup();
+  await alice.mutation(api.handover.save, {
+    phone: "+911234567890",
+    pickupPoint: "Lobby",
+    instructions: "Call on arrival",
+    returnInstructions: "Leave with security",
+  });
+  expect(await bob.query(api.handover.mine, {})).toBeNull();
+  await expect(t.query(api.handover.mine, {})).rejects.toThrow(
+    "Authentication",
+  );
+  const requestId = await bob.mutation(api.requests.create, {
+    toolId,
+    startDate: "2026-11-12",
+    endDate: "2026-11-14",
+  });
+  const loanId = await alice.mutation(api.requests.approve, { requestId });
+  expect((await bob.query(api.loans.detail, { loanId }))?.details).toHaveLength(
+    0,
+  );
+  await alice.mutation(api.loans.saveHandover, {
+    loanId,
+    phone: "",
+    pickupPoint: "Lobby",
+    instructions: "",
+    returnInstructions: "Leave with security",
+  });
+  const shared = (await bob.query(api.loans.detail, { loanId }))!.details[0];
+  expect(shared).toMatchObject({
+    phone: null,
+    pickupPoint: "Lobby",
+    instructions: null,
+    returnInstructions: "Leave with security",
+  });
+  expect(await charlie.query(api.loans.detail, { loanId })).toBeNull();
+  await alice.mutation(api.handover.save, {
+    phone: "",
+    pickupPoint: "New lobby",
+    instructions: "",
+    returnInstructions: "",
+  });
+  expect(
+    (await bob.query(api.loans.detail, { loanId }))!.details[0].pickupPoint,
+  ).toBe("Lobby");
+});
+
 test("completed loans allow a fresh request for the same future dates", async () => {
   const { alice, bob, toolId } = await setup();
   const dates = { toolId, startDate: "2026-11-12", endDate: "2026-11-14" };

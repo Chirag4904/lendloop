@@ -50,6 +50,13 @@ await page.route("**/__atlas-qa?*", (r) =>
   }),
 );
 await mkdir("artifacts/atlas", { recursive: true });
+await page.goto("http://localhost:3000/__atlas-qa?view=loan-shared");
+assert(await page.getByLabel(/Contact phone/).isChecked());
+assert(
+  await page
+    .getByRole("button", { name: "Update shared details" })
+    .isDisabled(),
+);
 for (const width of [360, 390, 768, 1280, 1440]) {
   await page.setViewportSize({ width, height: 1000 });
   for (const view of [
@@ -58,13 +65,59 @@ for (const width of [360, 390, 768, 1280, 1440]) {
     "requests",
     "incoming",
     "detail",
+    "detail-owner",
     "notifications",
     "profile",
+    "loan",
+    "loan-borrower",
     "admin",
     "admin-listings",
+    "listing-new",
+    "listing-edit",
   ]) {
     await page.goto(`http://localhost:3000/__atlas-qa?view=${view}`);
     await page.locator("h1").waitFor();
+    if (view === "detail-owner") {
+      assert.equal(
+        await page
+          .getByRole("link", { name: "Edit listing" })
+          .getAttribute("href"),
+        "/dashboard/listings/tool0/edit",
+      );
+      assert.equal(
+        await page
+          .getByRole("heading", { name: "How borrowing works" })
+          .count(),
+        0,
+      );
+    }
+    if (view === "loan" || view === "loan-borrower") {
+      assert(
+        await page
+          .getByRole("heading", { name: "Notification delivery" })
+          .isVisible(),
+      );
+      assert(await page.getByText("Delivery failed").isVisible());
+      const share = page.getByRole("button", {
+        name: "Share selected details",
+      });
+      assert(await share.isDisabled());
+      await page.getByLabel(/Contact phone/).check();
+      assert(await share.isEnabled());
+      await share.click();
+      assert(
+        await page
+          .getByRole("status")
+          .filter({ hasText: "Shared with" })
+          .isVisible(),
+      );
+      assert(await page.getByLabel(/Contact phone/).isChecked());
+      assert(
+        await page
+          .getByRole("button", { name: "Update shared details" })
+          .isDisabled(),
+      );
+    }
     await page.evaluate(() => document.fonts.ready);
     assert(
       await page.evaluate(
@@ -84,6 +137,45 @@ for (const width of [360, 390, 768, 1280, 1440]) {
       path: `artifacts/atlas/${view}-${width}.png`,
       fullPage: true,
     });
+    if (view === "profile" || view === "loan" || view === "loan-borrower") {
+      await page
+        .getByRole("button", {
+          name: view === "profile" ? "Edit saved details" : "Edit my details",
+        })
+        .click();
+      const fields = page.locator(
+        view === "profile"
+          ? ".profile-details-form input, .profile-details-form textarea"
+          : ".handover-form input, .handover-form textarea",
+      );
+      assert.equal(await fields.count(), 4);
+      for (const field of await fields.all()) {
+        const style = await field.evaluate((el) => {
+          const s = getComputedStyle(el);
+          return {
+            width: parseFloat(s.borderTopWidth),
+            color: s.borderTopColor,
+            height: el.getBoundingClientRect().height,
+          };
+        });
+        assert(
+          style.width >= 1 &&
+            style.color !== "rgba(0, 0, 0, 0)" &&
+            style.height >= 44,
+          `${view}: editable field must have a visible border and usable height`,
+        );
+      }
+      assert(
+        await page.evaluate(
+          () => document.documentElement.scrollWidth <= innerWidth,
+        ),
+        `${view} edit form overflows at ${width}`,
+      );
+      await page.screenshot({
+        path: `artifacts/atlas/${view}-editing-${width}.png`,
+        fullPage: true,
+      });
+    }
     if (view === "detail" && width === 390) {
       await page.getByText("Choose dates on a calendar").click();
       const box = await page.locator(".calendar-content").boundingBox();
@@ -238,8 +330,170 @@ assert.equal(await page.locator(".admin-listing").count(), 3);
 for (const row of await page.locator(".admin-listing").all()) {
   assert((await row.locator(".admin-listing-info").boundingBox()).width > 100);
 }
+for (const width of [390, 1280]) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto("http://localhost:3000/__atlas-qa?view=explore");
+  const nav = page.getByRole("navigation", {
+    name: width < 1000 ? "Mobile dashboard navigation" : "Dashboard navigation",
+  });
+  await page.waitForFunction(() =>
+    document.querySelector('nav[data-ready="true"]'),
+  );
+  const marker = nav.locator(".nav-indicator");
+  const first = await marker.boundingBox();
+  await page.evaluate(() => {
+    history.pushState({}, "", "/__atlas-qa?view=requests");
+    dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await marker.evaluate(
+    (el) =>
+      new Promise((resolve, reject) => {
+        let attempts = 0;
+        function check() {
+          if (
+            el
+              .getAnimations()
+              .some((animation) => animation.playState === "running")
+          )
+            return resolve();
+          if (++attempts > 12)
+            return reject(new Error("Navigation indicator did not animate"));
+          requestAnimationFrame(check);
+        }
+        requestAnimationFrame(check);
+      }),
+  );
+  await page.waitForTimeout(300);
+  const destination = await nav
+    .getByRole("link", { name: "My Activity" })
+    .boundingBox();
+  const arrived = await marker.boundingBox();
+  assert(
+    first &&
+      arrived &&
+      destination &&
+      arrived.x > first.x &&
+      Math.abs(arrived.x - destination.x) < 1,
+  );
+  await page.evaluate(() => {
+    history.pushState({}, "", "/__atlas-qa?view=incoming");
+    dispatchEvent(new PopStateEvent("popstate"));
+  });
+  assert.equal(
+    await nav
+      .getByRole("link", { name: "My Activity" })
+      .getAttribute("aria-current"),
+    "page",
+  );
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  assert.equal(
+    await marker.evaluate((el) => getComputedStyle(el).transitionDuration),
+    "0s",
+  );
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+  const listing = nav.getByRole("link", { name: "My Listings" });
+  await listing.evaluate((el) =>
+    el.addEventListener("click", (event) => event.preventDefault(), {
+      once: true,
+    }),
+  );
+  await listing.focus();
+  await page.keyboard.press("Enter");
+  assert.equal(await nav.getAttribute("data-instant"), "true");
+  assert.equal(
+    await marker.evaluate((el) => getComputedStyle(el).transitionDuration),
+    "0s",
+  );
+  await page.evaluate(() => {
+    history.pushState({}, "", "/__atlas-qa?view=listings");
+    dispatchEvent(new PopStateEvent("popstate"));
+  });
+  await page.waitForFunction(() =>
+    document.querySelector(
+      'a[href="/dashboard/listings"][aria-current="page"]',
+    ),
+  );
+}
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.goto("http://localhost:3000/__atlas-qa?view=listing-new");
+await page.getByRole("button", { name: "Preview listing" }).click();
+assert(await page.getByRole("alert").isVisible());
+await page.getByLabel("Item name").fill("A useful drill");
+await page.getByLabel("Description").fill("A drill for small projects.");
+assert(
+  await page
+    .getByRole("complementary", { name: "Live listing preview" })
+    .getByText("A useful drill")
+    .isVisible(),
+);
+await page.getByLabel("Paid rental").check();
+await page.getByLabel("Daily rate in INR").fill("175.50");
+const descriptionBox = await page
+  .locator(".studio-preview-content p")
+  .boundingBox();
+const priceBox = await page.locator(".studio-preview-price").boundingBox();
+assert(
+  descriptionBox &&
+    priceBox &&
+    priceBox.y - (descriptionBox.y + descriptionBox.height) >= 16,
+  "Preview price needs breathing room",
+);
+assert.equal(
+  await page
+    .locator(".studio-preview-price strong")
+    .evaluate((el) => getComputedStyle(el).backgroundColor),
+  "rgba(0, 0, 0, 0)",
+);
+assert(
+  await page
+    .getByRole("complementary", { name: "Live listing preview" })
+    .getByText("₹175.50 / day")
+    .isVisible(),
+);
+await page
+  .locator('input[type="file"]')
+  .first()
+  .setInputFiles("public/images/demo-rizvi/drill.jpg");
+await page.getByAltText("Listing cover preview").waitFor();
+await page
+  .locator('input[type="file"]')
+  .first()
+  .setInputFiles("public/images/demo-rizvi/ladder.jpg");
+for (const width of [360, 768, 1280, 1600]) {
+  await page.setViewportSize({ width, height: 900 });
+  const firstPhoto = await page.locator(".photo-tile").nth(0).boundingBox();
+  const secondPhoto = await page.locator(".photo-tile").nth(1).boundingBox();
+  assert(
+    firstPhoto &&
+      secondPhoto &&
+      Math.abs(firstPhoto.y - secondPhoto.y) < 1 &&
+      secondPhoto.x - (firstPhoto.x + firstPhoto.width) <= 11,
+    `Photo gap at ${width}px`,
+  );
+}
+await page.setViewportSize({ width: 1280, height: 900 });
+await page.getByRole("button", { name: "Set photo 2 as cover" }).click();
+assert.equal(
+  await page.getByAltText("Listing cover preview").getAttribute("src"),
+  await page.getByAltText("Listing photo 1").getAttribute("src"),
+);
+await page.getByRole("button", { name: "Remove photo 2" }).click();
+assert.equal(await page.locator(".photo-tile").count(), 1);
+await page.getByLabel("Daily rate in INR").fill("0");
+await page.getByRole("button", { name: "Preview listing" }).click();
+assert(await page.getByRole("alert").isVisible());
+await page.getByLabel("Daily rate in INR").fill("175.50");
+await page.getByRole("button", { name: "Preview listing" }).click();
+assert(
+  await page.getByRole("heading", { name: "Review your listing" }).isVisible(),
+);
+await page.getByRole("button", { name: "Back to edit" }).click();
+assert.equal(await page.getByLabel("Item name").inputValue(), "A useful drill");
+await page.goto("http://localhost:3000/__atlas-qa?view=listing-edit");
+assert.equal(await page.getByLabel("Item name").inputValue(), "Cordless drill");
+assert(await page.getByAltText("Listing cover preview").isVisible());
 assert.deepEqual(errors, []);
 console.log(
-  "45 viewport/page renders + filter/search/completed checks passed. Fixture UI only.",
+  "70 viewport/page renders + edit form and sharing checks passed. Fixture UI only.",
 );
 await browser.close();

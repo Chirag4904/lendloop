@@ -10,6 +10,7 @@ const privateDetails = v.object({
   phone: v.union(v.string(), v.null()),
   pickupPoint: v.union(v.string(), v.null()),
   instructions: v.union(v.string(), v.null()),
+  returnInstructions: v.union(v.string(), v.null()),
   updatedAt: v.number(),
 });
 const loanView = v.object({
@@ -85,6 +86,7 @@ export const detail = query({
           phone: d.phone ?? null,
           pickupPoint: d.pickupPoint ?? null,
           instructions: d.instructions ?? null,
+          returnInstructions: d.returnInstructions ?? null,
           updatedAt: d.updatedAt,
         })),
       ),
@@ -150,6 +152,7 @@ export const saveHandover = mutation({
     phone: v.string(),
     pickupPoint: v.string(),
     instructions: v.string(),
+    returnInstructions: v.optional(v.string()),
   },
   returns: v.null(),
   handler: async (ctx, args) => {
@@ -159,11 +162,13 @@ export const saveHandover = mutation({
       throw new Error("Loan unavailable");
     const phone = args.phone.trim(),
       pickupPoint = args.pickupPoint.trim(),
-      instructions = args.instructions.trim();
+      instructions = args.instructions.trim(),
+      returnInstructions = (args.returnInstructions ?? "").trim();
     if (
       (phone && !/^\+?[0-9 ()-]{7,20}$/.test(phone)) ||
       pickupPoint.length > 200 ||
-      instructions.length > 500
+      instructions.length > 500 ||
+      returnInstructions.length > 500
     )
       throw new Error("Check the handover details and try again");
     const existing = await ctx.db
@@ -172,13 +177,14 @@ export const saveHandover = mutation({
         q.eq("loanId", args.loanId).eq("authorId", me._id),
       )
       .unique();
-    if (!phone && !pickupPoint && !instructions) {
+    if (!phone && !pickupPoint && !instructions && !returnInstructions) {
       if (existing) await ctx.db.delete(existing._id);
     } else if (existing) {
       await ctx.db.patch(existing._id, {
         phone: phone || undefined,
         pickupPoint: pickupPoint || undefined,
         instructions: instructions || undefined,
+        returnInstructions: returnInstructions || undefined,
         updatedAt: Date.now(),
       });
     } else {
@@ -188,6 +194,7 @@ export const saveHandover = mutation({
         phone: phone || undefined,
         pickupPoint: pickupPoint || undefined,
         instructions: instructions || undefined,
+        returnInstructions: returnInstructions || undefined,
         updatedAt: Date.now(),
       });
     }

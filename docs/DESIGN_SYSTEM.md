@@ -57,3 +57,7 @@ The application uses the same Midnight Ink, Warm Paper, Electric Lime, Space Gro
 Search, category chips, society scope, price, sorting and reset are available directly on the Explore page. Mobile category chips scroll within their own region. Request progress reflects real states; it does not invent a pickup/borrowed event. Completed returns filters the currently returned loans in each existing request list. Existing confirmations, negotiations and return actions remain intact.
 
 Profile displays only the current account and administrator-assigned trust flags. Society labels reuse the existing bounded directory search; if the selected society is outside its first 20 results or inactive, the UI honestly falls back to “Your selected society.” A backend lookup was deliberately not introduced. Notification delivery and sent states retain distinct labels. See [internal UI QA](ATLAS_QA.md).
+
+## Listing Studio
+
+Create and edit use the same Listing Studio in `components/listing-form.tsx`: essentials, optional photos and terms beside a live preview. The preview uses only the entered details and the current actual cover image; when there is no photo it displays a neutral placeholder. On smaller screens it follows the form. The existing validation, review, upload retry, camera, photo ordering and save flow remain authoritative.

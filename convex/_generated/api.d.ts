@@ -16,6 +16,7 @@ import type * as borrowing from "../borrowing.js";
 import type * as crons from "../crons.js";
 import type * as demoRizvi from "../demoRizvi.js";
 import type * as devSeed from "../devSeed.js";
+import type * as handover from "../handover.js";
 import type * as http from "../http.js";
 import type * as loans from "../loans.js";
 import type * as photos from "../photos.js";
@@ -41,6 +42,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   demoRizvi: typeof demoRizvi;
   devSeed: typeof devSeed;
+  handover: typeof handover;
   http: typeof http;
   loans: typeof loans;
   photos: typeof photos;

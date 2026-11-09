@@ -62,7 +62,15 @@ export const UserButton = () => (
 );
 export const useRouter = () => ({ replace: () => {} });
 export const usePathname = () => {
-  const v = new URLSearchParams(location.search).get("view");
+  const search = React.useSyncExternalStore(
+    (callback) => {
+      window.addEventListener("popstate", callback);
+      return () => window.removeEventListener("popstate", callback);
+    },
+    () => location.search,
+    () => "?view=explore",
+  );
+  const v = new URLSearchParams(search).get("view");
   return v === "explore"
     ? "/dashboard"
     : v === "admin"
@@ -80,8 +88,9 @@ export default function Link({
     </a>
   );
 }
-export function useMutation() {
+export function useMutation(ref: never) {
   return async () => {
+    if (getFunctionName(ref) === "loans:saveHandover") return null;
     throw new Error("Mutations disabled in visual QA");
   };
 }
@@ -101,9 +110,62 @@ export function usePaginatedQuery(ref: never) {
       : [];
   return { results, status: "Exhausted", loadMore: () => {} };
 }
-export function useQuery(ref: never, args?: Record<string, unknown>) {
+export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
   const name = getFunctionName(ref);
+  if (args === "skip") return undefined;
   if (name === "users:me") return profile;
+  if (name === "handover:mine")
+    return {
+      phone: "+91 98765 43210",
+      pickupPoint: "Lobby",
+      instructions: "Call on arrival",
+      returnInstructions: "Leave with security",
+    };
+  if (name === "automation:loanActivity")
+    return [
+      {
+        id: "event0",
+        message: "return · confirmed",
+        at: 1794200000000,
+        status: "failed",
+      },
+    ];
+  if (name === "loans:detail")
+    return {
+      id: "loan0",
+      toolName: "Cordless drill",
+      coverUrl: items[0].photos[0].url,
+      borrowerName: "Rohan",
+      lenderName: "Asha",
+      isLender:
+        new URLSearchParams(location.search).get("view") !== "loan-borrower",
+      startDate: "2026-11-09",
+      endDate: "2026-11-12",
+      days: 4,
+      rateMinor: 15000,
+      totalMinor: 60000,
+      status: "reserved",
+      overdue: false,
+      requestCreatedAt: 1794200000000,
+      approvedAt: 1794200000000,
+      returnReportedAt: null,
+      returnedAt: null,
+      details:
+        new URLSearchParams(location.search).get("view") === "loan-shared"
+          ? [
+              {
+                authorId: "user0",
+                isMine: true,
+                authorName: "Asha",
+                phone: "+91 98765 43210",
+                pickupPoint: null,
+                instructions: null,
+                returnInstructions: null,
+                updatedAt: 1794200000000,
+              },
+            ]
+          : [],
+    };
   if (name === "societies:search")
     return [
       {
@@ -127,19 +189,21 @@ export function useQuery(ref: never, args?: Record<string, unknown>) {
   if (name === "tools:mine")
     return items.map((x, i) => ({ ...x, isOwner: true, active: i !== 2 }));
   if (name === "tools:detail")
-    return new URLSearchParams(location.search).get("view") === "detail-multi"
-      ? {
-          ...items[0],
-          photos: [
-            items[0].photos[0],
-            {
-              ...items[0].photos[0],
-              id: "photo-second",
-              url: "/images/demo-rizvi/ladder.jpg",
-            },
-          ],
-        }
-      : items[0];
+    return new URLSearchParams(location.search).get("view") === "detail-owner"
+      ? { ...items[0], isOwner: true }
+      : new URLSearchParams(location.search).get("view") === "detail-multi"
+        ? {
+            ...items[0],
+            photos: [
+              items[0].photos[0],
+              {
+                ...items[0].photos[0],
+                id: "photo-second",
+                url: "/images/demo-rizvi/ladder.jpg",
+              },
+            ],
+          }
+        : items[0];
   if (name === "requests:availability") return true;
   if (name === "requests:reservedDates")
     return args?.month === "2026-11"

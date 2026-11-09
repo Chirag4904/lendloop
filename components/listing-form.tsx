@@ -4,6 +4,13 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
+import {
+  ArrowRight,
+  Camera,
+  ImagePlus,
+  PackageOpen,
+  Upload,
+} from "lucide-react";
 import { CameraCapture } from "./camera-capture";
 import { prepareImage, uploadWithProgress } from "./image-processing";
 
@@ -236,242 +243,322 @@ function ListingEditor({
   }
   return (
     <section className="listing-editor">
-      <div className="app-heading">
-        <span className="kicker">YOUR SHELF</span>
-        <h1>{toolId ? "Edit your listing" : "List an item"}</h1>
+      <div className="app-heading studio-heading">
+        <span className="kicker">THE LISTING STUDIO</span>
+        <h1>
+          {toolId
+            ? "Make your listing feel like you."
+            : "Give something useful a new adventure."}
+        </h1>
         <p>
-          Share something useful with neighbors. You can change or unlist it
-          later.
+          {toolId
+            ? "Update the details your neighbors see. You can unlist it anytime."
+            : "Share something useful with neighbors. You can change or unlist it later."}
         </p>
       </div>
-      {review ? (
-        <div className="editor-card review-card">
-          <h2>Review your listing</h2>
-          <div className="listing-cover">
-            {photos[0] ? (
-              <img src={photos[0].url} alt="Cover preview" />
-            ) : (
-              <span>Photo optional</span>
-            )}
-          </div>
-          <span className="catalog-category">
-            {category} · {conditions[condition]}
-          </span>
-          <h3>{name}</h3>
-          <p>{description}</p>
-          <strong>{paid ? `₹${rate} / day` : "Free to borrow"}</strong>
-          <p>
-            Visible in your society when published. Date availability is not
-            checked yet.
-          </p>
-          <div className="editor-actions">
-            <button type="button" onClick={() => setReview(false)}>
-              Back to edit
-            </button>
-            <button
-              className="button-primary"
-              type="button"
-              onClick={() => void save()}
-              disabled={saving}
-            >
-              {saving ? "Saving…" : toolId ? "Save changes" : "Publish listing"}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="editor-card">
-          <div className="editor-grid">
-            <div>
-              <label className="field-label" htmlFor="item-name">
-                Item name
-              </label>
-              <input
-                id="item-name"
-                className="text-input"
-                maxLength={80}
-                required
-                placeholder="Bosch Cordless Drill"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
+      <div className={`studio-layout ${review ? "is-review" : ""}`}>
+        {review ? (
+          <div className="editor-card review-card">
+            <h2>Review your listing</h2>
+            <div className="listing-cover">
+              {photos[0] ? (
+                <img src={photos[0].url} alt="Cover preview" />
+              ) : (
+                <span>Photo optional</span>
+              )}
             </div>
-            <div>
-              <label className="field-label" htmlFor="item-category">
-                Category
-              </label>
-              <select
-                id="item-category"
-                className="text-input"
-                value={category}
-                onChange={(e) => setCategory(e.target.value as typeof category)}
+            <span className="catalog-category">
+              {category} · {conditions[condition]}
+            </span>
+            <h3>{name}</h3>
+            <p>{description}</p>
+            <strong>{paid ? `₹${rate} / day` : "Free to borrow"}</strong>
+            <p>
+              Visible in your society when published. Date availability is not
+              checked yet.
+            </p>
+            <div className="editor-actions">
+              <button type="button" onClick={() => setReview(false)}>
+                Back to edit
+              </button>
+              <button
+                className="button-primary"
+                type="button"
+                onClick={() => void save()}
+                disabled={saving}
               >
-                {categories.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="field-label" htmlFor="item-condition">
-                Condition
-              </label>
-              <select
-                id="item-condition"
-                className="text-input"
-                value={condition}
-                onChange={(e) =>
-                  setCondition(e.target.value as typeof condition)
-                }
-              >
-                {Object.entries(conditions)
-                  .filter(([key]) => key !== "new")
-                  .map(([key, label]) => (
-                    <option key={key} value={key}>
-                      {label}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
-          <label className="field-label" htmlFor="item-description">
-            Description
-          </label>
-          <textarea
-            id="item-description"
-            className="text-input"
-            rows={5}
-            maxLength={1000}
-            required
-            placeholder="What is included? Anything a neighbor should know?"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-          <div className="photo-section">
-            <h2>
-              Photos <small>Optional · up to 5</small>
-            </h2>
-            <div className="photo-actions">
-              <label className="upload-button">
-                Upload Photos
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  multiple
-                  onChange={(e) => {
-                    if (e.target.files) void add(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-              </label>
-              <button type="button" onClick={() => setCamera(true)}>
-                Take Photo
+                {saving
+                  ? "Saving…"
+                  : toolId
+                    ? "Save changes"
+                    : "Publish listing"}
               </button>
             </div>
-            <div
-              className="drop-zone"
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => {
-                e.preventDefault();
-                void add(e.dataTransfer.files);
-              }}
-            >
-              Drop JPEG, PNG or WebP photos here · 5 MB max each
-            </div>
-            {photos.length > 0 && (
-              <div className="photo-grid">
-                {photos.map((photo, index) => (
-                  <div className="photo-tile" key={photo.key}>
-                    <img src={photo.url} alt={`Listing photo ${index + 1}`} />
-                    {index === 0 && <span className="cover-tag">Cover</span>}
-                    <div className="photo-controls">
-                      {index > 0 && (
-                        <button
-                          type="button"
-                          onClick={() => makeCover(index)}
-                          aria-label={`Set photo ${index + 1} as cover`}
-                          title="Set as cover"
-                        >
-                          ★
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        disabled={index === 0}
-                        onClick={() => move(index, -1)}
-                        aria-label={`Move photo ${index + 1} earlier`}
-                      >
-                        ←
-                      </button>
-                      <button
-                        type="button"
-                        disabled={index === photos.length - 1}
-                        onClick={() => move(index, 1)}
-                        aria-label={`Move photo ${index + 1} later`}
-                      >
-                        →
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => remove(photo.key)}
-                        aria-label={`Remove photo ${index + 1}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                    {photo.progress !== undefined && (
-                      <small>Upload {photo.progress}%</small>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
           </div>
-          <div className="price-section">
-            <h2>Pricing</h2>
-            <label className="radio-row">
-              <input
-                type="radio"
-                name="price-kind"
-                checked={!paid}
-                onChange={() => setPaid(false)}
-              />{" "}
-              Free to borrow
-            </label>
-            <label className="radio-row">
-              <input
-                type="radio"
-                name="price-kind"
-                checked={paid}
-                onChange={() => setPaid(true)}
-              />{" "}
-              Paid rental
-            </label>
-            {paid && (
+        ) : (
+          <div className="editor-card">
+            <h2 className="studio-section-title">
+              <span>01</span> The essentials
+            </h2>
+            <p className="studio-section-hint">
+              Tell neighbors what makes your item useful.
+            </p>
+            <div className="editor-grid">
               <div>
-                <label className="field-label" htmlFor="daily-rate">
-                  Daily rate in INR
+                <label className="field-label" htmlFor="item-name">
+                  Item name
                 </label>
                 <input
-                  id="daily-rate"
+                  id="item-name"
                   className="text-input"
-                  inputMode="decimal"
-                  placeholder="150"
-                  value={rate}
-                  onChange={(e) => setRate(e.target.value)}
+                  maxLength={80}
+                  required
+                  placeholder="Bosch Cordless Drill"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                 />
               </div>
-            )}
+              <div>
+                <label className="field-label" htmlFor="item-category">
+                  Category
+                </label>
+                <select
+                  id="item-category"
+                  className="text-input"
+                  value={category}
+                  onChange={(e) =>
+                    setCategory(e.target.value as typeof category)
+                  }
+                >
+                  {categories.map((c) => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="field-label" htmlFor="item-condition">
+                  Condition
+                </label>
+                <select
+                  id="item-condition"
+                  className="text-input"
+                  value={condition}
+                  onChange={(e) =>
+                    setCondition(e.target.value as typeof condition)
+                  }
+                >
+                  {Object.entries(conditions)
+                    .filter(([key]) => key !== "new")
+                    .map(([key, label]) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            </div>
+            <label className="field-label" htmlFor="item-description">
+              Description
+            </label>
+            <textarea
+              id="item-description"
+              className="text-input"
+              rows={5}
+              maxLength={1000}
+              required
+              placeholder="What is included? Anything a neighbor should know?"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+            <div className="photo-section">
+              <h2>
+                <span className="studio-section-number">02</span> Photos{" "}
+                <small>Optional · up to 5</small>
+              </h2>
+              <div className="photo-actions">
+                <label className="upload-button">
+                  <Upload size={17} aria-hidden="true" /> Upload Photos
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) void add(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                </label>
+                <button type="button" onClick={() => setCamera(true)}>
+                  <Camera size={17} aria-hidden="true" /> Take Photo
+                </button>
+              </div>
+              <div
+                className="drop-zone"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  void add(e.dataTransfer.files);
+                }}
+              >
+                <ImagePlus size={21} aria-hidden="true" />{" "}
+                <span>
+                  Drop photos here{" "}
+                  <small>JPEG, PNG or WebP · 5 MB max each</small>
+                </span>
+              </div>
+              {photos.length > 0 && (
+                <div className="photo-grid">
+                  {photos.map((photo, index) => (
+                    <div className="photo-tile" key={photo.key}>
+                      <img src={photo.url} alt={`Listing photo ${index + 1}`} />
+                      {index === 0 && <span className="cover-tag">Cover</span>}
+                      <div className="photo-controls">
+                        {index > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => makeCover(index)}
+                            aria-label={`Set photo ${index + 1} as cover`}
+                            title="Set as cover"
+                          >
+                            ★
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          disabled={index === 0}
+                          onClick={() => move(index, -1)}
+                          aria-label={`Move photo ${index + 1} earlier`}
+                        >
+                          ←
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === photos.length - 1}
+                          onClick={() => move(index, 1)}
+                          aria-label={`Move photo ${index + 1} later`}
+                        >
+                          →
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => remove(photo.key)}
+                          aria-label={`Remove photo ${index + 1}`}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      {photo.progress !== undefined && (
+                        <small>Upload {photo.progress}%</small>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="price-section">
+              <h2>
+                <span className="studio-section-number">03</span> Your terms
+              </h2>
+              <p className="studio-section-hint">
+                Choose whether to lend for free or set a daily price.
+              </p>
+              <label className="radio-row">
+                <input
+                  type="radio"
+                  name="price-kind"
+                  checked={!paid}
+                  onChange={() => setPaid(false)}
+                />{" "}
+                Free to borrow
+              </label>
+              <label className="radio-row">
+                <input
+                  type="radio"
+                  name="price-kind"
+                  checked={paid}
+                  onChange={() => setPaid(true)}
+                />{" "}
+                Paid rental
+              </label>
+              {paid && (
+                <div>
+                  <label className="field-label" htmlFor="daily-rate">
+                    Daily rate in INR
+                  </label>
+                  <input
+                    id="daily-rate"
+                    className="text-input"
+                    inputMode="decimal"
+                    placeholder="150"
+                    value={rate}
+                    onChange={(e) => setRate(e.target.value)}
+                  />
+                </div>
+              )}
+            </div>
+            <div className="editor-actions">
+              <button
+                type="button"
+                className="button-primary"
+                onClick={reviewListing}
+              >
+                Preview listing <ArrowRight size={17} aria-hidden="true" />
+              </button>
+            </div>
           </div>
-          <div className="editor-actions">
-            <button
-              type="button"
-              className="button-primary"
-              onClick={reviewListing}
-            >
-              Preview listing
-            </button>
-          </div>
-        </div>
-      )}
+        )}
+        {!review && (
+          <aside className="studio-preview" aria-label="Live listing preview">
+            <div className="studio-preview-top">
+              <span className="kicker">A LITTLE LOOK AHEAD</span>
+              <h2>Listing preview</h2>
+              <p>Your preview updates as you add details.</p>
+            </div>
+            <div className="studio-preview-card">
+              <div className="studio-preview-image">
+                {photos[0] ? (
+                  <img src={photos[0].url} alt="Listing cover preview" />
+                ) : (
+                  <div>
+                    <PackageOpen
+                      size={36}
+                      strokeWidth={1.2}
+                      aria-hidden="true"
+                    />
+                    <span>Your item’s photo goes here</span>
+                    <small>Photos are optional</small>
+                  </div>
+                )}
+              </div>
+              <div className="studio-preview-content">
+                <span className="catalog-category">
+                  {category} · {conditions[condition]}
+                </span>
+                <h3>{name.trim() || "Your item’s name"}</h3>
+                <p>
+                  {description.trim() ||
+                    "A little about your item will appear here."}
+                </p>
+                <div className="studio-preview-price">
+                  <span>{paid ? "Daily rate" : "Sharing terms"}</span>
+                  <strong>
+                    {paid
+                      ? rate
+                        ? `₹${rate} / day`
+                        : "Set a daily rate"
+                      : "Free to borrow"}
+                  </strong>
+                </div>
+              </div>
+            </div>
+            <p className="studio-preview-note">
+              {toolId
+                ? "Your saved listing remains visible according to its current status."
+                : "Your listing is visible after you review and publish it."}
+            </p>
+          </aside>
+        )}
+      </div>
       {error && (
         <p className="form-message error" role="alert">
           {error}
