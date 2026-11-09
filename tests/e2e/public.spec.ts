@@ -12,15 +12,15 @@ test("landing hero, catalog entry, and journal navigation", async ({
       .getByRole("link", { name: "Sign in", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    /You don’t need.*to own.*everything.*you need/,
+    /Most things spend their life.*waiting/,
   );
   await expect(
-    page.getByRole("link", { name: "Explore LendLoop" }),
+    page.getByRole("link", { name: "Find what’s next door" }),
   ).toHaveAttribute("href", "#tools");
   await expect(
     page.getByRole("img", { name: "A lime and graphite cordless drill" }),
   ).toBeVisible();
-  await page.getByRole("link", { name: "Explore LendLoop" }).click();
+  await page.getByRole("link", { name: "Find what’s next door" }).click();
   await expect(
     page.locator(".catalog-state, .catalog-card").first(),
   ).toBeVisible();
@@ -57,7 +57,7 @@ for (const width of [360, 390, 768, 1280, 1600]) {
       .evaluate((el) =>
         new DOMMatrix(getComputedStyle(el).transform).toString(),
       );
-    for (const id of ["nearby", "request", "handover", "return"]) {
+    for (const id of ["nearby", "request", "handover", "in-use", "return"]) {
       await page
         .locator(`#${id}`)
         .evaluate((el) =>
@@ -114,7 +114,7 @@ test("reduced motion keeps every chapter and keyboard controls accessible", asyn
 }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
-  await expect(page.locator(".story-chapter")).toHaveCount(5);
+  await expect(page.locator(".story-chapter")).toHaveCount(6);
   for (const chapter of await page.locator(".story-chapter").all()) {
     await chapter.scrollIntoViewIfNeeded();
     await expect(chapter).toBeVisible();
@@ -134,9 +134,9 @@ test("server-rendered story remains readable without JavaScript", async ({
   const page = await context.newPage();
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.locator(".story-chapter")).toHaveCount(5);
+  await expect(page.locator(".story-chapter")).toHaveCount(6);
   await expect(
-    page.getByRole("link", { name: "Explore LendLoop" }),
+    page.getByRole("link", { name: "Find what’s next door" }),
   ).toHaveAttribute("href", "#tools");
   await page.locator("#return").scrollIntoViewIfNeeded();
   await expect(page.locator("#return h2")).toBeVisible();

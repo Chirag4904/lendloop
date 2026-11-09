@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { AuthNav } from "./auth-nav";
-export function MarketingHeader() {
+/** `overlay` lets the homepage story run edge to edge beneath the header. */
+export function MarketingHeader({ overlay = false }: { overlay?: boolean }) {
   return (
-    <header className="marketing-header">
+    <header
+      className={overlay ? "marketing-header is-overlay" : "marketing-header"}
+    >
       <div className="shell marketing-nav">
         <Link href="/" className="wordmark" aria-label="LendLoop home">
           <span aria-hidden="true">↔</span> lendloop

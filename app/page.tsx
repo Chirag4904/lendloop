@@ -11,7 +11,7 @@ export default function Home() {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <MarketingHeader />
+      <MarketingHeader overlay />
       <main id="main">
         <ScrollStory />
         <section className="sharing-manifesto shell" id="our-story">
