@@ -1,5 +1,5 @@
 import { Compass, Inbox, Package, UserRound } from "lucide-react";
-import { PublicCatalog } from "@/components/public-catalog";
+import { ExploreTools, MyListings } from "@/components/marketplace";
 
 const pages = {
   listings: {
@@ -29,22 +29,8 @@ const pages = {
 };
 
 export function DashboardView({ section }: { section?: keyof typeof pages }) {
-  if (!section)
-    return (
-      <>
-        <div className="app-heading">
-          <span className="kicker">EXPLORE TOOLS</span>
-          <h1>Find something useful nearby.</h1>
-          <p>
-            Available tools are shown here with public details only. More ways
-            to explore are coming in a future phase.
-          </p>
-        </div>
-        <div className="app-catalog">
-          <PublicCatalog />
-        </div>
-      </>
-    );
+  if (!section) return <ExploreTools />;
+  if (section === "listings") return <MyListings />;
   const page = pages[section];
   const Icon = page.icon;
   return (

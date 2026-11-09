@@ -55,9 +55,17 @@ export default defineSchema({
     societyId: v.id("societies"),
     name: v.string(),
     category: toolCategories,
-    condition: v.union(v.literal("new"), v.literal("good"), v.literal("fair")),
+    condition: v.union(
+      v.literal("new"),
+      v.literal("likeNew"),
+      v.literal("good"),
+      v.literal("fair"),
+      v.literal("wellUsed"),
+    ),
     description: v.string(),
     active: v.boolean(),
+    archived: v.optional(v.boolean()),
+    photoIds: v.optional(v.array(v.id("listingPhotos"))),
     pricing: v.optional(
       v.object({ dailyAmount: v.number(), currency: v.literal("INR") }),
     ),
@@ -65,5 +73,23 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_active", ["active"])
-    .index("by_society_active", ["societyId", "active"]),
+    .index("by_society_active", ["societyId", "active"])
+    .index("by_owner", ["ownerId"]),
+  listingPhotos: defineTable({
+    ownerId: v.id("users"),
+    toolId: v.optional(v.id("tools")),
+    storageId: v.id("_storage"),
+    createdAt: v.number(),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_owner_and_tool", ["ownerId", "toolId"])
+    .index("by_tool", ["toolId"])
+    .index("by_storage", ["storageId"]),
+  uploadTickets: defineTable({
+    ownerId: v.id("users"),
+    sha256: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_owner", ["ownerId"])
+    .index("by_created_at", ["createdAt"]),
 });

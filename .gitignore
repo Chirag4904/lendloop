@@ -2,8 +2,7 @@ node_modules
 .next
 .env
 .env.*
-docs/
-AGENTS.md
+!.env.example
 coverage
 playwright-report
 test-results
