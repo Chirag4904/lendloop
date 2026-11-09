@@ -5,5 +5,10 @@ import nextTs from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextCoreWebVitals,
   ...nextTs,
-  globalIgnores([".next/**", "convex/_generated/**"]),
+  globalIgnores([
+    ".next/**",
+    "convex/_generated/**",
+    "playwright-report/**",
+    "test-results/**",
+  ]),
 ]);

@@ -36,3 +36,11 @@ The borrower can submit, track and cancel pending requests; the lender can appro
 ## Completed in Phase 6
 
 Protected LendLoop-only admin overview and paged Users, Listings, Loans, Societies, Suggestions, Audit and Automation views; internal one-time first-admin provisioning; manual independent trust badges; archived listing moderation; curated society edits and atomic suggestion approval/rejection; minimal transactional audit records; and backend authorization/privacy tests. Admin route authentication uses Clerk, while Convex enforces every permission. Existing borrowing and automation state machines were left intact. Before production use, review audit/history retention, add indexed normalized society keys and aggregate/search infrastructure when the documented 1,000-row limits are reached, and run authenticated mobile browser scenarios with isolated Clerk accounts.
+
+## Implemented in Phase 7 — awaiting visual review
+
+New visual identity and fonts; continuous SVG drill scrollytelling with GSAP/ScrollTrigger React cleanup; responsive and reduced-motion layouts; fictional radius showcase; unchanged private-by-default public catalog; journal guidance; future community concept; shared functional-app branding; browser regression coverage and screenshots. See [Phase 7 QA](PHASE7_QA.md) for actual checks and remaining manual verification. No deployment or Phase 8 work is included. Review the actual design before proceeding.
+
+## Internal application redesign — awaiting review
+
+Implemented Neighborhood Edit × Atlas navigation, photo-led cards and conditional real-result emphasis, compact filters, activity tabs and completed returns, recorded-state progress, profile presentation, and restrained details/updates/admin styling. Existing routes, authorization and mutations remain intact. Fixture-rendered visual QA and live-service regression coverage are distinguished in [ATLAS_QA.md](ATLAS_QA.md). Review live authenticated flows with isolated accounts before calling those flows visually verified. No further product phase started.

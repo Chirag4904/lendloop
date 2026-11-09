@@ -28,10 +28,10 @@ const contrast = (a: string, b: string) => {
 };
 
 test("brand colors and text pairs meet WCAG AA for normal text", () => {
-  expect(token("cream").toLowerCase()).toBe("#f7f6f2");
-  expect(token("blue").toLowerCase()).toBe("#2854c5");
-  expect(token("tangerine").toLowerCase()).toBe("#f4b46a");
-  expect(token("ink").toLowerCase()).toBe("#202938");
+  expect(token("cream").toLowerCase()).toBe("#f6f2e9");
+  expect(token("blue").toLowerCase()).toBe("#152d3b");
+  expect(token("tangerine").toLowerCase()).toBe("#d9f36a");
+  expect(token("ink").toLowerCase()).toBe("#152d3b");
   expect(token("paper").toLowerCase()).toBe("#ffffff");
   for (const [foreground, background] of [
     [token("ink"), token("cream")],
@@ -43,7 +43,8 @@ test("brand colors and text pairs meet WCAG AA for normal text", () => {
     [token("paper"), token("blue")],
     [token("paper"), token("blue-dark")],
     [token("ink"), token("tangerine")],
-    [token("blue"), "#d4def5"],
+    [token("brand-ink"), token("brand-lime")],
+    ["#c3d2cc", token("brand-ink")],
   ]) {
     expect(
       contrast(foreground, background),

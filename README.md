@@ -90,3 +90,13 @@ LendLoop has two application roles: `user` and LendLoop `admin`. The `/admin` ar
 There is no browser-callable admin promotion. Additional admin provisioning or recovery after the first admin requires a separately reviewed operator process; this command cannot be rerun. Do not grant a role by editing browser profile fields.
 
 Run `npm test -- convex/admin.test.ts` for the admin authorization tests. The browser admin scenarios require an isolated development Clerk admin account and Convex data; set `E2E_CLERK_ADMIN_EMAIL` alongside the existing development E2E variables after provisioning that account. The current dashboard searches and filters loaded pages; use **Load more** to expand the result set. Overview counts stop at 1,001 records per indexed read and show a lower-bound marker when capped. This avoids an unbounded dashboard scan; larger deployments need aggregates and server-side search. Society creation refuses to proceed after 1,000 directory rows until a normalized-key index/backfill is added. Automation shows Convex delivery states without requiring a live n8n instance.
+
+## Phase 7 editorial experience
+
+The homepage follows one original SVG drill through discovery, a request, handover and return with GSAP/ScrollTrigger. Midnight Ink (`#152D3B`), Warm Paper (`#F6F2E9`) and Electric Lime (`#D9F36A`) replace the earlier palette; Space Grotesk and DM Sans load through `next/font`. Existing app layouts use the shared brand tokens without changing their business logic.
+
+The fictional interactive society showcase is separate from the real Convex public catalog, which still returns only name and category. `/journal` contains original borrowing guidance. `/for-communities` describes a future concept, not an existing integration or partnership. See [design and motion notes](docs/DESIGN_SYSTEM.md) and [Phase 7 QA](docs/PHASE7_QA.md) for implementation details, screenshots, validation and limits. Phase 8 has not started.
+
+## Internal application — Neighborhood Edit × Atlas
+
+The authenticated marketplace now uses a photo-led editorial Explore grid, compact modal filters, four primary navigation destinations, borrowing/lending activity tabs, a personal lending shelf, a real account profile, and restrained updates/admin styling. Backend rules and existing routes are unchanged. See [design conventions](docs/DESIGN_SYSTEM.md) and [actual QA results and screenshots](docs/ATLAS_QA.md). With the local development server running, `node tests/visual/atlas-qa.mjs` renders synthetic, test-only internal screens at five widths without backend writes.

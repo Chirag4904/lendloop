@@ -295,6 +295,10 @@ export function RequestList({ incoming }: { incoming: boolean }) {
     [error, setError] = useState(""),
     [counterId, setCounterId] = useState<Id<"borrowRequests"> | null>(null),
     [counter, setCounter] = useState("");
+  const [completedOnly, setCompletedOnly] = useState(false);
+  const visibleRows = rows?.filter(
+    (row) => !completedOnly || row.loanStatus === "returned",
+  );
   const counterDialog = useRef<HTMLDialogElement>(null);
   const counterRow = rows?.find((row) => row.id === counterId);
   const counterMinor = minorFromRupees(counter);
@@ -359,12 +363,42 @@ export function RequestList({ incoming }: { incoming: boolean }) {
         <span className="kicker">
           {incoming ? "YOUR SHELF" : "YOUR BORROWING"}
         </span>
-        <h1>{incoming ? "Incoming Requests" : "My Requests"}</h1>
+        <h1>
+          {incoming ? "Your lending inbox." : "A little give. A little borrow."}
+        </h1>
         <p>
           {incoming
             ? "Respond to neighbors who want to borrow your items."
             : "Follow your requests and return borrowed items."}
         </p>
+      </div>
+      <nav className="activity-tabs" aria-label="Activity views">
+        <Link
+          href="/dashboard/requests"
+          aria-current={!incoming ? "page" : undefined}
+        >
+          Things I’m borrowing
+        </Link>
+        <Link
+          href="/dashboard/incoming"
+          aria-current={incoming ? "page" : undefined}
+        >
+          Requests for my items
+        </Link>
+      </nav>
+      <div className="activity-controls">
+        <button
+          aria-pressed={!completedOnly}
+          onClick={() => setCompletedOnly(false)}
+        >
+          All activity
+        </button>
+        <button
+          aria-pressed={completedOnly}
+          onClick={() => setCompletedOnly(true)}
+        >
+          Completed returns
+        </button>
       </div>
       {error && (
         <p role="alert" className="form-message error">
@@ -375,9 +409,15 @@ export function RequestList({ incoming }: { incoming: boolean }) {
         <p role="status" className="catalog-state">
           Loading requests…
         </p>
-      ) : rows.length === 0 ? (
+      ) : visibleRows?.length === 0 ? (
         <div className="app-empty">
-          <h2>{incoming ? "No requests yet" : "Nothing requested yet"}</h2>
+          <h2>
+            {completedOnly
+              ? "No completed returns yet"
+              : incoming
+                ? "No requests yet"
+                : "Nothing requested yet"}
+          </h2>
           <p>
             {incoming
               ? "New borrowing requests will appear here."
@@ -389,7 +429,7 @@ export function RequestList({ incoming }: { incoming: boolean }) {
         </div>
       ) : (
         <div className="request-grid">
-          {rows.map((row) => (
+          {visibleRows?.map((row) => (
             <article className="request-card" key={row.id}>
               {row.coverUrl ? (
                 <img className="request-cover" src={row.coverUrl} alt="" />
@@ -441,6 +481,24 @@ export function RequestList({ incoming }: { incoming: boolean }) {
                   )}{" "}
                   {row.status === "approved" ? "agreed" : "proposed"}
                 </p>
+                <ol className="request-progress" aria-label="Recorded progress">
+                  <li>Requested</li>
+                  <li>
+                    {row.status === "approved"
+                      ? "Agreement confirmed"
+                      : statusLabel(
+                          row.status === "awaiting_borrower" && incoming
+                            ? "Waiting for borrower"
+                            : requestState(row.status, row.loanStatus),
+                          false,
+                        )}
+                  </li>
+                  {row.loanStatus === "returned" ? (
+                    <li>Returned</li>
+                  ) : row.loanStatus === "return_pending" ? (
+                    <li>Return awaiting confirmation</li>
+                  ) : null}
+                </ol>
                 {row.borrowerOfferMinor !== null && (
                   <section
                     className="negotiation-timeline"

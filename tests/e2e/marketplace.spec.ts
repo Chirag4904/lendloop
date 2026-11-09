@@ -19,7 +19,7 @@ test.beforeEach(async ({ page }) => {
   await clerk.signIn({ page, emailAddress: process.env.E2E_CLERK_USER_EMAIL! });
   await page.goto("/dashboard");
   await expect(
-    page.getByRole("heading", { name: "Good things, close to home." }),
+    page.getByRole("heading", { name: "Good things, closer than you think." }),
   ).toBeVisible();
 });
 
@@ -64,10 +64,12 @@ test("create, edit, discover, unlist and relist a listing", async ({
     .click();
   await page.goto("/dashboard");
   await page.getByLabel("Search tools").fill(`${name} updated`);
+  await page.getByRole("button", { name: "Filters", exact: true }).click();
   await page.getByLabel("Category").selectOption("Power Tools");
   await page
     .getByRole("combobox", { name: "Price", exact: true })
     .selectOption("paid");
+  await page.getByRole("button", { name: "Show results" }).click();
   await page.getByRole("button", { name: "Within 500 m" }).click();
   await expect(
     page.getByRole("heading", { name: `${name} updated` }),
@@ -227,12 +229,14 @@ test("unsupported camera still offers a file capture option", async ({
   await expect(page.getByText("Use device camera")).toBeVisible();
 });
 
-for (const width of [360, 390, 768, 1280]) {
+for (const width of [360, 390, 768, 1280, 1440]) {
   test(`marketplace and listing form fit ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 800 });
     await page.goto("/dashboard");
     await expect(
-      page.getByRole("heading", { name: "Good things, close to home." }),
+      page.getByRole("heading", {
+        name: "Good things, closer than you think.",
+      }),
     ).toBeVisible();
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth),

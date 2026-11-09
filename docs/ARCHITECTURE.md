@@ -51,3 +51,15 @@ An optional borrower offer on the existing request distinguishes negotiation fro
 ## Phase 6 admin boundary
 
 `convex/admin.ts` is the only public admin data/action surface. Each query and mutation resolves the Clerk subject and requires the stored `admin` role. `admin:provisionInitial` is an internal mutation callable only through deployment-operator tooling, and only before any admin exists. Admin actions and their minimal `adminAudit` rows commit in the same Convex transaction. `app/admin` requires Clerk authentication, while `components/admin.tsx` provides role-aware navigation and bounded pages. The backend remains the security boundary. Admin loan projections deliberately omit `loanHandoverDetails`, phone, pickup point, and instructions. Phase 5 delivery and overdue rules remain unchanged.
+
+## Phase 7 frontend boundary
+
+`app/page.tsx` composes the marketing shell, homepage-only `ScrollStory` client component, `SocietyShowcase` client control and existing `PublicCatalog`. The story uses GSAP, ScrollTrigger and `@gsap/react`; one SVG instance moves through coordinated scene layers, with scoped contexts and media cleanup. CSS sticky positioning retains native scrolling; mobile reduces the stage to 260px. All narrative copy is server-rendered and remains available without animation. Reduced-motion mode does not create a timeline.
+
+`components/auth-nav.tsx` keeps the sign-in link visible during Clerk loading and switches to the dashboard for authenticated users. Server-rendered `/journal` and `/for-communities` share the editorial shell. Shared tokens and `next/font` update the restrained authenticated UI; no Convex APIs, permissions, transaction state or deployment configuration changed. Public catalog privacy remains the explicit name/category projection. See [design system](DESIGN_SYSTEM.md) and [QA](PHASE7_QA.md).
+
+## Internal editorial redesign
+
+The internal redesign reuses `marketplace.tsx`, `borrowing.tsx`, `notifications.tsx` and the existing admin markup. `DashboardShell` groups navigation without removing routes. `Profile` replaces the placeholder using existing account and society queries. Compact filtering is a native `<dialog>`; local UI state controls scope/category/search/price/sort and the completed-return view. No backend function, permission, schema or transaction was changed.
+
+`tests/visual/atlas-qa.mjs` bundles the real presentation components with explicit synthetic query/identity adapters using a development-only esbuild dependency. Playwright intercepts test-only URLs; no fixture route or auth bypass is shipped in Next. Mutations throw in this renderer. It validates presentation and local controls, not the live Clerk/Convex bridge or transaction subscriptions.

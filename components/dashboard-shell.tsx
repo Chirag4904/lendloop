@@ -4,16 +4,14 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { UserButton } from "@clerk/nextjs";
-import { Bell, Compass, Inbox, Package, UserRound, Wrench } from "lucide-react";
+import { Bell, Compass, Package, UserRound, Activity } from "lucide-react";
 import { useCurrentProfile } from "@/components/use-current-profile";
 
 const items = [
   { href: "/dashboard", label: "Explore", icon: Compass },
+  { href: "/dashboard/requests", label: "My Activity", icon: Activity },
   { href: "/dashboard/listings", label: "My Listings", icon: Package },
-  { href: "/dashboard/requests", label: "Requests", icon: Compass },
-  { href: "/dashboard/incoming", label: "Incoming", icon: Inbox },
   { href: "/dashboard/notifications", label: "Updates", icon: Bell },
-  { href: "/dashboard/profile", label: "Profile", icon: UserRound },
 ];
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -40,8 +38,18 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <Link
       href={href}
       key={href}
-      className={pathname === href ? "active" : ""}
-      aria-current={pathname === href ? "page" : undefined}
+      className={
+        pathname === href ||
+        (href === "/dashboard/requests" && pathname === "/dashboard/incoming")
+          ? "active"
+          : ""
+      }
+      aria-current={
+        pathname === href ||
+        (href === "/dashboard/requests" && pathname === "/dashboard/incoming")
+          ? "page"
+          : undefined
+      }
     >
       <Icon size={19} />
       {label}
@@ -51,15 +59,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="app-layout">
       <header className="app-header">
         <div className="shell app-header-inner">
-          <Link className="brand" href="/">
-            <span className="brand-mark">
-              <Wrench size={20} />
-            </span>
-            LendLoop<span className="brand-dot">.</span>
+          <Link className="wordmark" href="/">
+            ↔ lendloop.
           </Link>
           <nav className="desktop-nav" aria-label="Dashboard navigation">
             {navigation}
           </nav>
+          <Link
+            className="profile-link"
+            href="/dashboard/profile"
+            aria-label="Profile"
+          >
+            <UserRound size={18} />
+            <span>Profile</span>
+          </Link>
           {profile.role === "admin" && (
             <Link className="text-link" href="/admin">
               Admin

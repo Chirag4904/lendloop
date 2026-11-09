@@ -17,3 +17,7 @@ Any onboarded user may borrow or lend. Borrowers request 1–30 inclusive Kolkat
 ## Phase 6 administration
 
 LendLoop has only `user` and platform `admin` roles. LendLoop admins can review all loan statuses and prices without participant contact details, archive any listing, manually grant or revoke Trusted Lender and Trusted Borrower independently, manage the curated society directory, moderate suggestions, inspect an audit trail, and view automation delivery states. Badges denote an administrator assignment, not identity or residency verification. Users keep their own listing, borrowing, negotiation, return, and society-choice permissions. An archived listing leaves confirmed loan history intact. Inactive societies remain linked to historical records but cannot be newly selected. Suggestion approval never automatically moves a submitter into the society.
+
+## Phase 7 public experience
+
+The editorial homepage follows one drill through five chapters: forgotten, discovered nearby, requested, handed over, and returned. Benefits use qualitative messaging without invented usage, savings or environmental statistics. A labeled fictional radius demonstration precedes the unchanged real public catalog. Sign-in leads into the existing marketplace. Journal guidance and a secondary future community-integration concept live at `/journal` and `/for-communities`. No competitor comparison or partnership is claimed. See [design notes](DESIGN_SYSTEM.md) for responsive and static behavior.

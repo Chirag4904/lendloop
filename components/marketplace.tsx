@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
@@ -12,6 +12,7 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { categories, conditions } from "./listing-form";
+import { useCurrentProfile } from "./use-current-profile";
 import { RequestForm } from "./borrowing";
 
 type Tool = {
@@ -55,7 +56,12 @@ export function ToolCard({
         aria-label={`View ${tool.name}`}
       >
         {tool.photos[0]?.url ? (
-          <img src={tool.photos[0].url!} alt="" />
+          <img
+            src={tool.photos[0].url!}
+            alt=""
+            loading="lazy"
+            decoding="async"
+          />
         ) : (
           <PackageOpen size={42} strokeWidth={1.3} />
         )}
@@ -87,12 +93,15 @@ export function ToolCard({
 }
 
 export function ExploreTools() {
+  const { profile } = useCurrentProfile();
+  const societies = useQuery(api.societies.search, { term: "" });
+  const society = societies?.find((s) => s._id === profile?.societyId);
   const [scope, setScope] = useState<"society" | "500" | "1000">("society"),
     [text, setText] = useState(""),
     [category, setCategory] = useState(""),
     [cost, setCost] = useState<"all" | "free" | "paid">("all"),
-    [sort, setSort] = useState<"nearest" | "newest" | "price">("nearest"),
-    [filters, setFilters] = useState(false);
+    [sort, setSort] = useState<"nearest" | "newest" | "price">("nearest");
+  const filterDialog = useRef<HTMLDialogElement>(null);
   const tools = useQuery(api.tools.explore, {
     scope,
     text,
@@ -111,10 +120,13 @@ export function ExploreTools() {
     <section className="explore-page">
       <div className="market-heading explore-heading">
         <div className="app-heading">
-          <span className="kicker">EXPLORE TOOLS</span>
-          <h1>Good things, close to home.</h1>
+          <span className="kicker">
+            THE NEIGHBORHOOD EDIT{society ? ` · ${society.name}` : ""}
+          </span>
+          <h1>Good things, closer than you think.</h1>
           <p>
-            Find useful things shared by neighbors in your society and nearby.
+            Discover useful things shared by people around you. Your society is
+            the starting point.
           </p>
         </div>
         <Link className="button-primary" href="/dashboard/listings/new">
@@ -139,11 +151,12 @@ export function ExploreTools() {
             <button
               type="button"
               className="filter-toggle"
-              onClick={() => setFilters(!filters)}
-              aria-expanded={filters}
+              onClick={() => filterDialog.current?.showModal()}
+              aria-haspopup="dialog"
               aria-controls="explore-filters"
             >
               <SlidersHorizontal size={17} aria-hidden="true" /> Filters
+              {(cost !== "all" || sort !== "nearest") && " · Active"}
             </button>
           </div>
           <div className="scope-tabs" role="group" aria-label="Search distance">
@@ -165,57 +178,96 @@ export function ExploreTools() {
               </button>
             ))}
           </div>
+          <div className="category-chips" role="group" aria-label="Categories">
+            {["", ...categories].map((c) => (
+              <button
+                key={c}
+                aria-pressed={category === c}
+                onClick={() => setCategory(c)}
+              >
+                {c || "All items"}
+              </button>
+            ))}
+          </div>
+          {(text ||
+            category ||
+            cost !== "all" ||
+            scope !== "society" ||
+            sort !== "nearest") && (
+            <button className="reset-filters" onClick={clear}>
+              Reset filters
+            </button>
+          )}
         </div>
-        <aside
+        <dialog
+          ref={filterDialog}
           id="explore-filters"
-          className={`filter-panel ${filters ? "open" : ""}`}
-          aria-label="Browse filters"
+          className="atlas-filters"
+          aria-labelledby="filter-title"
         >
-          <div className="filter-panel-head">
-            <strong>Filters</strong>
-            <button type="button" onClick={clear}>
-              Clear all
+          <div className="filter-panel">
+            <div className="filter-panel-head">
+              <strong id="filter-title">Refine your neighborhood</strong>
+              <button
+                type="button"
+                onClick={() => filterDialog.current?.close()}
+              >
+                Close
+              </button>
+              <button type="button" onClick={clear}>
+                Clear all
+              </button>
+            </div>
+            <label>
+              Category
+              <select
+                aria-label="Category"
+                className="text-input"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+              >
+                <option value="">All categories</option>
+                {categories.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              Price
+              <select
+                className="text-input"
+                aria-label="Price"
+                value={cost}
+                onChange={(e) => setCost(e.target.value as typeof cost)}
+              >
+                <option value="all">Free and paid</option>
+                <option value="free">Free</option>
+                <option value="paid">Paid</option>
+              </select>
+            </label>
+            <label>
+              Sort by
+              <select
+                className="text-input"
+                aria-label="Sort by"
+                value={sort}
+                onChange={(e) => setSort(e.target.value as typeof sort)}
+              >
+                <option value="nearest">Nearest first</option>
+                <option value="newest">Newest first</option>
+                <option value="price">Lowest price</option>
+              </select>
+            </label>
+            <p>Distances are approximate and use society centers.</p>
+            <button
+              className="button-primary"
+              type="button"
+              onClick={() => filterDialog.current?.close()}
+            >
+              Show results
             </button>
           </div>
-          <label>
-            Category
-            <select
-              className="text-input"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              <option value="">All categories</option>
-              {categories.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            Price
-            <select
-              className="text-input"
-              value={cost}
-              onChange={(e) => setCost(e.target.value as typeof cost)}
-            >
-              <option value="all">Free and paid</option>
-              <option value="free">Free</option>
-              <option value="paid">Paid</option>
-            </select>
-          </label>
-          <label>
-            Sort by
-            <select
-              className="text-input"
-              value={sort}
-              onChange={(e) => setSort(e.target.value as typeof sort)}
-            >
-              <option value="nearest">Nearest first</option>
-              <option value="newest">Newest first</option>
-              <option value="price">Lowest price</option>
-            </select>
-          </label>
-          <p>Distances are approximate and use society centers.</p>
-        </aside>
+        </dialog>
         <div className="explore-results">
           {tools === undefined ? (
             <div className="catalog-state" role="status">
@@ -229,7 +281,9 @@ export function ExploreTools() {
                   explore
                 </h2>
               </div>
-              <div className="tool-grid">
+              <div
+                className={`tool-grid ${tools[0]?.photos[0]?.url && tools.length >= 3 ? "editorial-grid" : ""}`}
+              >
                 {tools.map((tool) => (
                   <ToolCard key={tool.id} tool={tool} />
                 ))}
@@ -238,10 +292,16 @@ export function ExploreTools() {
           ) : (
             <div className="app-empty">
               <PackageOpen size={36} />
-              <h2>No tools match just yet.</h2>
-              <p>Try another category or widen your search.</p>
+              <h2>Nothing here just yet.</h2>
+              <p>
+                Try looking a little further, or be the first to share something
+                useful.
+              </p>
               <button type="button" className="button-primary" onClick={clear}>
                 Clear filters
+              </button>
+              <button className="text-link" onClick={() => setScope("1000")}>
+                Look within 1 km
               </button>
             </div>
           )}
@@ -276,8 +336,8 @@ export function MyListings() {
       <div className="market-heading">
         <div className="app-heading">
           <span className="kicker">YOUR SHELF</span>
-          <h1>My Listings</h1>
-          <p>Manage the useful things you share with your neighborhood.</p>
+          <h1>Your little lending shelf.</h1>
+          <p>Good things are even better when they’re shared.</p>
         </div>
         <Link className="button-primary" href="/dashboard/listings/new">
           List an item

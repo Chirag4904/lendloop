@@ -23,3 +23,11 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## LendLoop Phase 6 conventions
 
 `convex/admin.ts` owns LendLoop-only admin checks, bounded admin reads, trust and moderation mutations, society validation, first-admin provisioning, and transactional audit writes. The first-admin mutation stays internal and requires deployment-operator credentials. Admin loan projections never return `loanHandoverDetails`; public catalog output remains exactly name and category. Society deactivation and listing archiving preserve historical relationships. Keep the dashboard independent of n8n availability. Search and filters currently operate on loaded pages, and overview counts are capped at 1,000 until aggregates are introduced.
+
+## LendLoop Phase 7 conventions
+
+`components/story/scroll-story.tsx` owns the homepage-only GSAP/ScrollTrigger timeline and media cleanup; `drill.tsx` is the single original SVG object and `scene-art.tsx` supplies illustrative layers. Keep narrative copy readable without animation, preserve reduced-motion behavior and native scrolling, and do not add per-frame React state. `society-showcase.tsx` is explicitly fictional and separate from authenticated discovery. Shared identity is Midnight Ink, Warm Paper and Electric Lime with Space Grotesk/DM Sans through `next/font`; existing color-token names remain compatibility aliases. Public catalog responses remain exactly name and category. Journal articles must not fabricate research, dates, comparisons or impact statistics. Community integrations remain future concepts. See `docs/DESIGN_SYSTEM.md` and `docs/PHASE7_QA.md`; stop after Phase 7 until user review.
+
+## Internal application design conventions
+
+Keep the four primary DashboardShell destinations; requests/incoming remain existing routes under My Activity, with Profile and authorized Admin in the header. ToolCard is shared by Explore and My Listings. Filters use a native dialog; retain keyboard behavior and all query arguments. Request progress must reflect recorded statuses, never infer a pickup or invent a completed step. Profile trust flags remain admin-assigned. `tests/visual/` is test-only synthetic rendering, never an app route or authentication bypass. See `docs/ATLAS_QA.md` for the distinction between fixture UI checks and live transaction verification.

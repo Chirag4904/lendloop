@@ -20,7 +20,7 @@ async function asUser(browser: Browser, emailAddress: string) {
   await clerk.signIn({ page, emailAddress });
   await page.goto("/dashboard");
   await expect(
-    page.getByRole("heading", { name: "Good things, close to home." }),
+    page.getByRole("heading", { name: "Good things, closer than you think." }),
   ).toBeVisible();
   return { context, page };
 }
@@ -320,7 +320,7 @@ test("notification center updates live and loan automation fits mobile widths", 
     const { name, href } = await listDrill(lender.page);
     await lender.page.goto("/dashboard/notifications");
     await expect(
-      lender.page.getByRole("heading", { name: "Notifications" }),
+      lender.page.getByRole("heading", { name: "The latest, from nearby." }),
     ).toBeVisible();
     const before = await lender.page.locator(".automation-list li").count();
     await request(borrower.page, href);
