@@ -51,6 +51,17 @@ export function CameraCapture({
       stream.current = null;
     };
   }, []);
+  useEffect(() => {
+    if (shot || !video.current || !stream.current) return;
+    video.current.srcObject = stream.current;
+    void video.current
+      .play()
+      .catch(() =>
+        setError(
+          "Camera preview is unavailable here. Use Upload Photos instead.",
+        ),
+      );
+  }, [shot]);
   function capture() {
     const camera = video.current;
     if (!camera?.videoWidth) return;

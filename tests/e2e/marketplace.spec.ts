@@ -65,7 +65,9 @@ test("create, edit, discover, unlist and relist a listing", async ({
   await page.goto("/dashboard");
   await page.getByLabel("Search tools").fill(`${name} updated`);
   await page.getByLabel("Category").selectOption("Power Tools");
-  await page.getByLabel("Price").selectOption("paid");
+  await page
+    .getByRole("combobox", { name: "Price", exact: true })
+    .selectOption("paid");
   await page.getByRole("button", { name: "Within 500 m" }).click();
   await expect(
     page.getByRole("heading", { name: `${name} updated` }),
@@ -118,7 +120,9 @@ test("photo previews, cover order, removal and failed upload retry", async ({
     } else await route.continue();
   });
   await page.getByRole("button", { name: "Publish listing" }).click();
-  await expect(page.getByRole("alert")).toContainText("retry");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "retry" }),
+  ).toBeVisible();
   await page.unrouteAll();
   await page.getByRole("button", { name: "Publish listing" }).click();
   await expect(page).toHaveURL(/\/dashboard\/listings$/);
@@ -144,7 +148,9 @@ test("camera denial offers device capture fallback", async ({ page }) => {
   await page.goto("/dashboard/listings/new");
   await page.getByRole("button", { name: "Take Photo" }).click();
   await expect(page.getByRole("dialog", { name: "Take photo" })).toBeVisible();
-  await expect(page.getByRole("alert")).toContainText("denied");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "denied" }),
+  ).toBeVisible();
   await expect(page.getByText("Use device camera")).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("dialog", { name: "Take photo" })).toHaveCount(0);
@@ -185,6 +191,13 @@ test("camera capture supports retake, use and releases the stream", async ({
   await page.getByRole("button", { name: "Capture", exact: true }).click();
   await expect(page.getByAltText("Captured photo preview")).toBeVisible();
   await page.getByRole("button", { name: "Retake" }).click();
+  await expect
+    .poll(() =>
+      page
+        .locator("video")
+        .evaluate((video) => (video as HTMLVideoElement).videoWidth),
+    )
+    .toBeGreaterThan(0);
   await page.getByRole("button", { name: "Capture", exact: true }).click();
   await page.getByRole("button", { name: "Use photo" }).click();
   await expect(page.locator(".photo-tile")).toHaveCount(1);
@@ -208,7 +221,9 @@ test("unsupported camera still offers a file capture option", async ({
   );
   await page.goto("/dashboard/listings/new");
   await page.getByRole("button", { name: "Take Photo" }).click();
-  await expect(page.getByRole("alert")).toContainText("unavailable");
+  await expect(
+    page.getByRole("alert").filter({ hasText: "unavailable" }),
+  ).toBeVisible();
   await expect(page.getByText("Use device camera")).toBeVisible();
 });
 
