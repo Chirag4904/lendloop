@@ -186,6 +186,67 @@ test("discovery starts at home and respects 500 m and 1 km scopes", async () => 
   ).toHaveLength(1);
 });
 
+test("automatic discovery fills pages by distance and sorts prices across societies", async () => {
+  const { people } = await setup();
+  for (const [i, count] of [10, 7, 10, 1].entries()) {
+    for (let n = 0; n < count; n++) {
+      const id = await people[i].mutation(api.tools.create, {
+        ...item,
+        name: `Match ${i}-${n}`,
+        dailyAmount: i === 0 ? 1000 : i === 1 ? 500 : 500,
+      });
+      await people[i].mutation(api.tools.setStatus, {
+        toolId: id,
+        status: "active",
+      });
+    }
+  }
+  const args = {
+    scope: "all" as const,
+    text: "Match",
+    price: "all" as const,
+    sort: "nearest" as const,
+  };
+  const first = await people[0].query(api.tools.explore, { ...args, page: 0 });
+  const second = await people[0].query(api.tools.explore, { ...args, page: 1 });
+  expect(first).toHaveLength(21);
+  expect(first.slice(0, 10).every((x) => x.name.startsWith("Match 0-"))).toBe(
+    true,
+  );
+  expect(first.slice(10, 17).every((x) => x.name.startsWith("Match 1-"))).toBe(
+    true,
+  );
+  expect(first.slice(17, 20).every((x) => x.name.startsWith("Match 2-"))).toBe(
+    true,
+  );
+  expect(second).toHaveLength(8);
+  expect(second.at(-1)?.name).toBe("Match 3-0");
+  expect(
+    new Set([...first.slice(0, 20), ...second].map((x) => x.id)).size,
+  ).toBe(28);
+  const cheapest = await people[0].query(api.tools.explore, {
+    ...args,
+    sort: "price",
+    page: 0,
+  });
+  expect(cheapest.slice(0, 7).every((x) => x.name.startsWith("Match 1-"))).toBe(
+    true,
+  );
+  expect(
+    cheapest.slice(7, 17).every((x) => x.name.startsWith("Match 2-")),
+  ).toBe(true);
+  expect(
+    await people[0].query(api.tools.explore, {
+      ...args,
+      text: "Match 2-",
+      page: 0,
+    }),
+  ).toHaveLength(10);
+  await expect(
+    people[0].query(api.tools.explore, { ...args, page: -1 }),
+  ).rejects.toThrow("Invalid page");
+});
+
 test("photo registration rejects oversized, invalid and another owner's images", async () => {
   const { t, people } = await setup();
   const toolId = await people[0].mutation(api.tools.create, item);

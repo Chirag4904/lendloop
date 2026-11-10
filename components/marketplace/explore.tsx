@@ -39,11 +39,6 @@ const categoryIcons: Record<string, LucideIcon> = {
   "Sports & Fitness": Dumbbell,
   "Home & Cleaning": SprayCan,
 };
-const scopeOptions = [
-  ["society", "My Society"],
-  ["500", "Within 500 m"],
-  ["1000", "Within 1 km"],
-] as const;
 const sortOptions = [
   ["nearest", "Nearest first"],
   ["newest", "Newest first"],
@@ -54,14 +49,15 @@ export function ExploreTools() {
   const { profile } = useCurrentProfile();
   const societies = useQuery(api.societies.search, { term: "" });
   const society = societies?.find((s) => s._id === profile?.societyId);
-  const [scope, setScope] = useState<"society" | "500" | "1000">("society"),
-    [text, setText] = useState(""),
+  const [text, setText] = useState(""),
     [category, setCategory] = useState<"" | (typeof categories)[number]>(""),
     [cost, setCost] = useState<"all" | "free" | "paid">("all"),
-    [sort, setSort] = useState<"nearest" | "newest" | "price">("nearest");
+    [sort, setSort] = useState<"nearest" | "newest" | "price">("nearest"),
+    [page, setPage] = useState(0);
   const searchInput = useRef<HTMLInputElement>(null);
   const tools = useQuery(api.tools.explore, {
-    scope,
+    scope: "all",
+    page,
     text,
     category: category || undefined,
     price: cost,
@@ -71,8 +67,8 @@ export function ExploreTools() {
     setText("");
     setCategory("");
     setCost("all");
-    setScope("society");
     setSort("nearest");
+    setPage(0);
   }
   return (
     <section>
@@ -117,27 +113,11 @@ export function ExploreTools() {
               type="search"
               placeholder="Search tools, categories, details…"
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                setText(e.target.value);
+                setPage(0);
+              }}
             />
-          </div>
-          <div className={styles.where}>
-            <MapPin size={18} aria-hidden="true" />
-            <span className={styles.pickerText} aria-hidden="true">
-              <small>Where</small>
-              <b>{scopeOptions.find(([v]) => v === scope)?.[1]}</b>
-            </span>
-            <ChevronDown size={16} aria-hidden="true" />
-            <select
-              aria-label="Search distance"
-              value={scope}
-              onChange={(e) => setScope(e.target.value as typeof scope)}
-            >
-              {scopeOptions.map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
           </div>
           <Button type="submit" className={styles.submit} aria-label="Search">
             <Search size={18} aria-hidden="true" />
@@ -158,7 +138,10 @@ export function ExploreTools() {
                 type="button"
                 variant="ghost"
                 aria-pressed={cost === value}
-                onClick={() => setCost(value)}
+                onClick={() => {
+                  setCost(value);
+                  setPage(0);
+                }}
               >
                 {label}
               </Button>
@@ -178,7 +161,10 @@ export function ExploreTools() {
                   type="button"
                   variant="outline"
                   aria-pressed={category === c}
-                  onClick={() => setCategory(c)}
+                  onClick={() => {
+                    setCategory(c);
+                    setPage(0);
+                  }}
                 >
                   <Icon size={16} aria-hidden="true" />
                   {c || "All items"}
@@ -196,7 +182,10 @@ export function ExploreTools() {
             <select
               aria-label="Sort by"
               value={sort}
-              onChange={(e) => setSort(e.target.value as typeof sort)}
+              onChange={(e) => {
+                setSort(e.target.value as typeof sort);
+                setPage(0);
+              }}
             >
               {sortOptions.map(([value, label]) => (
                 <option key={value} value={value}>
@@ -206,11 +195,7 @@ export function ExploreTools() {
             </select>
           </div>
         </div>
-        {(text ||
-          category ||
-          cost !== "all" ||
-          scope !== "society" ||
-          sort !== "nearest") && (
+        {(text || category || cost !== "all" || sort !== "nearest") && (
           <Button
             type="button"
             variant="ghost"
@@ -229,34 +214,55 @@ export function ExploreTools() {
             <div className={styles.resultsHeading} aria-live="polite">
               <h2>Available to explore</h2>
               <span>
-                {tools.length} {tools.length === 1 ? "item" : "items"}
+                {Math.min(tools.length, 20)}{" "}
+                {tools.length === 1 ? "item" : "items"} · Page {page + 1}
               </span>
             </div>
             <div className={styles.grid}>
-              {tools.map((tool) => (
+              {tools.slice(0, 20).map((tool) => (
                 <ToolCard key={tool.id} tool={tool} className={styles.card} />
               ))}
             </div>
+            {(page > 0 || tools.length > 20) && (
+              <nav className={styles.pagination} aria-label="Explore pages">
+                <Button
+                  variant="outline"
+                  disabled={page === 0}
+                  onClick={() => setPage(page - 1)}
+                >
+                  Previous
+                </Button>
+                <span>Page {page + 1}</span>
+                <Button
+                  variant="outline"
+                  disabled={tools.length <= 20}
+                  onClick={() => setPage(page + 1)}
+                >
+                  Next
+                </Button>
+              </nav>
+            )}
           </>
         ) : (
           <div className="app-empty">
             <PackageOpen size={36} />
             <h2>Nothing here just yet.</h2>
             <p>
-              Try looking a little further, or be the first to share something
-              useful.
+              Try a different search or filter, or be the first to share
+              something useful.
             </p>
             <Button type="button" className="button-primary" onClick={clear}>
               Clear filters
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              className="text-link min-h-0 rounded-none p-0 hover:bg-transparent"
-              onClick={() => setScope("1000")}
-            >
-              Look within 1 km
-            </Button>
+            {page > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setPage(page - 1)}
+              >
+                Previous page
+              </Button>
+            )}
           </div>
         )}
       </div>

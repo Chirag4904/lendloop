@@ -280,7 +280,13 @@ export const setStatus = mutation({
 });
 export const explore = query({
   args: {
-    scope: v.union(v.literal("society"), v.literal("500"), v.literal("1000")),
+    scope: v.union(
+      v.literal("society"),
+      v.literal("500"),
+      v.literal("1000"),
+      v.literal("all"),
+    ),
+    page: v.optional(v.number()),
     text: v.string(),
     category: v.optional(toolCategories),
     price: v.union(v.literal("all"), v.literal("free"), v.literal("paid")),
@@ -292,10 +298,15 @@ export const explore = query({
   },
   returns: v.array(toolView),
   handler: async (ctx, args) => {
+    if (
+      args.page !== undefined &&
+      (!Number.isSafeInteger(args.page) || args.page < 0 || args.page > 1000)
+    )
+      throw new Error("Invalid page");
     const me = await user(ctx),
       home = await ctx.db.get(me.societyId!);
     if (!home) return [];
-    // shortcut: first 200 active societies and 40 listings per society; add a geospatial index and pagination as the directory grows.
+    // shortcut: discovery scans 200 active societies and 40 listings per society; use a geospatial index as the directory grows.
     const societies = [
       home,
       ...(args.scope === "society"
@@ -308,7 +319,13 @@ export const explore = query({
           ).filter((s) => s._id !== home._id)),
     ];
     const radius =
-      args.scope === "500" ? 500 : args.scope === "1000" ? 1000 : 0;
+      args.scope === "all"
+        ? Infinity
+        : args.scope === "500"
+          ? 500
+          : args.scope === "1000"
+            ? 1000
+            : 0;
     const nearby = societies.filter(
       (s) =>
         s._id === home._id ||
@@ -343,18 +360,29 @@ export const explore = query({
             .includes(text)),
     );
     filtered.sort((a, b) => {
-      if ((a.distance === 0) !== (b.distance === 0))
-        return a.distance === 0 ? -1 : 1;
+      const distanceOrder =
+        a.distance - b.distance ||
+        Number(b.tool.societyId === home._id) -
+          Number(a.tool.societyId === home._id);
       return args.sort === "price"
         ? (a.tool.pricing?.dailyAmount ?? 0) -
-            (b.tool.pricing?.dailyAmount ?? 0) || a.distance - b.distance
+            (b.tool.pricing?.dailyAmount ?? 0) ||
+            distanceOrder ||
+            a.tool._id.localeCompare(b.tool._id)
         : args.sort === "newest"
-          ? b.tool.createdAt - a.tool.createdAt
-          : a.distance - b.distance || b.tool.createdAt - a.tool.createdAt;
+          ? b.tool.createdAt - a.tool.createdAt ||
+            distanceOrder ||
+            a.tool._id.localeCompare(b.tool._id)
+          : distanceOrder ||
+            b.tool.createdAt - a.tool.createdAt ||
+            a.tool._id.localeCompare(b.tool._id);
     });
     return Promise.all(
       filtered
-        .slice(0, 100)
+        .slice(
+          args.page === undefined ? 0 : args.page * 20,
+          args.page === undefined ? 100 : args.page * 20 + 21,
+        )
         .map(({ tool, distance }) => view(ctx, tool, distance, me._id)),
     );
   },

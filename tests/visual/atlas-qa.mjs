@@ -305,14 +305,7 @@ assert(
     .isVisible(),
 );
 assert.equal(await page.getByRole("article").count(), 6);
-await page
-  .getByRole("combobox", { name: "Search distance" })
-  .selectOption("500");
-assert.equal(await page.evaluate(() => window.__atlasExploreArgs.scope), "500");
-assert.equal(
-  await page.getByRole("combobox", { name: "Search distance" }).inputValue(),
-  "500",
-);
+assert.equal(await page.evaluate(() => window.__atlasExploreArgs.scope), "all");
 await page.getByRole("button", { name: "Garden", exact: true }).press("Space");
 assert.equal(await page.getByRole("article").count(), 1);
 assert.equal(
@@ -326,16 +319,13 @@ assert.equal(
 );
 await page.getByRole("button", { name: "Reset filters" }).click();
 assert.deepEqual(await page.evaluate(() => window.__atlasExploreArgs), {
-  scope: "society",
+  scope: "all",
+  page: 0,
   text: "",
   category: undefined,
   price: "all",
   sort: "nearest",
 });
-assert.equal(
-  await page.getByRole("combobox", { name: "Search distance" }).inputValue(),
-  "society",
-);
 assert.equal(
   await page.getByRole("combobox", { name: "Sort by" }).inputValue(),
   "nearest",
