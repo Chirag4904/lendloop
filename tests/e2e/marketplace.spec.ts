@@ -23,6 +23,16 @@ test.beforeEach(async ({ page }) => {
   ).toBeVisible();
 });
 
+test("signed-in users visiting public Explore go to the dashboard", async ({
+  page,
+}) => {
+  await page.goto("/explore");
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(
+    page.getByRole("heading", { name: "Your neighborhood shelf." }),
+  ).toBeVisible();
+});
+
 test("create, edit, discover, unlist and relist a listing", async ({
   page,
 }) => {
@@ -67,9 +77,6 @@ test("create, edit, discover, unlist and relist a listing", async ({
     .getByRole("group", { name: "Price" })
     .getByRole("button", { name: "Paid" })
     .click();
-  await page
-    .getByRole("combobox", { name: "Search distance" })
-    .selectOption("500");
   await expect(
     page.getByRole("heading", { name: `${name} updated` }),
   ).toBeVisible();

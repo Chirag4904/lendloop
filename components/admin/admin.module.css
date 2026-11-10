@@ -10,7 +10,7 @@
 }
 .header > span {
   margin-left: auto;
-  color: var(--muted);
+  color: #c5d1cd;
   font-size: 11px;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -40,11 +40,12 @@
   font-weight: 700;
 }
 .nav a:hover {
-  color: var(--blue);
-}
-.nav a[aria-current="page"] {
   background: var(--surface-selected);
   color: var(--ink);
+}
+.nav a[aria-current="page"] {
+  background: var(--ink);
+  color: var(--paper);
 }
 .main {
   min-width: 0;
@@ -79,7 +80,9 @@
   flex-direction: column;
   justify-content: space-between;
   border-radius: 12px;
-  background: var(--surface-muted);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  box-shadow: 0 5px 18px #152d3b0a;
 }
 .card span {
   color: var(--muted);
@@ -151,6 +154,41 @@
   font-size: 12px;
   line-height: 1.5;
   overflow-wrap: anywhere;
+}
+.userRow {
+  gap: 18px;
+  padding: 20px;
+}
+.userIdentity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--surface-selected);
+  color: var(--ink);
+  font-weight: 800;
+}
+.userDetails {
+  min-width: 0;
+}
+.userEmail {
+  display: block;
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.userRow .actions button[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
 }
 .status {
   border-radius: 99px;

@@ -48,8 +48,18 @@ createRoot(document.getElementById("root")!).render(
         </section>
         <div style={{ height: "100vh" }} />
       </main>
-    ) : view === "admin" || view === "admin-listings" ? (
-      <Admin section={view === "admin" ? "overview" : "listings"} />
+    ) : view === "admin" ||
+      view === "admin-listings" ||
+      view === "admin-users" ? (
+      <Admin
+        section={
+          view === "admin"
+            ? "overview"
+            : view === "admin-users"
+              ? "users"
+              : "listings"
+        }
+      />
     ) : view === "onboarding" ? (
       <Onboarding />
     ) : (

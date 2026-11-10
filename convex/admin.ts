@@ -138,6 +138,51 @@ export const provisionInitial = internalMutation({
   },
 });
 
+// Deployment operators transfer admin access without deleting either user's data.
+export const transferAdmin = internalMutation({
+  args: { currentClerkUserId: v.string(), nextClerkUserId: v.string() },
+  returns: v.null(),
+  handler: async (ctx, { currentClerkUserId, nextClerkUserId }) => {
+    if (
+      !currentClerkUserId.trim() ||
+      !nextClerkUserId.trim() ||
+      currentClerkUserId === nextClerkUserId
+    )
+      throw new Error("Choose two different users");
+    const current = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_user", (q) =>
+        q.eq("clerkUserId", currentClerkUserId),
+      )
+      .unique();
+    const next = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", nextClerkUserId))
+      .unique();
+    if (!current || current.role !== "admin")
+      throw new Error("Current admin does not match");
+    if (!next || next.role !== "user")
+      throw new Error("New admin must have a user profile");
+    const admins = await ctx.db
+      .query("users")
+      .withIndex("by_role", (q) => q.eq("role", "admin"))
+      .take(2);
+    if (admins.length !== 1 || admins[0]._id !== current._id)
+      throw new Error("Expected exactly one admin");
+    const now = Date.now();
+    await ctx.db.patch(current._id, { role: "user", updatedAt: now });
+    await ctx.db.patch(next._id, { role: "admin", updatedAt: now });
+    await ctx.db.insert("adminAudit", {
+      action: "admin.transferred",
+      targetType: "user",
+      targetId: next._id,
+      detail: `Deployment operator; previous admin ${current._id}`,
+      createdAt: now,
+    });
+    return null;
+  },
+});
+
 export const access = query({
   args: {},
   returns: v.boolean(),
@@ -248,6 +293,7 @@ export const users = query({
         result.page.map(async (user) => ({
           id: user._id,
           name: user.displayName,
+          email: user.email ?? null,
           account: user._id.slice(-8),
           society: user.societyId
             ? ((await ctx.db.get(user.societyId))?.name ?? "Inactive")

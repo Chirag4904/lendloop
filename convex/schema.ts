@@ -16,6 +16,7 @@ export default defineSchema({
   users: defineTable({
     clerkUserId: v.string(),
     displayName: v.string(),
+    email: v.optional(v.string()),
     societyId: v.optional(v.id("societies")),
     role: v.union(v.literal("user"), v.literal("admin")),
     trustedLender: v.boolean(),
@@ -24,6 +25,7 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_clerk_user", ["clerkUserId"])
+    .index("by_email", ["email"])
     .index("by_role", ["role"])
     .index("by_society", ["societyId"]),
   societies: defineTable({

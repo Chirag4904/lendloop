@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import {
   MarketingFooter,
   MarketingHeader,
@@ -10,7 +12,11 @@ export const metadata: Metadata = {
   description: "Browse things available to share on LendLoop.",
 };
 
-export default function ExplorePage() {
+export default async function ExplorePage() {
+  if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+    const { userId } = await auth();
+    if (userId) redirect("/dashboard");
+  }
   return (
     <>
       <MarketingHeader />

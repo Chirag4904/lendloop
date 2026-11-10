@@ -212,18 +212,43 @@ export function usePaginatedQuery(
     };
   }
   const results =
-    getFunctionName(ref) === "admin:listings"
-      ? items.slice(0, 3).map((item, index) => ({
-          ...item,
-          owner: "A neighbor",
-          society: "Paper Gardens",
-          societyId: "society1",
-          status: removedListings.has(item.id) ? "removed" : "active",
-          coverUrl: index === 1 ? null : item.photos[0].url,
-          createdAt: 1794200000000,
-          updatedAt: 1794200000000,
-        }))
-      : [];
+    getFunctionName(ref) === "admin:users"
+      ? [
+          {
+            id: "user0",
+            name: "Alex Morgan",
+            email: "alex@example.com",
+            account: "account0",
+            society: "Paper Gardens",
+            createdAt: 1794200000000,
+            role: "admin",
+            trustedLender: true,
+            trustedBorrower: false,
+          },
+          {
+            id: "user1",
+            name: "Sam Rivera",
+            email: "sam@example.com",
+            account: "account1",
+            society: "Paper Gardens",
+            createdAt: 1794200000000,
+            role: "user",
+            trustedLender: false,
+            trustedBorrower: false,
+          },
+        ]
+      : getFunctionName(ref) === "admin:listings"
+        ? items.slice(0, 3).map((item, index) => ({
+            ...item,
+            owner: "A neighbor",
+            society: "Paper Gardens",
+            societyId: "society1",
+            status: removedListings.has(item.id) ? "removed" : "active",
+            coverUrl: index === 1 ? null : item.photos[0].url,
+            createdAt: 1794200000000,
+            updatedAt: 1794200000000,
+          }))
+        : [];
   return { results, status: "Exhausted", loadMore: () => {} };
 }
 export const useQuery = fixtureQuery;

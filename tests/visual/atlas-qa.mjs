@@ -134,12 +134,15 @@ for (const width of [360, 390, 768, 1280, 1440]) {
     "loan",
     "loan-borrower",
     "admin",
+    "admin-users",
     "admin-listings",
     "listing-new",
     "listing-edit",
   ]) {
     await page.goto(`http://localhost:3000/__atlas-qa?view=${view}`);
     await page.locator("h1").waitFor();
+    if (view === "admin-users")
+      await page.getByText("alex@example.com").waitFor();
     if (view === "detail-owner") {
       assert.equal(
         await page
@@ -298,6 +301,11 @@ for (const width of [360, 390, 768, 1280, 1440]) {
     }
   }
 }
+await page.goto("http://localhost:3000/__atlas-qa?view=admin-users");
+await page.getByText("alex@example.com").waitFor();
+await page.getByLabel("Search loaded records").fill("sam@example.com");
+assert.equal(await page.getByRole("article").count(), 1);
+assert(await page.getByText("Sam Rivera").isVisible());
 await page.goto("http://localhost:3000/__atlas-qa?view=explore");
 assert(
   await page

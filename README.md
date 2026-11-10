@@ -44,6 +44,18 @@ CLERK_SECRET_KEY=your_secret_key
 
 Keep the sign-in and sign-up paths from `.env.example`. Copy the same Clerk instance's **Frontend API URL**, including `https://`; you will use it as the Convex issuer below.
 
+In Clerk's **User & authentication → User model → User permissions**, turn off allowing users to change their email address. In **Sessions → Customize session token**, keep the existing `aud` claim and add these claims so Convex can store the verified address:
+
+```json
+{
+  "aud": "convex",
+  "email": "{{user.primary_email_address}}",
+  "email_verified": "{{user.email_verified}}"
+}
+```
+
+Clerk administrators can still change addresses. Such operator changes are not automatically synced; update the Convex record through a reviewed operator process if an address must change.
+
 ### 3. Start Convex
 
 In a terminal, run the following and follow the prompts to create or select a cloud development deployment:

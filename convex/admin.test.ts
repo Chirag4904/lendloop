@@ -122,6 +122,18 @@ test("admin queries and trust changes enforce the Clerk-derived role", async () 
   ).toHaveLength(4);
 });
 
+test("only admins can list stored email addresses", async () => {
+  const { admin, owner } = await setup();
+  await owner.mutation(api.users.ensureCurrent, { displayName: "owner" });
+  await expect(
+    owner.query(api.admin.users, { paginationOpts }),
+  ).rejects.toThrow("Admin access");
+  const page = await admin.query(api.admin.users, { paginationOpts });
+  expect(
+    page.page.find((user: { name: string }) => user.name === "owner"),
+  ).toHaveProperty("email", null);
+});
+
 test("only deployment operators can provision the first admin", async () => {
   const t = convexTest(schema, modules);
   const user = t.withIdentity(identity("first"));
@@ -132,6 +144,36 @@ test("only deployment operators can provision the first admin", async () => {
   await expect(
     t.mutation(internal.admin.provisionInitial, { clerkUserId: "second" }),
   ).rejects.toThrow("already exists");
+});
+
+test("operator transfer preserves accounts and changes the only admin atomically", async () => {
+  const { t, admin, owner } = await setup();
+  await expect(
+    t.mutation(internal.admin.transferAdmin, {
+      currentClerkUserId: "admin",
+      nextClerkUserId: "missing",
+    }),
+  ).rejects.toThrow("user profile");
+  expect(await admin.query(api.admin.access, {})).toBe(true);
+  await t.mutation(internal.admin.transferAdmin, {
+    currentClerkUserId: "admin",
+    nextClerkUserId: "owner",
+  });
+  expect(await admin.query(api.admin.access, {})).toBe(false);
+  expect(await owner.query(api.admin.access, {})).toBe(true);
+  expect((await admin.query(api.users.me))?.role).toBe("user");
+  const audit = await owner.query(api.admin.auditHistory, { paginationOpts });
+  expect(
+    audit.page.some(
+      (entry: { action: string }) => entry.action === "admin.transferred",
+    ),
+  ).toBe(true);
+  await expect(
+    t.mutation(internal.admin.transferAdmin, {
+      currentClerkUserId: "admin",
+      nextClerkUserId: "owner",
+    }),
+  ).rejects.toThrow("Current admin");
 });
 
 test("admin sees every loan without handover data; strangers do not", async () => {

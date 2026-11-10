@@ -189,7 +189,7 @@ function Users() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState("");
   const rows = results.filter((r) =>
-    `${r.name} ${r.account} ${r.society}`
+    `${r.name} ${r.account} ${r.society} ${r.email ?? ""}`
       .toLowerCase()
       .includes(search.toLowerCase()),
   );
@@ -228,12 +228,21 @@ function Users() {
       <Notice text={message} />
       <div className={styles.records}>
         {rows.map((r) => (
-          <article className={styles.row} key={r.id}>
-            <div>
-              <strong>{r.name}</strong>
-              <small>
-                Account …{r.account} · {r.society} · Joined {date(r.createdAt)}
-              </small>
+          <article className={cn(styles.row, styles.userRow)} key={r.id}>
+            <div className={styles.userIdentity}>
+              <span className={styles.avatar} aria-hidden="true">
+                {r.name.trim().charAt(0).toUpperCase() || "?"}
+              </span>
+              <div className={styles.userDetails}>
+                <strong>{r.name}</strong>
+                <span className={styles.userEmail}>
+                  {r.email ?? "No email available"}
+                </span>
+                <small>
+                  Account …{r.account} · {r.society} · Joined{" "}
+                  {date(r.createdAt)}
+                </small>
+              </div>
             </div>
             <Status>{r.role}</Status>
             <div className={styles.actions}>
@@ -241,6 +250,8 @@ function Users() {
                 <Button
                   key={badge}
                   type="button"
+                  variant="outline"
+                  aria-pressed={r[badge]}
                   disabled={!!busy}
                   onClick={() => void toggle(r.id, r.name, badge, !r[badge])}
                 >

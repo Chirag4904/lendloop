@@ -33,6 +33,10 @@ test("admin pages stay usable at phone, tablet, and desktop widths", async ({
     page,
     emailAddress: process.env.E2E_CLERK_ADMIN_EMAIL!,
   });
+  await page.goto("/admin/users");
+  await expect(
+    page.getByText(process.env.E2E_CLERK_ADMIN_EMAIL!, { exact: true }),
+  ).toBeVisible();
   for (const width of [360, 390, 768, 1280]) {
     await page.setViewportSize({ width, height: 800 });
     await page.goto("/admin");

@@ -1,5 +1,7 @@
-import { mutation, query } from "./_generated/server";
+import { internalMutation, mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import type { MutationCtx } from "./_generated/server";
+import type { Id } from "./_generated/dataModel";
 
 async function authenticatedClerkId(ctx: {
   auth: { getUserIdentity: () => Promise<{ subject: string } | null> };
@@ -7,6 +9,18 @@ async function authenticatedClerkId(ctx: {
   const identity = await ctx.auth.getUserIdentity();
   if (!identity) throw new Error("Authentication required");
   return identity.subject;
+}
+
+async function saveEmail(ctx: MutationCtx, userId: Id<"users">, email: string) {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized || normalized.length > 254) throw new Error("Invalid email");
+  const existing = await ctx.db
+    .query("users")
+    .withIndex("by_email", (q) => q.eq("email", normalized))
+    .unique();
+  if (existing && existing._id !== userId)
+    throw new Error("Email already belongs to another user");
+  await ctx.db.patch(userId, { email: normalized });
 }
 
 export const me = query({
@@ -23,14 +37,20 @@ export const me = query({
 export const ensureCurrent = mutation({
   args: { displayName: v.string() },
   handler: async (ctx, { displayName }) => {
-    const clerkUserId = await authenticatedClerkId(ctx);
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Authentication required");
+    const clerkUserId = identity.subject;
     const existing = await ctx.db
       .query("users")
       .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
       .unique();
-    if (existing) return existing._id;
+    if (existing) {
+      if (!existing.email && identity.email && identity.emailVerified === true)
+        await saveEmail(ctx, existing._id, identity.email);
+      return existing._id;
+    }
     const now = Date.now();
-    return ctx.db.insert("users", {
+    const id = await ctx.db.insert("users", {
       clerkUserId,
       displayName: displayName.trim().slice(0, 80) || "Neighbor",
       role: "user",
@@ -39,6 +59,29 @@ export const ensureCurrent = mutation({
       createdAt: now,
       updatedAt: now,
     });
+    if (identity.email && identity.emailVerified === true)
+      await saveEmail(ctx, id, identity.email);
+    return id;
+  },
+});
+
+// Deployment operators can backfill verified primary emails from Clerk.
+export const backfillEmail = internalMutation({
+  args: { clerkUserId: v.string(), email: v.string() },
+  returns: v.union(
+    v.literal("saved"),
+    v.literal("unchanged"),
+    v.literal("missing"),
+  ),
+  handler: async (ctx, { clerkUserId, email }) => {
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_clerk_user", (q) => q.eq("clerkUserId", clerkUserId))
+      .unique();
+    if (!user) return "missing";
+    if (user.email) return "unchanged";
+    await saveEmail(ctx, user._id, email);
+    return "saved";
   },
 });
 

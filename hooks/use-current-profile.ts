@@ -13,7 +13,8 @@ export function useCurrentProfile() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!isAuthenticated || !user || profile !== null) return;
+    if (!isAuthenticated || !user || profile === undefined || profile?.email)
+      return;
     void ensure({
       displayName: user.firstName || user.username || "Neighbor",
     }).catch((e) => setError(e.message));
