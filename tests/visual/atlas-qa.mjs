@@ -271,22 +271,53 @@ assert(
 await page.getByRole("button", { name: "Clear filters" }).click();
 assert.equal(await page.locator(".explore-page .tool-card").count(), 6);
 await page.goto("http://localhost:3000/__atlas-qa?view=requests");
+const activityNav = page.getByRole("navigation", { name: "Activity views" });
+assert.equal(
+  await activityNav
+    .getByRole("link", { name: "Things I’m borrowing" })
+    .getAttribute("aria-current"),
+  "page",
+);
 await page.getByRole("button", { name: "Completed returns" }).click();
-assert.equal(await page.locator(".request-card").count(), 1);
-await page.goto("http://localhost:3000/__atlas-qa?view=incoming");
+assert.equal(await page.getByRole("article").count(), 1);
 assert.equal(
   await page
-    .locator(".request-progress")
-    .filter({ hasText: "Your decision" })
-    .count(),
+    .getByRole("button", { name: "Completed returns" })
+    .getAttribute("aria-pressed"),
+  "true",
+);
+await page.goto("http://localhost:3000/__atlas-qa?view=incoming");
+const recordedProgress = page.getByRole("list", { name: "Recorded progress" });
+assert.equal(
+  await recordedProgress.filter({ hasText: "Your decision" }).count(),
   0,
 );
 assert.equal(
-  await page
-    .locator(".request-progress")
-    .filter({ hasText: "Waiting for borrower" })
-    .count(),
+  await recordedProgress.filter({ hasText: "Waiting for borrower" }).count(),
   1,
+);
+await page.goto("http://localhost:3000/__atlas-qa?view=incoming&pendingOffer");
+const suggestPrice = page.getByRole("button", {
+  name: "Suggest Another Price",
+});
+await suggestPrice.click();
+const counteroffer = page.getByRole("dialog", {
+  name: "Suggest Another Price",
+});
+const counterInput = counteroffer.getByRole("textbox", {
+  name: "Your final daily price in rupees",
+});
+const sendPrice = counteroffer.getByRole("button", {
+  name: "Send final price",
+});
+await counterInput.fill("100");
+assert(await sendPrice.isDisabled());
+await counterInput.fill("125");
+assert(await sendPrice.isEnabled());
+await page.keyboard.press("Escape");
+await counteroffer.waitFor({ state: "hidden" });
+assert(
+  await suggestPrice.evaluate((button) => button === document.activeElement),
 );
 await page.goto("http://localhost:3000/__atlas-qa?view=detail");
 assert.equal(await page.locator(".thumb-row").count(), 0);

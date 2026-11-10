@@ -214,6 +214,9 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
     return args?.month === "2026-11"
       ? [{ startDate: "2026-11-10", endDate: "2026-11-12" }]
       : [];
+  const pendingOffer =
+    name === "requests:incoming" &&
+    new URLSearchParams(location.search).has("pendingOffer");
   if (name.startsWith("requests:"))
     return ["pending", "awaiting_borrower", "approved"].map((status, i) => ({
       id: `request${i}`,
@@ -231,7 +234,7 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       rateMinor: 15000,
       totalMinor: 30000,
       listedRateMinor: 15000,
-      borrowerOfferMinor: i === 1 ? 10000 : null,
+      borrowerOfferMinor: i === 1 || (i === 0 && pendingOffer) ? 10000 : null,
       lenderCounterMinor: i === 1 ? 12500 : null,
       priceDecision: i === 1 ? "countered" : null,
       createdAt: 1794200000000,

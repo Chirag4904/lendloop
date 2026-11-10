@@ -14,8 +14,10 @@ import {
 } from "lucide-react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Button } from "@/components/ui/button";
 import { BorrowCalendar } from "./borrow-calendar";
 import type { Id } from "@/convex/_generated/dataModel";
+import activity from "./activity.module.css";
 
 const money = (minor: number) =>
   minor === 0
@@ -330,8 +332,8 @@ export function RequestList({ incoming }: { incoming: boolean }) {
     }
   }
   return (
-    <section className="request-page">
-      <div className="app-heading">
+    <section className={activity.page}>
+      <div className={`app-heading ${activity.heading}`}>
         <span className="kicker">
           {incoming ? "YOUR SHELF" : "YOUR BORROWING"}
         </span>
@@ -342,33 +344,41 @@ export function RequestList({ incoming }: { incoming: boolean }) {
             : "Everything you’re borrowing, all in one place."}
         </p>
       </div>
-      <nav className="activity-tabs" aria-label="Activity views">
-        <Link
-          href="/dashboard/requests"
-          aria-current={!incoming ? "page" : undefined}
-        >
-          <ArrowDownLeft size={18} /> Things I’m borrowing
-        </Link>
-        <Link
-          href="/dashboard/incoming"
-          aria-current={incoming ? "page" : undefined}
-        >
-          <ArrowUpRight size={18} /> Requests for my items
-        </Link>
+      <nav className={activity.tabs} aria-label="Activity views">
+        <Button asChild variant="ghost">
+          <Link
+            href="/dashboard/requests"
+            aria-current={!incoming ? "page" : undefined}
+          >
+            <ArrowDownLeft size={18} /> Things I’m borrowing
+          </Link>
+        </Button>
+        <Button asChild variant="ghost">
+          <Link
+            href="/dashboard/incoming"
+            aria-current={incoming ? "page" : undefined}
+          >
+            <ArrowUpRight size={18} /> Requests for my items
+          </Link>
+        </Button>
       </nav>
-      <div className="activity-controls">
-        <button
+      <div className={`my-6 flex items-center gap-2.5 ${activity.filters}`}>
+        <Button
+          type="button"
+          variant="outline"
           aria-pressed={!completedOnly}
           onClick={() => setCompletedOnly(false)}
         >
           All activity
-        </button>
-        <button
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
           aria-pressed={completedOnly}
           onClick={() => setCompletedOnly(true)}
         >
           Completed returns
-        </button>
+        </Button>
       </div>
       {error && (
         <p role="alert" className="form-message error">
@@ -393,335 +403,342 @@ export function RequestList({ incoming }: { incoming: boolean }) {
               ? "New borrowing requests will appear here."
               : "Explore your neighborhood to find something useful."}
           </p>
-          <Link className="button-primary" href="/dashboard">
-            Explore tools
-          </Link>
+          <Button asChild className={activity.largeAction}>
+            <Link href="/dashboard">Explore tools</Link>
+          </Button>
         </div>
       ) : (
-        <div className="request-grid">
-          {visibleRows?.map((row) => (
-            <article className="request-card" key={row.id}>
-              {row.coverUrl ? (
-                <img className="request-cover" src={row.coverUrl} alt="" />
-              ) : (
-                <div
-                  className="request-cover request-placeholder"
-                  aria-hidden="true"
-                >
-                  ✳
-                </div>
-              )}
-              <div className="request-body">
-                <div className="request-card-top">
-                  <span
-                    className={`request-status status-${row.status === "approved" && row.loanStatus !== "returned" && row.endDate < localToday() ? "overdue" : requestState(row.status, row.loanStatus)}`}
+        <div className="grid grid-cols-1 gap-4">
+          {visibleRows?.map((row) => {
+            const requestStatus = requestState(row.status, row.loanStatus);
+            const roleStatus =
+              row.status === "awaiting_borrower" && incoming
+                ? "Waiting for borrower"
+                : requestStatus;
+            const overdue =
+              row.status === "approved" &&
+              row.loanStatus !== "returned" &&
+              row.endDate < localToday();
+            return (
+              <article className={activity.card} key={row.id}>
+                {row.coverUrl ? (
+                  <img className={activity.cover} src={row.coverUrl} alt="" />
+                ) : (
+                  <div
+                    className={`${activity.cover} ${activity.placeholder}`}
+                    aria-hidden="true"
                   >
-                    {statusLabel(
-                      row.status === "awaiting_borrower" && incoming
-                        ? "Waiting for borrower"
-                        : requestState(row.status, row.loanStatus),
-                      row.status === "approved" &&
-                        row.loanStatus !== "returned" &&
-                        row.endDate < localToday(),
-                    )}
-                  </span>
-                  <span>
-                    {dateLabel(row.startDate)} – {dateLabel(row.endDate)}
-                  </span>
-                </div>
-                <h2>
-                  <Link href={`/dashboard/tools/${row.toolId}`}>
-                    {row.toolName}
-                  </Link>
-                </h2>
-                <p>
-                  {incoming ? "From" : "Shared by"} {row.otherName}
-                  {row.trusted
-                    ? ` · Trusted ${incoming ? "Borrower" : "Lender"}`
-                    : ""}
-                </p>
-                <p>
-                  {row.days} {row.days === 1 ? "day" : "days"} ·{" "}
-                  {money(
-                    (row.status === "pending" && row.borrowerOfferMinor !== null
-                      ? row.borrowerOfferMinor
-                      : row.status === "awaiting_borrower"
-                        ? (row.lenderCounterMinor ?? row.listedRateMinor)
-                        : row.rateMinor) * row.days,
-                  )}{" "}
-                  {row.status === "approved" ? "agreed" : "proposed"}
-                </p>
-                <ol className="request-progress" aria-label="Recorded progress">
-                  <li>Requested</li>
-                  <li>
-                    {row.status === "approved"
-                      ? "Agreement confirmed"
-                      : statusLabel(
-                          row.status === "awaiting_borrower" && incoming
-                            ? "Waiting for borrower"
-                            : requestState(row.status, row.loanStatus),
-                          false,
-                        )}
-                  </li>
-                  {row.loanStatus === "returned" ? (
-                    <li>Returned</li>
-                  ) : row.loanStatus === "return_pending" ? (
-                    <li>Return awaiting confirmation</li>
-                  ) : null}
-                </ol>
-                {row.borrowerOfferMinor !== null && (
-                  <section
-                    className="negotiation-timeline"
-                    aria-label="Price conversation"
+                    ✳
+                  </div>
+                )}
+                <div className={activity.body}>
+                  <div className={activity.summary}>
+                    <span
+                      className={`request-status status-${overdue ? "overdue" : requestStatus}`}
+                    >
+                      {statusLabel(roleStatus, overdue)}
+                    </span>
+                    <span>
+                      {dateLabel(row.startDate)} – {dateLabel(row.endDate)}
+                    </span>
+                  </div>
+                  <h2>
+                    <Link href={`/dashboard/tools/${row.toolId}`}>
+                      {row.toolName}
+                    </Link>
+                  </h2>
+                  <p>
+                    {incoming ? "From" : "Shared by"} {row.otherName}
+                    {row.trusted
+                      ? ` · Trusted ${incoming ? "Borrower" : "Lender"}`
+                      : ""}
+                  </p>
+                  <p>
+                    {row.days} {row.days === 1 ? "day" : "days"} ·{" "}
+                    {money(
+                      (row.status === "pending" &&
+                      row.borrowerOfferMinor !== null
+                        ? row.borrowerOfferMinor
+                        : row.status === "awaiting_borrower"
+                          ? (row.lenderCounterMinor ?? row.listedRateMinor)
+                          : row.rateMinor) * row.days,
+                    )}{" "}
+                    {row.status === "approved" ? "agreed" : "proposed"}
+                  </p>
+                  <ol
+                    className={activity.progress}
+                    aria-label="Recorded progress"
                   >
-                    <div className="negotiation-heading">
-                      <span className="negotiation-icon">₹</span>
-                      <div>
-                        <strong>Price conversation</strong>
-                        <p>Offers and responses, in order</p>
+                    <li>Requested</li>
+                    <li>
+                      {row.status === "approved"
+                        ? "Agreement confirmed"
+                        : statusLabel(roleStatus)}
+                    </li>
+                    {row.loanStatus === "returned" ? (
+                      <li>Returned</li>
+                    ) : row.loanStatus === "return_pending" ? (
+                      <li>Return awaiting confirmation</li>
+                    ) : null}
+                  </ol>
+                  {row.borrowerOfferMinor !== null && (
+                    <section
+                      className={activity.timeline}
+                      aria-label="Price conversation"
+                    >
+                      <div
+                        className={`flex items-center gap-3 ${activity.timelineHeading}`}
+                      >
+                        <span className={activity.timelineIcon}>₹</span>
+                        <div>
+                          <strong>Price conversation</strong>
+                          <p>Offers and responses, in order</p>
+                        </div>
                       </div>
-                    </div>
-                    <ol>
-                      <li>
-                        <span>
-                          Borrower offered{" "}
-                          <strong>{money(row.borrowerOfferMinor)} / day</strong>
-                        </span>
-                        <time dateTime={new Date(row.createdAt).toISOString()}>
-                          {new Date(row.createdAt).toLocaleString("en-IN")}
-                        </time>
-                      </li>
-                      {row.priceDecision === "accepted_offer" && (
-                        <li>
-                          <span>Lender accepted the offer</span>
-                          <time
-                            dateTime={new Date(
-                              row.lenderRespondedAt!,
-                            ).toISOString()}
-                          >
-                            {new Date(row.lenderRespondedAt!).toLocaleString(
-                              "en-IN",
-                            )}
-                          </time>
-                        </li>
-                      )}
-                      {row.priceDecision === "countered" && (
+                      <ol>
                         <li>
                           <span>
-                            Lender suggested{" "}
+                            Borrower offered{" "}
                             <strong>
-                              {money(row.lenderCounterMinor!)} / day
+                              {money(row.borrowerOfferMinor)} / day
                             </strong>
                           </span>
                           <time
-                            dateTime={new Date(
-                              row.lenderRespondedAt!,
-                            ).toISOString()}
+                            dateTime={new Date(row.createdAt).toISOString()}
                           >
-                            {new Date(row.lenderRespondedAt!).toLocaleString(
-                              "en-IN",
-                            )}
+                            {new Date(row.createdAt).toLocaleString("en-IN")}
                           </time>
                         </li>
-                      )}
-                      {row.priceDecision === "kept_listed_price" && (
-                        <li>
-                          <span>
-                            Lender kept the listed price of{" "}
-                            <strong>{money(row.listedRateMinor)} / day</strong>
-                          </span>
-                          <time
-                            dateTime={new Date(
-                              row.lenderRespondedAt!,
-                            ).toISOString()}
-                          >
-                            {new Date(row.lenderRespondedAt!).toLocaleString(
-                              "en-IN",
+                        {row.priceDecision && (
+                          <li>
+                            {row.priceDecision === "accepted_offer" ? (
+                              <span>Lender accepted the offer</span>
+                            ) : row.priceDecision === "countered" ? (
+                              <span>
+                                Lender suggested{" "}
+                                <strong>
+                                  {money(row.lenderCounterMinor!)} / day
+                                </strong>
+                              </span>
+                            ) : (
+                              <span>
+                                Lender kept the listed price of{" "}
+                                <strong>
+                                  {money(row.listedRateMinor)} / day
+                                </strong>
+                              </span>
                             )}
-                          </time>
-                        </li>
-                      )}
-                      {row.status === "approved" && row.borrowerRespondedAt && (
-                        <li>
-                          <span>
-                            Borrower accepted{" "}
-                            <strong>{money(row.rateMinor)} / day</strong>
-                          </span>
-                          <time
-                            dateTime={new Date(
-                              row.borrowerRespondedAt,
-                            ).toISOString()}
-                          >
-                            {new Date(row.borrowerRespondedAt).toLocaleString(
-                              "en-IN",
-                            )}
-                          </time>
-                        </li>
-                      )}
-                      {row.status === "approved" && (
-                        <li>
-                          <span>
-                            Rental confirmed ·{" "}
-                            <strong>{money(row.totalMinor)} total</strong>
-                          </span>
-                        </li>
-                      )}
-                      {row.status === "cancelled" && (
-                        <li>Negotiation closed</li>
-                      )}
-                    </ol>
-                    {row.status === "pending" && (
-                      <p>
-                        {incoming
-                          ? `Listed at ${money(row.listedRateMinor)} / day · ${row.days} days · ${money(row.borrowerOfferMinor * row.days)} offered`
-                          : "Waiting for lender to respond."}
-                      </p>
-                    )}
-                    {row.status === "awaiting_borrower" && (
-                      <p>
-                        {incoming
-                          ? "Waiting for the borrower’s decision."
-                          : `${row.priceDecision === "kept_listed_price" ? `The lender would prefer to keep the original price of ${money(row.listedRateMinor)} / day. You can still proceed if that works for you. ` : ""}Listed ${money(row.listedRateMinor)} / day · offered ${money(row.borrowerOfferMinor)} / day · final ${money(row.lenderCounterMinor ?? row.listedRateMinor)} / day · ${money((row.lenderCounterMinor ?? row.listedRateMinor) * row.days)} total`}
-                      </p>
-                    )}
-                  </section>
-                )}
-                {row.conflict && (
-                  <p className="request-conflict" role="status">
-                    These dates overlap another confirmed loan. This request
-                    cannot be approved.
-                  </p>
-                )}
-                {row.status === "declined" && !incoming && (
-                  <p>
-                    This request couldn’t be accommodated. You can explore
-                    another item.
-                  </p>
-                )}
-                <div className="request-actions">
-                  {row.loanId && (
-                    <Link
-                      className="button-primary"
-                      href={`/dashboard/loans/${row.loanId}`}
-                    >
-                      View loan
-                    </Link>
-                  )}
-                  {row.status === "awaiting_borrower" && !incoming && (
-                    <>
-                      <button
-                        type="button"
-                        className="button-primary"
-                        disabled={!!busy}
-                        onClick={() => void priceAction(row.id, "accept_final")}
-                      >
-                        {row.priceDecision === "countered"
-                          ? `Accept ${money(row.lenderCounterMinor!)} / day`
-                          : `Continue at ${money(row.listedRateMinor)} / day`}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!!busy}
-                        onClick={() =>
-                          void priceAction(row.id, "decline_final")
-                        }
-                      >
-                        Not Right Now
-                      </button>
-                    </>
-                  )}
-                  {row.status === "pending" &&
-                    (incoming ? (
-                      <>
-                        {row.borrowerOfferMinor !== null ? (
-                          <>
-                            <button
-                              type="button"
-                              className="button-primary"
-                              disabled={!!busy || row.conflict}
-                              onClick={() =>
-                                void priceAction(row.id, "accepted_offer")
-                              }
+                            <time
+                              dateTime={new Date(
+                                row.lenderRespondedAt!,
+                              ).toISOString()}
                             >
-                              Accept Offer
-                            </button>
-                            <button
-                              type="button"
-                              disabled={
-                                !!busy ||
-                                row.listedRateMinor - row.borrowerOfferMinor <=
-                                  1
-                              }
-                              onClick={() => {
-                                setCounterId(row.id);
-                                setCounter("");
-                                counterDialog.current?.showModal();
-                              }}
-                            >
-                              Suggest Another Price
-                            </button>
-                            <button
-                              type="button"
-                              disabled={!!busy}
-                              onClick={() =>
-                                void priceAction(row.id, "kept_listed_price")
-                              }
-                            >
-                              Keep Listed Price
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            className="button-primary"
-                            disabled={!!busy || row.conflict}
-                            onClick={() => void act(row.id, "approve")}
-                          >
-                            Approve Request
-                          </button>
+                              {new Date(row.lenderRespondedAt!).toLocaleString(
+                                "en-IN",
+                              )}
+                            </time>
+                          </li>
                         )}
-                        <button
+                        {row.status === "approved" &&
+                          row.borrowerRespondedAt && (
+                            <li>
+                              <span>
+                                Borrower accepted{" "}
+                                <strong>{money(row.rateMinor)} / day</strong>
+                              </span>
+                              <time
+                                dateTime={new Date(
+                                  row.borrowerRespondedAt,
+                                ).toISOString()}
+                              >
+                                {new Date(
+                                  row.borrowerRespondedAt,
+                                ).toLocaleString("en-IN")}
+                              </time>
+                            </li>
+                          )}
+                        {row.status === "approved" && (
+                          <li>
+                            <span>
+                              Rental confirmed ·{" "}
+                              <strong>{money(row.totalMinor)} total</strong>
+                            </span>
+                          </li>
+                        )}
+                        {row.status === "cancelled" && (
+                          <li>Negotiation closed</li>
+                        )}
+                      </ol>
+                      {row.status === "pending" && (
+                        <p>
+                          {incoming
+                            ? `Listed at ${money(row.listedRateMinor)} / day · ${row.days} days · ${money(row.borrowerOfferMinor * row.days)} offered`
+                            : "Waiting for lender to respond."}
+                        </p>
+                      )}
+                      {row.status === "awaiting_borrower" && (
+                        <p>
+                          {incoming
+                            ? "Waiting for the borrower’s decision."
+                            : `${row.priceDecision === "kept_listed_price" ? `The lender would prefer to keep the original price of ${money(row.listedRateMinor)} / day. You can still proceed if that works for you. ` : ""}Listed ${money(row.listedRateMinor)} / day · offered ${money(row.borrowerOfferMinor)} / day · final ${money(row.lenderCounterMinor ?? row.listedRateMinor)} / day · ${money((row.lenderCounterMinor ?? row.listedRateMinor) * row.days)} total`}
+                        </p>
+                      )}
+                    </section>
+                  )}
+                  {row.conflict && (
+                    <p className={activity.conflict} role="status">
+                      These dates overlap another confirmed loan. This request
+                      cannot be approved.
+                    </p>
+                  )}
+                  {row.status === "declined" && !incoming && (
+                    <p>
+                      This request couldn’t be accommodated. You can explore
+                      another item.
+                    </p>
+                  )}
+                  <div
+                    className={`mt-[18px] flex flex-wrap gap-2.5 ${activity.actions}`}
+                  >
+                    {row.loanId && (
+                      <Button asChild className={activity.primaryAction}>
+                        <Link href={`/dashboard/loans/${row.loanId}`}>
+                          View loan
+                        </Link>
+                      </Button>
+                    )}
+                    {row.status === "awaiting_borrower" && !incoming && (
+                      <>
+                        <Button
                           type="button"
+                          className={activity.primaryAction}
                           disabled={!!busy}
-                          onClick={() => void act(row.id, "decline")}
+                          onClick={() =>
+                            void priceAction(row.id, "accept_final")
+                          }
                         >
-                          Decline Request
-                        </button>
+                          {row.priceDecision === "countered"
+                            ? `Accept ${money(row.lenderCounterMinor!)} / day`
+                            : `Continue at ${money(row.listedRateMinor)} / day`}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={activity.secondaryAction}
+                          disabled={!!busy}
+                          onClick={() =>
+                            void priceAction(row.id, "decline_final")
+                          }
+                        >
+                          Not Right Now
+                        </Button>
                       </>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={!!busy}
-                        onClick={() => void act(row.id, "cancel")}
-                      >
-                        Cancel request
-                      </button>
-                    ))}
+                    )}
+                    {row.status === "pending" &&
+                      (incoming ? (
+                        <>
+                          {row.borrowerOfferMinor !== null ? (
+                            <>
+                              <Button
+                                type="button"
+                                className={activity.primaryAction}
+                                disabled={!!busy || row.conflict}
+                                onClick={() =>
+                                  void priceAction(row.id, "accepted_offer")
+                                }
+                              >
+                                Accept Offer
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className={activity.secondaryAction}
+                                disabled={
+                                  !!busy ||
+                                  row.listedRateMinor -
+                                    row.borrowerOfferMinor <=
+                                    1
+                                }
+                                onClick={() => {
+                                  setCounterId(row.id);
+                                  setCounter("");
+                                  counterDialog.current?.showModal();
+                                }}
+                              >
+                                Suggest Another Price
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className={activity.secondaryAction}
+                                disabled={!!busy}
+                                onClick={() =>
+                                  void priceAction(row.id, "kept_listed_price")
+                                }
+                              >
+                                Keep Listed Price
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              type="button"
+                              className={activity.primaryAction}
+                              disabled={!!busy || row.conflict}
+                              onClick={() => void act(row.id, "approve")}
+                            >
+                              Approve Request
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={activity.secondaryAction}
+                            disabled={!!busy}
+                            onClick={() => void act(row.id, "decline")}
+                          >
+                            Decline Request
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className={activity.secondaryAction}
+                          disabled={!!busy}
+                          onClick={() => void act(row.id, "cancel")}
+                        >
+                          Cancel request
+                        </Button>
+                      ))}
+                  </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
       <dialog
         ref={counterDialog}
-        className="borrow-dialog"
+        className={activity.dialog}
         aria-labelledby="counter-title"
         onClose={() => setCounterId(null)}
       >
         {counterRow && (
           <form
-            className="borrow-form"
+            className={`borrow-form ${activity.counterForm}`}
             onSubmit={(e) => {
               e.preventDefault();
               if (counterValid)
                 void priceAction(counterRow.id, "countered", counterMinor);
             }}
           >
-            <div className="borrow-form-heading">
+            <div
+              className={`mb-4 flex items-center justify-between gap-3 ${activity.dialogHeading}`}
+            >
               <h2 id="counter-title">Suggest Another Price</h2>
               <button
                 type="button"
+                className="px-2 py-1"
                 aria-label="Close counteroffer"
                 onClick={() => counterDialog.current?.close()}
               >
@@ -755,13 +772,13 @@ export function RequestList({ incoming }: { incoming: boolean }) {
                 total
               </p>
             )}
-            <button
+            <Button
               type="submit"
-              className="button-primary"
+              className={`mt-3.5 w-full ${activity.largeAction}`}
               disabled={!counterValid || !!busy}
             >
               Send final price
-            </button>
+            </Button>
           </form>
         )}
       </dialog>

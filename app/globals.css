@@ -1681,29 +1681,13 @@ textarea:focus-visible {
   padding: 11px;
   font: inherit;
 }
-.negotiation-timeline {
-  margin-top: 14px;
-  padding: 14px 16px;
-  border-left: 3px solid #152d3b;
-  border-radius: 0 10px 10px 0;
-  background: #f1f5ff;
-}
-.negotiation-timeline ol {
-  margin: 8px 0;
-  padding-left: 20px;
-}
-.negotiation-timeline li {
-  margin: 4px 0;
-}
 .borrow-choices button:focus-visible,
-.offer-field input:focus-visible,
-.request-actions button:focus-visible {
+.offer-field input:focus-visible {
   outline: 3px solid #d9f36a;
   outline-offset: 2px;
 }
 .borrow-form,
-.loan-card,
-.request-card {
+.loan-card {
   background: #fff;
   border: 1px solid #d6deec;
   border-radius: 18px;
@@ -1765,62 +1749,12 @@ textarea:focus-visible {
   padding: 14px 0;
 }
 .borrow-form .button-primary,
-.request-actions .button-primary,
 .loan-card .button-primary {
   border: 0;
 }
 .button-primary:disabled {
   opacity: 0.55;
   cursor: not-allowed;
-}
-.request-page .app-heading {
-  margin-bottom: 25px;
-}
-.request-grid {
-  display: grid;
-  gap: 18px;
-}
-.request-card {
-  display: grid;
-  grid-template-columns: 180px minmax(0, 1fr);
-  overflow: hidden;
-}
-.request-cover {
-  width: 100%;
-  height: 100%;
-  min-height: 190px;
-  object-fit: cover;
-}
-.request-placeholder {
-  display: grid;
-  place-items: center;
-  background: #dce6fb;
-  color: var(--blue);
-  font-size: 50px;
-}
-.request-body {
-  padding: 20px;
-}
-.request-body h2 {
-  font:
-    400 26px Georgia,
-    serif;
-  margin: 14px 0 8px;
-}
-.request-body h2 a {
-  color: var(--ink);
-}
-.request-body p {
-  margin: 6px 0;
-  color: var(--muted);
-}
-.request-card-top {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 16px;
-  font-size: 14px;
-  color: var(--muted);
 }
 .request-status {
   display: inline-block;
@@ -1849,17 +1783,6 @@ textarea:focus-visible {
   background: #fff0d9;
   color: #68400c;
 }
-.request-body .request-conflict {
-  color: #a9432b;
-  font-weight: 700;
-}
-.request-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
-}
-.request-actions button:not(.button-primary),
 .loan-card button:not(.button-primary) {
   border: 1px solid #9aabc7;
   border-radius: 9px;
@@ -1869,10 +1792,6 @@ textarea:focus-visible {
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-}
-.request-actions button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 .loan-page {
   max-width: 1040px;
@@ -1934,13 +1853,9 @@ textarea:focus-visible {
   margin: 8px 0;
 }
 @media (max-width: 700px) {
-  .request-card,
   .loan-hero,
   .loan-columns {
     grid-template-columns: 1fr;
-  }
-  .request-cover {
-    height: 190px;
   }
   .borrow-dates {
     grid-template-columns: 1fr;
@@ -1948,9 +1863,7 @@ textarea:focus-visible {
   .borrow-form {
     padding: 16px;
   }
-  .borrow-form .button-primary,
-  .request-actions .button-primary,
-  .request-actions button {
+  .borrow-form .button-primary {
     width: 100%;
     text-align: center;
   }
@@ -1959,47 +1872,6 @@ textarea:focus-visible {
 .status-overdue {
   background: #f8dfd6;
   color: #8b321e;
-}
-
-.borrow-dialog {
-  width: min(520px, calc(100vw - 24px));
-  max-height: min(88vh, 800px);
-  padding: 0;
-  border: 0;
-  border-radius: 20px;
-  overflow: auto;
-  color: var(--ink);
-  box-shadow: 0 24px 80px #152d3b55;
-}
-.borrow-dialog::backdrop {
-  background: #152d3b99;
-}
-.borrow-dialog .borrow-form {
-  margin: 0;
-  border: 0;
-  box-shadow: none;
-}
-.borrow-form-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 14px;
-}
-.borrow-form-heading h2 {
-  font:
-    400 27px Georgia,
-    serif;
-  margin: 0;
-}
-.borrow-form-heading button {
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  font-size: 29px;
-  cursor: pointer;
-  line-height: 1;
-  padding: 4px 8px;
 }
 .notification-page {
   max-width: 760px;
@@ -4143,89 +4015,6 @@ textarea:focus-visible {
   border-top: 1px solid var(--line);
   padding-top: 20px;
 }
-.activity-tabs {
-  display: flex;
-  gap: 24px;
-  border-bottom: 1px solid var(--line);
-  margin-top: 28px;
-}
-.activity-tabs a {
-  padding-block: 18px;
-  color: var(--muted);
-  font-size: 15px;
-}
-.activity-tabs a[aria-current] {
-  color: var(--ink);
-  border-bottom: 2px solid var(--ink);
-}
-.activity-controls {
-  display: flex;
-  gap: 10px;
-  margin-block: 22px;
-}
-.activity-controls button {
-  min-height: 44px;
-  padding: 10px 18px;
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  color: var(--ink);
-  background: transparent;
-}
-.activity-controls button[aria-pressed="true"] {
-  background: var(--surface-selected);
-  border-color: var(--border-strong);
-}
-.request-grid {
-  grid-template-columns: 1fr;
-  gap: 24px;
-}
-.request-card {
-  display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  overflow: hidden;
-}
-.request-card .request-cover {
-  width: 100%;
-  height: 100%;
-  max-height: 320px;
-  object-fit: cover;
-}
-.request-body {
-  padding: 28px;
-}
-.request-body h2 {
-  font-size: 28px;
-  font-family: var(--font-heading), sans-serif;
-  letter-spacing: -1px;
-}
-.request-progress {
-  display: flex;
-  flex-wrap: wrap;
-  list-style: none;
-  gap: 10px;
-  padding: 0;
-  margin-block: 20px;
-  font-size: 12px;
-  color: var(--muted);
-}
-.request-progress li {
-  border-left: 2px solid var(--border-strong);
-  padding-left: 10px;
-}
-.request-progress li:last-child {
-  color: var(--ink);
-  border-color: var(--ink);
-  font-weight: 600;
-}
-.negotiation-timeline {
-  background: var(--brand-paper);
-  border: 0;
-  border-left: 2px solid var(--border-strong);
-  padding: 20px;
-}
 .loan-card {
   box-shadow: none;
   border-color: var(--line);
@@ -4401,21 +4190,6 @@ textarea:focus-visible {
   .search-row input {
     font-size: 13px;
   }
-  .request-card {
-    grid-template-columns: 1fr;
-  }
-  .request-card .request-cover {
-    height: 185px;
-  }
-  .request-body {
-    padding: 20px;
-  }
-  .activity-tabs {
-    gap: 18px;
-  }
-  .activity-tabs a {
-    font-size: 13px;
-  }
   .detail-layout {
     grid-template-columns: 1fr;
   }
@@ -4427,9 +4201,6 @@ textarea:focus-visible {
   .tool-image:hover img {
     transform: none;
   }
-}
-.request-card {
-  box-shadow: none;
 }
 .status-pending,
 .status-awaiting_borrower {
@@ -4491,11 +4262,6 @@ textarea:focus-visible {
   border: 0;
   box-shadow: none;
   background: transparent;
-}
-.borrow-form-heading h2 {
-  font:
-    500 23px var(--font-heading),
-    sans-serif;
 }
 .admin-listing {
   display: grid;
@@ -4619,21 +4385,6 @@ textarea:focus-visible {
 }
 .borrow-panel .borrow-form {
   margin-top: 26px;
-}
-.borrow-form-heading {
-  margin-bottom: 16px;
-}
-.borrow-form-heading h3 {
-  margin: 0;
-  font:
-    600 18px var(--font-heading),
-    sans-serif;
-  letter-spacing: -0.02em;
-}
-.detail-copy .borrow-form-heading p {
-  margin: 5px 0 0;
-  font-size: 13px;
-  line-height: 1.5;
 }
 .borrow-calendar {
   border: 1px solid var(--line);
@@ -6219,182 +5970,6 @@ textarea:focus-visible {
     grid-template-columns: 100px minmax(0, 1fr);
   }
 }
-
-/* Activity workspace */
-.request-page {
-  max-width: 1120px;
-  margin-inline: auto;
-}
-.request-page .app-heading {
-  margin-bottom: 30px;
-}
-.request-page .app-heading h1 {
-  font-size: clamp(38px, 4vw, 56px);
-  letter-spacing: -0.04em;
-}
-.activity-tabs {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  margin: 0;
-  padding: 5px;
-  background: #e7eae0;
-  border: 0;
-  border-radius: 14px;
-}
-.activity-tabs a {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  min-height: 46px;
-  padding: 10px 18px;
-  border-radius: 10px;
-  color: #526760;
-  font-weight: 600;
-}
-.activity-tabs a[aria-current] {
-  background: var(--brand-ink);
-  color: white;
-  border: 0;
-  box-shadow: 0 3px 8px #152d3b1f;
-}
-.activity-controls {
-  align-items: center;
-  margin: 24px 0;
-}
-.activity-controls button {
-  background: white;
-  font-size: 14px;
-  font-weight: 600;
-  min-height: 40px;
-  padding: 8px 16px;
-}
-.activity-controls button[aria-pressed="true"] {
-  background: var(--brand-lime);
-  border-color: var(--brand-lime);
-  color: var(--ink);
-}
-.request-grid {
-  gap: 16px;
-}
-.request-card {
-  grid-template-columns: 168px minmax(0, 1fr);
-  background: white;
-  border-radius: 18px;
-  box-shadow: 0 5px 24px #152d3b0a;
-}
-.request-card .request-cover {
-  align-self: start;
-  width: 136px;
-  height: 136px;
-  min-height: 0;
-  max-height: none;
-  margin: 20px 0 20px 20px;
-  border-radius: 12px;
-  object-fit: cover;
-}
-.request-placeholder {
-  background: #ebf0dd;
-  color: var(--ink);
-}
-.request-body {
-  min-width: 0;
-  padding: 24px 26px 26px;
-}
-.request-card-top {
-  gap: 10px;
-  font-size: 13px;
-}
-.request-body h2 {
-  margin: 12px 0 5px;
-  font-size: 24px;
-  font-weight: 600;
-  letter-spacing: -0.03em;
-}
-.request-body p {
-  line-height: 1.5;
-  font-size: 14px;
-}
-.request-progress {
-  gap: 8px;
-  margin: 18px 0;
-}
-.request-progress li,
-.request-progress li:last-child {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  border: 0;
-  padding: 0;
-  color: #667a74;
-}
-.request-progress li::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #a7b8aa;
-}
-.request-progress li:not(:last-child)::after {
-  content: "";
-  width: 20px;
-  height: 1px;
-  background: #d4ded3;
-  margin-left: 3px;
-}
-.request-progress li:last-child {
-  color: var(--ink);
-  font-weight: 700;
-}
-.request-progress li:last-child::before {
-  background: #86ab25;
-}
-.negotiation-timeline {
-  padding: 18px 20px;
-  border: 1px solid #d9e3cf;
-  border-radius: 12px;
-  background: #f6f8ef;
-}
-.negotiation-timeline > strong {
-  display: block;
-  font-size: 14px;
-  color: var(--ink);
-}
-.negotiation-timeline ol {
-  list-style: none;
-  padding: 0;
-  margin: 12px 0 0;
-}
-.negotiation-timeline li {
-  position: relative;
-  padding: 7px 0 7px 17px;
-  margin: 0;
-  color: #344b4a;
-  font-size: 14px;
-  line-height: 1.5;
-}
-.negotiation-timeline li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 15px;
-  width: 7px;
-  height: 7px;
-  background: #91ad4b;
-  border-radius: 50%;
-}
-.negotiation-timeline time {
-  color: var(--muted);
-  font-size: 12px;
-}
-.request-actions {
-  margin-top: 18px;
-}
-.request-actions .button-primary,
-.request-actions button {
-  min-height: 44px;
-  font-size: 14px;
-}
 .timeline-dot {
   background: var(--brand-lime);
   color: var(--brand-ink);
@@ -6409,32 +5984,6 @@ textarea:focus-visible {
   margin: 8px 0 14px;
   font-size: 13px;
   line-height: 1.5;
-}
-@media (max-width: 700px) {
-  .activity-tabs {
-    display: flex;
-    width: 100%;
-  }
-  .activity-tabs a {
-    flex: 1 1 160px;
-    justify-content: center;
-    text-align: center;
-    padding-inline: 10px;
-  }
-  .request-card {
-    grid-template-columns: 1fr;
-  }
-  .request-card .request-cover {
-    width: calc(100% - 32px);
-    height: 190px;
-    margin: 16px 16px 0;
-  }
-  .request-body {
-    padding: 20px;
-  }
-  .request-progress li:not(:last-child)::after {
-    width: 12px;
-  }
 }
 
 /* Owner listing and handover refinements */
@@ -6543,59 +6092,9 @@ textarea:focus-visible {
 .handover-success svg {
   flex: none;
 }
-.negotiation-timeline {
-  background: #f9faf6;
-  border: 1px solid #e0e7d9;
-  padding: 18px 20px;
-}
-.negotiation-heading {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.negotiation-heading strong {
-  color: var(--ink);
-  font-size: 14px;
-}
-.request-body .negotiation-heading p {
-  margin: 2px 0 0;
-  font-size: 12px;
-}
-.negotiation-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  background: #e7efcf;
-  color: #365d42;
-  border-radius: 10px;
-  font-weight: 700;
-}
-.negotiation-timeline ol {
-  margin: 14px 0 0 17px;
-  border-left: 1px solid #cad9bb;
-}
-.negotiation-timeline li {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 3px 14px;
-  padding: 8px 0 8px 20px;
-}
-.negotiation-timeline li::before {
-  left: -4px;
-  background: #8ba957;
-}
-.negotiation-timeline li time {
-  white-space: nowrap;
-}
 @media (max-width: 700px) {
   .owner-listing-panel {
     margin-top: 18px;
     padding: 20px;
-  }
-  .negotiation-timeline li {
-    display: grid;
   }
 }
