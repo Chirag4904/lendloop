@@ -69,15 +69,20 @@ export default function Home() {
                   </h2>
                 </div>
                 <p>
-                  A live peek at LendLoop. Just item names and categories here.
-                  Sign in to explore the details.
+                  A few examples of the things neighbors could share. Explore
+                  the live shelf to see what’s currently listed.
                 </p>
               </div>
             }
           />
           <div className="shell">
             <div className="catalog-entry">
-              <span>Have something useful sitting idle?</span>
+              <span>Curious what’s available?</span>
+              <Button asChild variant="outline">
+                <Link href="/explore">
+                  Explore listings <ArrowUpRight size={18} />
+                </Link>
+              </Button>
               <Button asChild className="button-primary">
                 <Link href="/dashboard">
                   Sign in to lend or borrow <ArrowUpRight size={18} />

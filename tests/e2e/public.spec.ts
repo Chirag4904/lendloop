@@ -397,3 +397,46 @@ for (const width of [390, 1440]) {
     });
   });
 }
+
+test("visitors can open public Explore without signing in", async ({
+  page,
+}) => {
+  const response = await page.goto("/explore");
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByRole("heading", { name: "See what’s out there." }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Sign in to lend or borrow" }),
+  ).toHaveAttribute("href", "/dashboard");
+  if (
+    process.env.NEXT_PUBLIC_CONVEX_URL &&
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
+  ) {
+    await expect(
+      page.getByRole("searchbox", { name: "Search listings by name" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("group", { name: "Filter by category" }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole("list", { name: "Public listings" })
+        .or(page.getByRole("heading", { name: /No listings/ })),
+    ).toBeVisible({ timeout: 15000 });
+    const photos = page
+      .getByRole("list", { name: "Public listings" })
+      .locator("img");
+    if (await photos.count()) {
+      await photos.first().scrollIntoViewIfNeeded();
+      await expect
+        .poll(() =>
+          photos
+            .first()
+            .evaluate((image: HTMLImageElement) => image.naturalWidth),
+        )
+        .toBeGreaterThan(0);
+    }
+  }
+  expect(page.url()).toContain("/explore");
+});

@@ -75,6 +75,11 @@ export default defineSchema({
     updatedAt: v.number(),
   })
     .index("by_active", ["active"])
+    .index("by_active_and_category", ["active", "category"])
+    .searchIndex("search_name", {
+      searchField: "name",
+      filterFields: ["active", "category"],
+    })
     .index("by_society_active", ["societyId", "active"])
     .index("by_owner", ["ownerId"]),
   listingPhotos: defineTable({

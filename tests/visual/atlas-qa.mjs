@@ -1026,13 +1026,53 @@ assert.deepEqual(
 assert.equal(editCalls[0].args.name, "Updated cordless drill");
 assert.deepEqual(editCalls[1].args, { toolId: "tool0", photoIds: ["photo0"] });
 assert.deepEqual(errors, []);
+for (const width of [360, 390, 768, 1280, 1440]) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto("http://localhost:3000/__atlas-qa?view=public-explore");
+  const listings = page.getByRole("list", { name: "Public listings" });
+  assert.equal(await listings.getByRole("listitem").count(), 6);
+  assert.equal(await listings.getByText("Sample listing").count(), 0);
+  assert.equal(await listings.getByText("Demo · Cordless drill").count(), 0);
+  assert.equal(await listings.locator("img").count(), 5);
+  assert.equal(
+    await listings
+      .getByRole("listitem")
+      .filter({ hasText: "Step ladder" })
+      .locator("svg")
+      .count(),
+    1,
+  );
+  assert.equal(await listings.getByText(/₹|Rohan|per day/i).count(), 0);
+  await page.screenshot({
+    path: `artifacts/atlas/public-explore-${width}.png`,
+    fullPage: true,
+  });
+  await page
+    .getByRole("searchbox", { name: "Search listings by name" })
+    .fill("drill");
+  assert.equal(await listings.getByRole("listitem").count(), 1);
+  await page.getByRole("button", { name: "Garden", exact: true }).click();
+  await page.getByRole("heading", { name: "No listings found" }).waitFor();
+  await page
+    .getByRole("searchbox", { name: "Search listings by name" })
+    .fill("");
+  assert.equal(await listings.getByRole("listitem").count(), 1);
+  assert(
+    await listings.getByRole("heading", { name: "Garden pruner" }).isVisible(),
+  );
+  assert(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  );
+}
 for (const width of [390, 1440]) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("http://localhost:3000/__atlas-qa?view=shelf");
   const track = page.locator(".shelf-track");
   await track.waitFor();
-  assert.equal(await page.locator(".shelf-track > li").count(), 7);
-  assert(await page.getByRole("link", { name: "List an item" }).isVisible());
+  assert.equal(await page.locator(".shelf-track > li").count(), 10);
+  assert.equal(await page.getByText("Example", { exact: true }).count(), 10);
   await page.locator("#tools").scrollIntoViewIfNeeded();
   await page.screenshot({ path: `artifacts/atlas/shelf-${width}.png` });
   if (width === 390) {

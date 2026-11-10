@@ -171,6 +171,29 @@ export function usePaginatedQuery(
   ref: never,
   args?: Record<string, unknown> | "skip",
 ) {
+  if (getFunctionName(ref) === "tools:publicBrowse") {
+    const term =
+      typeof args === "object" && typeof args.text === "string"
+        ? args.text.toLowerCase()
+        : "";
+    const category = typeof args === "object" ? args.category : undefined;
+    return {
+      results: items
+        .filter(
+          (item) =>
+            item.name.toLowerCase().includes(term) &&
+            (!category || item.category === category),
+        )
+        .map(({ name, category, photos }) => ({
+          name: name === "Cordless drill" ? `Demo · ${name}` : name,
+          category,
+          photoUrl: name === "Step ladder" ? null : (photos[0]?.url ?? null),
+        })),
+      status: "Exhausted",
+      loadMore: () => {},
+    };
+  }
+
   if (getFunctionName(ref) === "requests:activityPage") {
     if (args === "skip")
       return { results: [], status: "Exhausted", loadMore: () => {} };

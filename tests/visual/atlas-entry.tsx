@@ -8,6 +8,7 @@ import { Admin } from "../../components/admin/admin";
 import { Onboarding } from "../../components/onboarding/onboarding";
 import { LoanDetail } from "../../components/borrowing/loan-detail";
 import { PublicCatalog } from "../../components/public-catalog";
+import { PublicExplore } from "../../components/marketplace/public-explore";
 import DashboardLoading from "../../app/dashboard/loading";
 const view = new URLSearchParams(location.search).get("view") || "explore";
 createRoot(document.getElementById("root")!).render(
@@ -22,7 +23,9 @@ createRoot(document.getElementById("root")!).render(
     >
       Visual QA fixture · synthetic data · no live account or mutations
     </div>
-    {view === "shelf" ? (
+    {view === "public-explore" ? (
+      <PublicExplore />
+    ) : view === "shelf" ? (
       // Spacers give the pinned gallery a page to scroll through.
       <main>
         <div style={{ height: "60vh", background: "#152d3b" }} />

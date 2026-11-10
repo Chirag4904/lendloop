@@ -21,7 +21,7 @@ Convex does not receive Clerk's secret key. Clerk stays the identity system; Con
 
 Active societies can be entered by a provisioned LendLoop admin through `/admin/societies` or by a deployment operator through a controlled migration. Normal users cannot create or approve societies. Source city, locality, latitude, and longitude independently for LendLoop's own directory. Until an active society exists, onboarding shows a clear empty state and lets users submit a suggestion.
 
-For a development preview, seed four fictional Mumbai societies near Rizvi Oak, four synthetic neighbor profiles, and eight sample tools. Their coordinates are illustrative. The profiles are Convex sample rows, not Clerk sign-in accounts. Names are prefixed `Demo ·`, and the catalog labels their tools as sample listings. Enable the seed only on your Convex development deployment, then run it once (re-running is safe):
+For a development preview, seed four fictional Mumbai societies near Rizvi Oak, four synthetic neighbor profiles, and eight sample tools. Their coordinates are illustrative. The profiles are Convex sample rows, not Clerk sign-in accounts. Their stored names are prefixed `Demo ·`; public Explore removes that prefix from display. Enable the seed only on your Convex development deployment, then run it once (re-running is safe):
 
 ```bash
 npx convex env set LENDLOOP_DEMO_SEED_ALLOWED true

@@ -1,8 +1,13 @@
 import { v } from "convex/values";
+import {
+  paginationOptsValidator,
+  paginationResultValidator,
+} from "convex/server";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
 import { toolCategories } from "./schema";
+import { cover } from "./borrowing";
 
 const condition = v.union(
   v.literal("likeNew"),
@@ -127,6 +132,55 @@ export const publicList = query({
       .filter((t) => !t.archived)
       .slice(0, 24)
       .map(({ name, category }) => ({ name, category })),
+});
+export const publicBrowse = query({
+  args: {
+    text: v.string(),
+    category: v.optional(toolCategories),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: paginationResultValidator(
+    v.object({
+      name: v.string(),
+      category: toolCategories,
+      photoUrl: v.union(v.string(), v.null()),
+    }),
+  ),
+  handler: async (ctx, { text, category, paginationOpts }) => {
+    const term = text.trim();
+    if (term.length > 80)
+      throw new Error("Search must be 80 characters or fewer");
+    if (paginationOpts.numItems < 1 || paginationOpts.numItems > 50)
+      throw new Error("Choose up to 50 listings per page");
+    const source = ctx.db.query("tools");
+    const search = term
+      ? source.withSearchIndex("search_name", (q) => {
+          const filter = q.search("name", term).eq("active", true);
+          return category ? filter.eq("category", category) : filter;
+        })
+      : category
+        ? source
+            .withIndex("by_active_and_category", (q) =>
+              q.eq("active", true).eq("category", category),
+            )
+            .order("desc")
+        : source
+            .withIndex("by_active", (q) => q.eq("active", true))
+            .order("desc");
+    const page = await search.paginate(paginationOpts);
+    return {
+      ...page,
+      page: await Promise.all(
+        page.page
+          .filter((tool) => !tool.archived)
+          .map(async (tool) => ({
+            name: tool.name,
+            category: tool.category,
+            photoUrl: await cover(ctx, tool),
+          })),
+      ),
+    };
+  },
 });
 export const mine = query({
   args: {},

@@ -17,7 +17,7 @@ export function MarketingHeader({ overlay = false }: { overlay?: boolean }) {
         </Link>
         <nav aria-label="Main navigation">
           <Link href="/#how-it-works">How it works</Link>
-          <Link href="/#tools">Explore</Link>
+          <Link href="/explore">Explore</Link>
           <Link href="/#our-story">Our story</Link>
           <Link href="/journal">Journal</Link>
         </nav>

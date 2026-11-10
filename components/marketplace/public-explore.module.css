@@ -1,0 +1,145 @@
+.page {
+  padding-block: 60px 100px;
+  min-height: 65vh;
+}
+.heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.heading h1 {
+  font:
+    500 clamp(38px, 5vw, 62px) / 1.05 var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.055em;
+  margin: 14px 0;
+}
+.heading p {
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 530px;
+}
+.heading a {
+  color: white;
+}
+.search {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  padding: 0 20px;
+  min-height: 56px;
+}
+.search:focus-within {
+  outline: 3px solid var(--brand-ink);
+  outline-offset: 2px;
+}
+.search input {
+  flex: 1;
+  min-width: 0;
+  outline: none;
+  background: transparent;
+}
+.categories {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 20px 0;
+}
+.categories button {
+  flex: none;
+  min-height: 40px;
+  padding-inline: 16px;
+}
+.categories button[aria-pressed="true"] {
+  background: var(--ink);
+  color: white;
+  border-color: var(--ink);
+}
+.resultsHeading {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  margin: 20px 0;
+}
+.resultsHeading h2 {
+  font:
+    500 27px var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.04em;
+  margin: 0;
+}
+.resultsHeading span {
+  color: var(--muted);
+  font-size: 13px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  min-width: 0;
+}
+.photo {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 5 / 4;
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cardBody {
+  padding: 18px 20px 20px;
+}
+.category {
+  color: var(--muted);
+  font-size: 12px;
+}
+.card h3 {
+  font:
+    600 20px / 1.2 var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+  margin: 8px 0 0;
+}
+.more {
+  margin-top: 24px;
+}
+@media (min-width: 760px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 18px;
+  }
+}
+@media (max-width: 600px) {
+  .page {
+    padding-block: 36px 70px;
+  }
+  .cardBody {
+    padding: 14px 16px 16px;
+  }
+  .card h3 {
+    font-size: 17px;
+  }
+}

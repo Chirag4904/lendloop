@@ -327,6 +327,10 @@ function ListingEditor({
               <h2 className={styles.sectionTitle}>
                 <span>02</span> Photos <small>Optional · up to 5</small>
               </h2>
+              <p className={styles.hint}>
+                The cover photo is visible to everyone when your listing is
+                active.
+              </p>
               <div className={styles.photoActions}>
                 <label className={styles.upload}>
                   <Upload size={17} aria-hidden="true" /> Upload Photos

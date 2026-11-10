@@ -258,3 +258,138 @@ test("demo societies move near Rizvi without changing the real society, and samp
     delete process.env.LENDLOOP_DEMO_SEED_ALLOWED;
   }
 });
+
+test("public browse searches and pages active listings without exposing private fields", async () => {
+  const t = convexTest(schema, modules);
+  await t.run(async (ctx) => {
+    const societyId = await ctx.db.insert("societies", {
+      name: "Home",
+      city: "Mumbai",
+      locality: "A",
+      latitude: 19,
+      longitude: 72,
+      status: "active",
+      createdAt: 0,
+      updatedAt: 0,
+    });
+    const ownerId = await ctx.db.insert("users", {
+      clerkUserId: "owner",
+      displayName: "Private owner",
+      societyId,
+      role: "user",
+      trustedBorrower: false,
+      trustedLender: false,
+      createdAt: 0,
+      updatedAt: 0,
+    });
+    for (let i = 0; i < 30; i++)
+      await ctx.db.insert("tools", {
+        name: `Drill ${i}`,
+        category: "Power Tools",
+        ownerId,
+        societyId,
+        condition: "good",
+        description: "Private description",
+        pricing: { dailyAmount: 500, currency: "INR" },
+        active: true,
+        createdAt: i,
+        updatedAt: i,
+      });
+    await ctx.db.insert("tools", {
+      name: "Secret drill",
+      category: "Power Tools",
+      ownerId,
+      societyId,
+      condition: "good",
+      description: "Private",
+      active: false,
+      createdAt: 0,
+      updatedAt: 0,
+    });
+    await ctx.db.insert("tools", {
+      name: "Archived drill",
+      category: "Power Tools",
+      ownerId,
+      societyId,
+      condition: "good",
+      description: "Private",
+      active: true,
+      archived: true,
+      createdAt: 0,
+      updatedAt: 0,
+    });
+    const gardenId = await ctx.db.insert("tools", {
+      name: "Garden rake",
+      category: "Garden",
+      ownerId,
+      societyId,
+      condition: "good",
+      description: "Private",
+      active: true,
+      createdAt: 0,
+      updatedAt: 0,
+    });
+    const storageId = await ctx.storage.store(
+      new Blob([new Uint8Array([255, 216, 255, 217])], { type: "image/jpeg" }),
+    );
+    const photoId = await ctx.db.insert("listingPhotos", {
+      ownerId,
+      toolId: gardenId,
+      storageId,
+      createdAt: 0,
+    });
+    await ctx.db.patch(gardenId, { photoIds: [photoId] });
+    await ctx.db.insert("tools", {
+      name: "Mismatched photo",
+      category: "Other",
+      ownerId,
+      societyId,
+      condition: "good",
+      description: "Private",
+      active: true,
+      photoIds: [photoId],
+      createdAt: 0,
+      updatedAt: 0,
+    });
+  });
+  const first = await t.query(api.tools.publicBrowse, {
+    text: "",
+    paginationOpts: { numItems: 10, cursor: null },
+  });
+  expect(first.isDone).toBe(false);
+  expect(
+    first.page.every(
+      (row) => Object.keys(row).sort().join(",") === "category,name,photoUrl",
+    ),
+  ).toBe(true);
+  const second = await t.query(api.tools.publicBrowse, {
+    text: "",
+    paginationOpts: { numItems: 10, cursor: first.continueCursor },
+  });
+  expect(second.page.length).toBeGreaterThan(0);
+  const garden = await t.query(api.tools.publicBrowse, {
+    text: "rake",
+    category: "Garden",
+    paginationOpts: { numItems: 24, cursor: null },
+  });
+  expect(garden.page).toEqual([
+    { name: "Garden rake", category: "Garden", photoUrl: expect.any(String) },
+  ]);
+  const mismatch = await t.query(api.tools.publicBrowse, {
+    text: "mismatched",
+    paginationOpts: { numItems: 24, cursor: null },
+  });
+  expect(mismatch.page).toEqual([
+    { name: "Mismatched photo", category: "Other", photoUrl: null },
+  ]);
+  const hidden = await t.query(api.tools.publicBrowse, {
+    text: "secret",
+    paginationOpts: { numItems: 24, cursor: null },
+  });
+  expect(hidden.page).toEqual([]);
+  const archived = await t.query(api.tools.publicBrowse, {
+    text: "archived",
+    paginationOpts: { numItems: 24, cursor: null },
+  });
+  expect(archived.page).toEqual([]);
+});
