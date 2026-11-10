@@ -4,7 +4,7 @@ import { DashboardShell } from "../../components/dashboard/dashboard-shell";
 import { DashboardView } from "../../components/dashboard/dashboard-view";
 import { ToolDetail } from "../../components/marketplace/tool-detail";
 import { ListingForm } from "../../components/listings/listing-form";
-import { Admin } from "../../components/admin";
+import { Admin } from "../../components/admin/admin";
 import { LoanDetail } from "../../components/borrowing/loan-detail";
 import { PublicCatalog } from "../../components/public-catalog";
 const view = new URLSearchParams(location.search).get("view") || "explore";

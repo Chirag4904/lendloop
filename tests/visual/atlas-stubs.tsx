@@ -93,12 +93,16 @@ export default function Link({
 }
 type ListingStatus = "active" | "unlisted" | "archived";
 const listingStatuses = new Map<string, ListingStatus>();
+const removedListings = new Set<string>();
 let loanReturnStatus: "return_pending" | "returned" | undefined;
 
 export function useMutation(ref: never) {
   const [, refresh] = React.useReducer((version: number) => version + 1, 0);
   return async (
-    args: { toolId: string; status: ListingStatus } | { loanId: string },
+    args:
+      | { toolId: string; status: ListingStatus }
+      | { toolId: string }
+      | { loanId: string },
   ) => {
     const name = getFunctionName(ref);
     const studioMutation = (
@@ -121,8 +125,13 @@ export function useMutation(ref: never) {
       refresh();
       return null;
     }
-    if (name === "tools:setStatus" && "toolId" in args) {
+    if (name === "tools:setStatus" && "status" in args) {
       listingStatuses.set(args.toolId, args.status);
+      refresh();
+      return null;
+    }
+    if (name === "admin:removeListing" && "toolId" in args) {
+      removedListings.add(args.toolId);
       refresh();
       return null;
     }
@@ -137,7 +146,7 @@ export function usePaginatedQuery(ref: never) {
           owner: "A neighbor",
           society: "Paper Gardens",
           societyId: "society1",
-          status: "active",
+          status: removedListings.has(item.id) ? "removed" : "active",
           coverUrl: index === 1 ? null : item.photos[0].url,
           createdAt: 1794200000000,
           updatedAt: 1794200000000,
@@ -335,7 +344,8 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         : []),
     ];
   }
-  if (name === "admin:access") return true;
+  if (name === "admin:access")
+    return !new URLSearchParams(location.search).has("adminDenied");
   if (name === "admin:overview")
     return {
       users: 24,

@@ -232,7 +232,7 @@ test("admin inspects a confirmed loan without private handover details", async (
     await incoming.getByRole("button", { name: "Approve Request" }).click();
     await admin.page.goto("/admin/loans");
     await admin.page.getByLabel("Search loaded records").fill(name);
-    const row = admin.page.locator(".admin-loan").filter({ hasText: name });
+    const row = admin.page.locator("details").filter({ hasText: name });
     await expect(row).toBeVisible();
     await row.locator("summary").click();
     await expect(row).toContainText("Agreed rate");

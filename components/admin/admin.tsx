@@ -8,6 +8,8 @@ import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import styles from "./admin.module.css";
 
 const nav = [
   ["overview", "Overview"],
@@ -29,11 +31,11 @@ const money = (value: number | null) =>
     ? "Free"
     : `₹${(value / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 function Status({ children }: { children: string }) {
-  return <span className="admin-status">{children.replaceAll("_", " ")}</span>;
+  return <span className={styles.status}>{children.replaceAll("_", " ")}</span>;
 }
 function Notice({ text }: { text: string }) {
   return text ? (
-    <p className="admin-notice" role="status">
+    <p className={styles.notice} role="status">
       {text}
     </p>
   ) : null;
@@ -46,7 +48,7 @@ function Search({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="admin-search">
+    <label className={styles.search}>
       Search loaded records
       <input
         className="text-input"
@@ -72,7 +74,7 @@ function More({
 }
 function Empty({ loading }: { loading: boolean }) {
   return (
-    <p className="admin-empty">
+    <p className={styles.empty}>
       {loading
         ? "Loading records…"
         : "No matching records in the loaded pages."}
@@ -96,16 +98,16 @@ export function Admin({ section }: { section: (typeof nav)[number][0] }) {
       </main>
     );
   return (
-    <div className="admin-shell">
-      <header className="admin-header">
+    <div className="min-h-screen bg-[var(--cream)]">
+      <header className={styles.header}>
         <Link className="brand" href="/dashboard">
           LendLoop<span className="brand-dot">.</span>
         </Link>
         <span>ADMINISTRATION</span>
         <UserButton />
       </header>
-      <div className="admin-layout">
-        <nav className="admin-nav" aria-label="Admin navigation">
+      <div className={styles.layout}>
+        <nav className={styles.nav} aria-label="Admin navigation">
           {nav.map(([id, label]) => (
             <Link
               key={id}
@@ -121,8 +123,8 @@ export function Admin({ section }: { section: (typeof nav)[number][0] }) {
           ))}
           <Link href="/dashboard">Marketplace ↗</Link>
         </nav>
-        <main className="admin-main">
-          <div className="admin-title">
+        <main className={styles.main}>
+          <div className={styles.title}>
             <span className="kicker">LENDLOOP OPERATIONS</span>
             <h1>{nav.find(([id]) => id === section)?.[1]}</h1>
           </div>
@@ -157,9 +159,9 @@ function Overview() {
   ];
   return (
     <>
-      <div className="admin-stats">
+      <div className={styles.stats}>
         {cards.map(([label, value, capped]) => (
-          <div className="admin-card" key={label}>
+          <div className={styles.card} key={label}>
             <span>{label}</span>
             <strong>
               {capped ? "≥" : ""}
@@ -169,7 +171,7 @@ function Overview() {
         ))}
       </div>
       {Object.values(data.capped).some(Boolean) && (
-        <p className="admin-muted">
+        <p className={styles.muted}>
           ≥ marks a lower bound after a dashboard read reached its limit. Open
           that section to page through records.
         </p>
@@ -219,15 +221,15 @@ function Users() {
   }
   return (
     <>
-      <p className="admin-muted">
+      <p className={styles.muted}>
         Trust badges are manually assigned by LendLoop. They do not verify
         identity.
       </p>
       <Search value={search} onChange={setSearch} />
       <Notice text={message} />
-      <div className="admin-records">
+      <div className={styles.records}>
         {rows.map((r) => (
-          <article className="admin-row" key={r.id}>
+          <article className={styles.row} key={r.id}>
             <div>
               <strong>{r.name}</strong>
               <small>
@@ -235,7 +237,7 @@ function Users() {
               </small>
             </div>
             <Status>{r.role}</Status>
-            <div className="admin-actions">
+            <div className={styles.actions}>
               {(["trustedLender", "trustedBorrower"] as const).map((badge) => (
                 <Button
                   key={badge}
@@ -300,7 +302,7 @@ function Listings() {
   }
   return (
     <>
-      <div className="admin-filters">
+      <div className={styles.filters}>
         <Search value={search} onChange={setSearch} />
         <label>
           Status
@@ -351,13 +353,13 @@ function Listings() {
         </label>
       </div>
       <Notice text={message} />
-      <div className="admin-records">
+      <div className={styles.records}>
         {rows.map((r) => (
-          <article className="admin-row admin-listing" key={r.id}>
+          <article className={cn(styles.row, styles.listing)} key={r.id}>
             {r.coverUrl && (
-              <img className="admin-cover" src={r.coverUrl} alt="" />
+              <img className={styles.cover} src={r.coverUrl} alt="" />
             )}
-            <div className="admin-listing-info">
+            <div className={styles.listingInfo}>
               <strong>{r.name}</strong>
               <small>
                 {r.category} · {r.owner} · {r.society} · {money(r.dailyAmount)}{" "}
@@ -370,7 +372,7 @@ function Listings() {
                 Remove
               </Button>
             )}
-            <details className="admin-listing-detail">
+            <details className={styles.listingDetail}>
               <summary>Inspect listing</summary>
               <p>{r.description}</p>
               <small>
@@ -415,7 +417,7 @@ function Loans() {
   );
   return (
     <>
-      <div className="admin-filters">
+      <div className={styles.filters}>
         <Search value={search} onChange={setSearch} />
         <label>
           Status
@@ -433,10 +435,10 @@ function Loans() {
           </select>
         </label>
       </div>
-      <div className="admin-records">
+      <div className={styles.records}>
         {rows.map((r) => (
           <details
-            className="admin-row admin-loan"
+            className={cn(styles.row, styles.loan)}
             key={r.id}
             onToggle={(event) => {
               const open = event.currentTarget.open;
@@ -459,7 +461,7 @@ function Loans() {
               </span>
               <strong>{money(r.totalMinor)}</strong>
             </summary>
-            <div className="admin-loan-detail">
+            <div className={styles.loanDetail}>
               <p>
                 Societies: {r.lenderSociety} → {r.borrowerSociety}
               </p>
@@ -575,9 +577,9 @@ function Societies() {
   }
   return (
     <>
-      <form className="admin-form" onSubmit={(e) => void submit(e)}>
+      <form className={styles.form} onSubmit={(e) => void submit(e)}>
         <h2>{id ? "Edit society" : "Add society"}</h2>
-        <div className="admin-form-grid">
+        <div className={styles.formGrid}>
           {(["name", "city", "locality", "latitude", "longitude"] as const).map(
             (key) => (
               <label key={key}>
@@ -618,7 +620,7 @@ function Societies() {
             </select>
           </label>
         </div>
-        <div className="admin-actions">
+        <div className={styles.actions}>
           <Button disabled={busy} type="submit">
             {busy ? "Saving…" : "Save society"}
           </Button>
@@ -637,9 +639,9 @@ function Societies() {
       </form>
       <Notice text={message} />
       <Search value={search} onChange={setSearch} />
-      <div className="admin-records">
+      <div className={styles.records}>
         {rows.map((r) => (
-          <article className="admin-row" key={r.id}>
+          <article className={styles.row} key={r.id}>
             <div>
               <strong>{r.name}</strong>
               <small>
@@ -761,9 +763,9 @@ function Suggestions() {
     <>
       <Search value={search} onChange={setSearch} />
       <Notice text={message} />
-      <div className="admin-records">
+      <div className={styles.records}>
         {rows.map((r) => (
-          <article className="admin-row admin-suggestion" key={r.id}>
+          <article className={cn(styles.row, styles.suggestion)} key={r.id}>
             <div>
               <strong>{r.name}</strong>
               <small>
@@ -773,7 +775,7 @@ function Suggestions() {
             </div>
             <Status>{r.status}</Status>
             {r.status === "pending" && (
-              <div className="admin-actions">
+              <div className={styles.actions}>
                 <Button
                   disabled={!!busy}
                   onClick={() =>
@@ -799,7 +801,7 @@ function Suggestions() {
               </div>
             )}
             {form.id === r.id && (
-              <div className="admin-review">
+              <div className={styles.review}>
                 <label>
                   Associate existing active society
                   <input
@@ -825,7 +827,7 @@ function Suggestions() {
                   </select>
                 </label>
                 {!form.societyId && (
-                  <div className="admin-form-grid">
+                  <div className={styles.formGrid}>
                     {(
                       [
                         "name",
@@ -878,9 +880,9 @@ function Audit() {
   );
   return (
     <>
-      <div className="admin-records">
+      <div className={styles.records}>
         {results.map((r) => (
-          <article className="admin-row" key={r.id}>
+          <article className={styles.row} key={r.id}>
             <div>
               <strong>{r.action.replaceAll(".", " · ")}</strong>
               <small>
@@ -907,11 +909,11 @@ function Automation() {
   );
   return (
     <>
-      <p className="admin-muted">
+      <p className={styles.muted}>
         Delivery states come from Convex. This view does not depend on n8n being
         online.
       </p>
-      <label className="admin-search">
+      <label className={styles.search}>
         Delivery status
         <select
           className="text-input"
@@ -926,9 +928,9 @@ function Automation() {
           <option value="failed">Failed</option>
         </select>
       </label>
-      <div className="admin-records">
+      <div className={styles.records}>
         {results.map((r) => (
-          <article className="admin-row" key={r.id}>
+          <article className={styles.row} key={r.id}>
             <div>
               <strong>{r.type}</strong>
               <small>

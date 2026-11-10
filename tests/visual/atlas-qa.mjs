@@ -510,11 +510,48 @@ await page.getByLabel("Your daily offer in rupees").fill("100");
 assert(await page.getByRole("button", { name: "Send Offer" }).isEnabled());
 await page.getByRole("button", { name: "Request at Listed Price" }).click();
 assert.equal(await page.getByLabel("Your daily offer in rupees").count(), 0);
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=admin-listings&adminDenied",
+);
+await page.getByRole("alert").getByText("Admin access required.").waitFor();
+assert.equal(await page.getByRole("article").count(), 0);
+
 await page.goto("http://localhost:3000/__atlas-qa?view=admin-listings");
-assert.equal(await page.locator(".admin-listing").count(), 3);
-for (const row of await page.locator(".admin-listing").all()) {
-  assert((await row.locator(".admin-listing-info").boundingBox()).width > 100);
+await page.getByRole("heading", { name: "Listings" }).waitFor();
+const adminListings = page.getByRole("article");
+assert.equal(await adminListings.count(), 3);
+for (const row of await adminListings.all()) {
+  assert((await row.locator(":scope > div").boundingBox()).width > 100);
 }
+const adminSearch = page.getByRole("searchbox", {
+  name: "Search loaded records",
+});
+const adminStatus = page.getByRole("combobox", { name: /^Status/ });
+const adminCategory = page.getByRole("combobox", { name: /^Category/ });
+await adminSearch.fill("drill");
+await adminCategory.selectOption("Garden");
+assert.equal(await adminListings.count(), 0);
+await adminCategory.selectOption("Power Tools");
+await page.getByRole("combobox", { name: /^Society/ }).selectOption("society1");
+await adminStatus.selectOption("active");
+assert.equal(await adminListings.count(), 1);
+const drill = adminListings.filter({ hasText: "Cordless drill" });
+await drill.getByText("Inspect listing").click();
+assert(await drill.getByText(/Condition: good/).isVisible());
+const remove = drill.getByRole("button", { name: "Remove" });
+page.once("dialog", (dialog) => dialog.dismiss());
+await remove.click();
+assert(await remove.isEnabled());
+page.once("dialog", (dialog) => dialog.accept());
+await remove.click();
+await page
+  .getByRole("status")
+  .getByText("Listing removed from discovery.")
+  .waitFor();
+assert.equal(await adminListings.count(), 0);
+await adminStatus.selectOption("removed");
+assert(await drill.isVisible());
+assert.equal(await remove.count(), 0);
 for (const width of [390, 1280]) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("http://localhost:3000/__atlas-qa?view=explore");

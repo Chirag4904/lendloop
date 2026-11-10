@@ -50,7 +50,7 @@ An optional borrower offer on the existing request distinguishes negotiation fro
 
 ## Phase 6 admin boundary
 
-`convex/admin.ts` is the only public admin data/action surface. Each query and mutation resolves the Clerk subject and requires the stored `admin` role. `admin:provisionInitial` is an internal mutation callable only through deployment-operator tooling, and only before any admin exists. Admin actions and their minimal `adminAudit` rows commit in the same Convex transaction. `app/admin` requires Clerk authentication, while `components/admin.tsx` provides role-aware navigation and bounded pages. The backend remains the security boundary. Admin loan projections deliberately omit `loanHandoverDetails`, phone, pickup point, and instructions. Phase 5 delivery and overdue rules remain unchanged.
+`convex/admin.ts` is the only public admin data/action surface. Each query and mutation resolves the Clerk subject and requires the stored `admin` role. `admin:provisionInitial` is an internal mutation callable only through deployment-operator tooling, and only before any admin exists. Admin actions and their minimal `adminAudit` rows commit in the same Convex transaction. `app/admin` requires Clerk authentication, while `components/admin/admin.tsx` provides role-aware navigation and bounded pages. The backend remains the security boundary. Admin loan projections deliberately omit `loanHandoverDetails`, phone, pickup point, and instructions. Phase 5 delivery and overdue rules remain unchanged.
 
 ## Phase 7 frontend boundary
 
