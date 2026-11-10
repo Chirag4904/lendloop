@@ -1120,8 +1120,7 @@ textarea:focus-visible {
   outline: 3px solid #d9f36a;
   outline-offset: 2px;
 }
-.borrow-form,
-.loan-card {
+.borrow-form {
   background: #fff;
   border: 1px solid #d6deec;
   border-radius: 18px;
@@ -1131,28 +1130,8 @@ textarea:focus-visible {
   margin-top: 14px;
   padding: 22px;
 }
-.borrow-form p,
-.loan-card p {
+.borrow-form p {
   color: var(--muted);
-}
-.handover-form label {
-  display: grid;
-  gap: 6px;
-  font-weight: 700;
-}
-.handover-form input,
-.handover-form textarea {
-  width: 100%;
-  min-width: 0;
-  border: 1px solid #aebbd0;
-  border-radius: 9px;
-  padding: 11px;
-  background: #fff;
-  color: var(--ink);
-  font: inherit;
-}
-.loan-card .button-primary {
-  border: 0;
 }
 .button-primary:disabled {
   opacity: 0.55;
@@ -1185,80 +1164,7 @@ textarea:focus-visible {
   background: #fff0d9;
   color: #68400c;
 }
-.loan-card button:not(.button-primary) {
-  border: 1px solid #9aabc7;
-  border-radius: 9px;
-  background: #fff;
-  color: var(--blue);
-  padding: 10px 15px;
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-}
-.loan-page {
-  max-width: 1040px;
-  margin: 0 auto;
-}
-.loan-hero {
-  display: grid;
-  grid-template-columns: minmax(0, 300px) 1fr;
-  gap: 30px;
-  align-items: center;
-  margin: 24px 0;
-}
-.loan-hero img {
-  width: 100%;
-  aspect-ratio: 1;
-  object-fit: cover;
-  border-radius: 20px;
-}
-.loan-hero h1 {
-  font:
-    400 clamp(32px, 4vw, 48px) Georgia,
-    serif;
-  margin: 10px 0;
-}
-.loan-hero p {
-  line-height: 1.7;
-}
-.loan-columns {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 18px;
-}
-.loan-card {
-  padding: 22px;
-}
-.loan-card h2 {
-  font:
-    400 25px Georgia,
-    serif;
-  margin: 0 0 10px;
-}
-.handover-entry {
-  border-top: 1px solid #d6deec;
-  padding: 14px 0;
-  overflow-wrap: anywhere;
-}
-.handover-form {
-  display: grid;
-  gap: 12px;
-  margin-top: 14px;
-}
-.handover-form textarea {
-  min-height: 90px;
-}
-.loan-history {
-  margin-top: 18px;
-}
-.loan-history li {
-  margin: 8px 0;
-}
 @media (max-width: 700px) {
-  .loan-hero,
-  .loan-columns {
-    grid-template-columns: 1fr;
-  }
   .borrow-form {
     padding: 16px;
   }
@@ -3251,13 +3157,6 @@ textarea:focus-visible {
   border-radius: 14px;
   gap: 16px;
 }
-.loan-card {
-  box-shadow: none;
-  border-color: var(--line);
-}
-.loan-hero h1 {
-  font-family: var(--font-heading), sans-serif;
-}
 .automation-list strong {
   font-weight: 500;
   font-size: 18px;
@@ -3613,80 +3512,6 @@ textarea:focus-visible {
     transition-duration: 0s !important;
   }
 }
-
-.share-saved-details {
-  background: var(--surface-muted);
-  border-radius: 14px;
-  padding: 20px;
-  margin: 20px 0;
-}
-.share-saved-details h3 {
-  font-size: 18px;
-  margin: 0 0 8px;
-}
-.share-saved-details > p {
-  margin-bottom: 14px;
-}
-.share-detail-option {
-  display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  border-top: 1px solid var(--line);
-  padding: 12px 0;
-  cursor: pointer;
-}
-.share-detail-option input {
-  width: 18px;
-  height: 18px;
-  accent-color: var(--brand-ink);
-  margin-top: 3px;
-}
-.share-detail-option span {
-  display: grid;
-  gap: 3px;
-  overflow-wrap: anywhere;
-}
-.share-detail-option small {
-  color: var(--muted);
-  font-size: 13px;
-}
-.share-saved-details .button-primary {
-  margin-top: 12px;
-}
-.loan-hero {
-  background: var(--surface-selected);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 24px;
-  grid-template-columns: minmax(0, 160px) minmax(0, 1fr);
-}
-.loan-hero:not(:has(img)) {
-  grid-template-columns: 1fr;
-}
-.loan-hero img {
-  border-radius: 14px;
-}
-.loan-hero h1 {
-  font-size: clamp(30px, 3vw, 42px);
-  margin: 8px 0;
-}
-.loan-card {
-  border-radius: 20px;
-  padding: 26px;
-}
-.loan-card h2 {
-  font-family: var(--font-heading), sans-serif;
-  font-size: 23px;
-}
-.loan-history ol:not(.automation-list) {
-  list-style: none;
-  padding-left: 6px;
-}
-.loan-history ol:not(.automation-list) li {
-  border-left: 2px solid var(--border-strong);
-  padding: 0 0 15px 18px;
-  margin: 0;
-}
 .app-header-inner {
   gap: clamp(12px, 2vw, 28px);
 }
@@ -3695,40 +3520,11 @@ textarea:focus-visible {
   border-radius: 30px;
   padding: 0 14px;
 }
-@media (max-width: 700px) {
-  .loan-hero {
-    grid-template-columns: 100px minmax(0, 1fr);
-    gap: 18px;
-    padding: 18px;
-  }
-}
-.loan-columns {
-  align-items: start;
-  grid-template-rows: auto 1fr;
-}
-.loan-columns > .loan-card:nth-child(2) {
-  grid-column: 2;
-  grid-row: 1 / 3;
-}
-.loan-columns .loan-history {
-  grid-column: 1;
-  grid-row: 2;
-  margin-top: 0;
-}
-@media (max-width: 700px) {
-  .loan-columns > .loan-card:nth-child(2),
-  .loan-columns .loan-history {
-    grid-column: auto;
-    grid-row: auto;
-  }
-}
 
-.handover-fields,
-.handover-form {
+.handover-fields {
   gap: 18px;
 }
-.handover-fields label,
-.handover-form label {
+.handover-fields label {
   display: grid;
   gap: 8px;
   font-size: 14px;
@@ -3736,9 +3532,7 @@ textarea:focus-visible {
   color: var(--ink);
 }
 .handover-fields input,
-.handover-fields textarea,
-.handover-form input,
-.handover-form textarea {
+.handover-fields textarea {
   display: block;
   width: 100%;
   min-width: 0;
@@ -3752,242 +3546,17 @@ textarea:focus-visible {
   font-weight: 400;
   line-height: 1.5;
 }
-.handover-fields textarea,
-.handover-form textarea {
+.handover-fields textarea {
   min-height: 84px;
   resize: vertical;
 }
 .handover-fields input::placeholder,
-.handover-fields textarea::placeholder,
-.handover-form input::placeholder,
-.handover-form textarea::placeholder {
+.handover-fields textarea::placeholder {
   color: #778985;
   opacity: 1;
 }
-.handover-fields :is(input, textarea):focus-visible,
-.handover-form :is(input, textarea):focus-visible {
+.handover-fields :is(input, textarea):focus-visible {
   outline: 2px solid #608b70;
   outline-offset: 2px;
   border-color: #608b70;
-}
-.handover-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin-top: 4px;
-}
-.handover-actions button:not(.button-primary) {
-  min-height: 44px;
-  padding: 8px 16px;
-  border: 1px solid #aebcb8;
-  border-radius: 10px;
-  background: white;
-  color: var(--ink);
-}
-.loan-hero {
-  background: white;
-  padding: 22px;
-  grid-template-columns: minmax(0, 145px) minmax(0, 1fr);
-  box-shadow: 0 8px 30px rgba(21, 45, 59, 0.04);
-}
-.loan-hero img {
-  aspect-ratio: 1;
-}
-.loan-hero .kicker {
-  color: #61766d;
-}
-.loan-hero h1 {
-  font-weight: 600;
-}
-.loan-hero p {
-  line-height: 1.5;
-}
-.loan-hero .loan-date-line {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin: 12px 0 6px;
-}
-.loan-columns {
-  gap: 18px;
-}
-.loan-card {
-  padding: clamp(22px, 2.5vw, 30px);
-}
-.loan-card-heading {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 16px;
-}
-.loan-heading-icon {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 44px;
-  height: 44px;
-  border-radius: 13px;
-  background: var(--surface-selected);
-  color: var(--ink);
-}
-.loan-card-eyebrow {
-  display: block;
-  color: #697c79;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  font-weight: 700;
-  margin-bottom: 3px;
-}
-.loan-card-heading h2 {
-  margin: 0;
-  font-weight: 600;
-}
-.loan-return-card > p,
-.loan-handover-card > p {
-  line-height: 1.65;
-}
-.loan-return-card .button-primary {
-  margin-top: 18px;
-  min-height: 46px;
-  padding: 10px 20px;
-  font-size: 14px;
-}
-.handover-empty {
-  border: 1px dashed #c4d1c3;
-  border-radius: 12px;
-  background: #f8faf5;
-  padding: 16px;
-  margin: 20px 0;
-}
-.handover-empty strong {
-  font-size: 14px;
-}
-.loan-card .handover-empty p {
-  font-size: 13px;
-  margin-top: 4px;
-}
-.loan-handover-card .handover-edit-button {
-  display: inline-flex;
-  justify-content: center;
-  min-height: 44px;
-  padding: 10px 16px;
-  border: 1px solid #aebcb8;
-  border-radius: 10px;
-  background: white;
-  font-size: 14px;
-}
-.handover-form {
-  padding-top: 20px;
-  margin-top: 20px;
-  border-top: 1px solid var(--line);
-}
-.handover-form > p {
-  font-size: 12px;
-}
-.share-saved-details {
-  background: #f6f8ef;
-  border: 1px solid #d9e2d1;
-}
-.loan-history ol:not(.automation-list) {
-  margin: 24px 0 0 10px;
-  padding: 0;
-}
-.loan-history ol:not(.automation-list) li {
-  display: grid;
-  position: relative;
-  gap: 3px;
-  border-left: 2px solid #d8e3d4;
-  padding: 0 0 22px 24px;
-  margin: 0;
-  font-size: 14px;
-}
-.loan-history ol:not(.automation-list) li:last-child {
-  padding-bottom: 0;
-  border-color: transparent;
-}
-.loan-history li time {
-  color: var(--muted);
-  font-size: 12px;
-}
-.timeline-dot {
-  position: absolute;
-  left: -11px;
-  top: 0;
-  width: 20px;
-  height: 20px;
-  display: grid;
-  place-items: center;
-  background: #dcebcf;
-  color: #315c3f;
-  border-radius: 50%;
-}
-@media (max-width: 700px) {
-  .loan-hero {
-    grid-template-columns: 100px minmax(0, 1fr);
-  }
-}
-.timeline-dot {
-  background: var(--brand-lime);
-  color: var(--brand-ink);
-}
-.loan-history ol:not(.automation-list) li {
-  border-color: #b3ce54;
-}
-.loan-history ol:not(.automation-list) li:last-child {
-  border-color: transparent;
-}
-.delivery-explanation {
-  margin: 8px 0 14px;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-/* Handover refinements */
-.share-saved-details {
-  background: transparent;
-  border: 0;
-  border-top: 1px solid var(--line);
-  border-radius: 0;
-  margin: 22px 0 18px;
-  padding: 20px 0 0;
-}
-.share-saved-details h3 {
-  font-size: 16px;
-  font-weight: 700;
-}
-.share-saved-details > p {
-  font-size: 13px;
-  line-height: 1.55;
-}
-.share-detail-option {
-  padding: 12px 0;
-}
-.share-saved-details .button-primary {
-  min-height: 42px;
-  padding: 9px 16px;
-  font-size: 13px;
-  border-radius: 10px;
-}
-.handover-empty {
-  border: 0;
-  border-left: 3px solid #d5e2c1;
-  border-radius: 0;
-  background: transparent;
-  padding: 5px 0 5px 14px;
-}
-.loan-card .handover-success {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  margin: 16px 0;
-  padding: 11px 14px;
-  border-radius: 10px;
-  color: #23583b;
-  background: #e5f1db;
-  font-size: 13px;
-  font-weight: 600;
-}
-.handover-success svg {
-  flex: none;
 }

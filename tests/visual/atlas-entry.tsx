@@ -5,7 +5,7 @@ import { DashboardView } from "../../components/dashboard/dashboard-view";
 import { ToolDetail } from "../../components/marketplace/tool-detail";
 import { ListingForm } from "../../components/listings/listing-form";
 import { Admin } from "../../components/admin";
-import { LoanDetail } from "../../components/borrowing/borrowing";
+import { LoanDetail } from "../../components/borrowing/loan-detail";
 import { PublicCatalog } from "../../components/public-catalog";
 const view = new URLSearchParams(location.search).get("view") || "explore";
 createRoot(document.getElementById("root")!).render(

@@ -132,6 +132,13 @@ for (const width of [360, 390, 768, 1280, 1440]) {
           .isVisible(),
       );
       assert(await page.getByLabel(/Contact phone/).isChecked());
+      assert.deepEqual(await page.evaluate(() => window.__atlasHandoverArgs), {
+        loanId: "loan0",
+        phone: "+91 98765 43210",
+        pickupPoint: "",
+        instructions: "",
+        returnInstructions: "",
+      });
       assert(
         await page
           .getByRole("button", { name: "Update shared details" })
@@ -163,10 +170,7 @@ for (const width of [360, 390, 768, 1280, 1440]) {
           name: view === "profile" ? "Edit saved details" : "Edit my details",
         })
         .click();
-      const fields =
-        view === "profile"
-          ? page.getByRole("textbox")
-          : page.locator(".handover-form input, .handover-form textarea");
+      const fields = page.getByRole("textbox");
       assert.equal(await fields.count(), 4);
       for (const field of await fields.all()) {
         const style = await field.evaluate((el) => {
@@ -194,6 +198,26 @@ for (const width of [360, 390, 768, 1280, 1440]) {
         path: `artifacts/atlas/${view}-editing-${width}.png`,
         fullPage: true,
       });
+      if (view === "loan-borrower" && width === 390) {
+        await page
+          .getByRole("textbox", { name: "Pickup point (optional)" })
+          .fill("Library entrance");
+        await page.getByRole("button", { name: "Save details" }).click();
+        await page
+          .getByRole("status")
+          .filter({ hasText: "updated for this loan" })
+          .waitFor();
+        assert.deepEqual(
+          await page.evaluate(() => window.__atlasHandoverArgs),
+          {
+            loanId: "loan0",
+            phone: "",
+            pickupPoint: "Library entrance",
+            instructions: "",
+            returnInstructions: "",
+          },
+        );
+      }
       if (view === "profile" && width === 390) {
         const phone = page.getByRole("textbox", { name: "Contact phone" });
         const savedPhone = await phone.inputValue();
@@ -317,6 +341,27 @@ await archiveListing.click();
 await listingCard.getByText("Archived", { exact: true }).waitFor();
 assert.equal(await listingCard.getByRole("button").count(), 0);
 assert.equal(await listingCard.getByRole("link", { name: "Edit" }).count(), 0);
+await page.goto("http://localhost:3000/__atlas-qa?view=loan-borrower");
+const backToRequests = page.getByRole("link", { name: /Back to requests/ });
+assert.equal(await backToRequests.getAttribute("href"), "/dashboard/requests");
+await page.getByRole("button", { name: "I’ve Returned the Item" }).click();
+await page.getByText("Waiting for the lender to confirm the return.").waitFor();
+assert(
+  await page.getByText("Borrower reported return", { exact: true }).isVisible(),
+);
+await page.goto("http://localhost:3000/__atlas-qa?view=loan&pendingReturn");
+assert.equal(await backToRequests.getAttribute("href"), "/dashboard/incoming");
+assert(await page.getByText("Sent", { exact: true }).isVisible());
+assert(await page.getByText("Retry pending", { exact: true }).isVisible());
+await page.getByRole("button", { name: "Confirm Return" }).click();
+await page.getByText("Return confirmed. This loan is complete.").waitFor();
+assert(
+  await page.getByText("Lender confirmed return", { exact: true }).isVisible(),
+);
+assert.equal(
+  await page.getByRole("button", { name: "Confirm Return" }).count(),
+  0,
+);
 await page.goto(
   "http://localhost:3000/__atlas-qa?view=notifications&updates=sent",
 );

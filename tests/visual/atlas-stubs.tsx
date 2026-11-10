@@ -93,10 +93,13 @@ export default function Link({
 }
 type ListingStatus = "active" | "unlisted" | "archived";
 const listingStatuses = new Map<string, ListingStatus>();
+let loanReturnStatus: "return_pending" | "returned" | undefined;
 
 export function useMutation(ref: never) {
   const [, refresh] = React.useReducer((version: number) => version + 1, 0);
-  return async (args: { toolId: string; status: ListingStatus }) => {
+  return async (
+    args: { toolId: string; status: ListingStatus } | { loanId: string },
+  ) => {
     const name = getFunctionName(ref);
     const studioMutation = (
       window as Window & {
@@ -104,8 +107,21 @@ export function useMutation(ref: never) {
       }
     ).__atlasStudioMutation;
     if (studioMutation) return studioMutation(name, args);
-    if (name === "loans:saveHandover") return null;
-    if (name === "tools:setStatus") {
+    if (name === "loans:saveHandover") {
+      Object.assign(window, { __atlasHandoverArgs: args });
+      return null;
+    }
+    if (
+      (name === "loans:reportReturn" || name === "loans:confirmReturn") &&
+      "loanId" in args &&
+      args.loanId === "loan0"
+    ) {
+      loanReturnStatus =
+        name === "loans:reportReturn" ? "return_pending" : "returned";
+      refresh();
+      return null;
+    }
+    if (name === "tools:setStatus" && "toolId" in args) {
       listingStatuses.set(args.toolId, args.status);
       refresh();
       return null;
@@ -140,6 +156,9 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       instructions: "Call on arrival",
       returnInstructions: "Leave with security",
     };
+  const pendingReturn = new URLSearchParams(location.search).has(
+    "pendingReturn",
+  );
   if (name === "automation:loanActivity")
     return [
       {
@@ -148,8 +167,26 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         at: 1794200000000,
         status: "failed",
       },
+      ...(pendingReturn
+        ? [
+            {
+              id: "event1",
+              message: "Return reported",
+              at: 1794200000000,
+              status: "delivered",
+            },
+            {
+              id: "event2",
+              message: "Return update",
+              at: 1794200000000,
+              status: "retry_pending",
+            },
+          ]
+        : []),
     ];
-  if (name === "loans:detail")
+  if (name === "loans:detail") {
+    const status =
+      loanReturnStatus ?? (pendingReturn ? "return_pending" : "reserved");
     return {
       id: "loan0",
       toolName: "Cordless drill",
@@ -163,12 +200,12 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       days: 4,
       rateMinor: 15000,
       totalMinor: 60000,
-      status: "reserved",
+      status,
       overdue: false,
       requestCreatedAt: 1794200000000,
       approvedAt: 1794200000000,
-      returnReportedAt: null,
-      returnedAt: null,
+      returnReportedAt: status === "reserved" ? null : 1794200000000,
+      returnedAt: status === "returned" ? 1794200001000 : null,
       details:
         new URLSearchParams(location.search).get("view") === "loan-shared"
           ? [
@@ -185,6 +222,7 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
             ]
           : [],
     };
+  }
   if (name === "societies:search")
     return [
       {
