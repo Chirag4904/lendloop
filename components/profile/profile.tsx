@@ -14,6 +14,7 @@ import {
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
+import "@/components/borrowing/handover-fields.css";
 import styles from "./profile.module.css";
 
 const handoverFields = [

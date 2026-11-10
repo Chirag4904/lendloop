@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import styles from "./notifications.module.css";
+import "./automation.css";
 
 export function Notifications() {
   const rows = useQuery(api.automation.mine, {});

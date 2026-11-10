@@ -13,8 +13,11 @@ import {
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import "@/components/notifications/automation.css";
 import { dateLabel, money, statusLabel } from "./borrowing-display";
 import styles from "./loan-detail.module.css";
+import "./borrowing.css";
+import "./handover-fields.css";
 
 export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
   const loan = useQuery(api.loans.detail, { loanId });

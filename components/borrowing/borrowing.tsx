@@ -12,6 +12,7 @@ import { dateLabel, money, statusLabel } from "./borrowing-display";
 import type { Id } from "@/convex/_generated/dataModel";
 import activity from "./activity.module.css";
 import requestForm from "./request-form.module.css";
+import "./borrowing.css";
 
 const minorFromRupees = (value: string) => {
   if (!/^\d+(?:\.\d{1,2})?$/.test(value)) return 0;

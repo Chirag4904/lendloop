@@ -71,7 +71,7 @@ export function Onboarding() {
     <main className="min-h-screen bg-[var(--cream)] px-6 pt-[30px] pb-[70px]">
       <header className={styles.header}>
         <Link className="brand" href="/">
-          <span className="brand-mark">
+          <span className={styles.brandMark}>
             <Wrench size={20} />
           </span>
           LendLoop<span className="brand-dot">.</span>
@@ -144,7 +144,7 @@ export function Onboarding() {
           )}
           {message && (
             <p
-              className={`form-message ${message.startsWith("Thanks") ? "success" : "error"}`}
+              className={`form-message ${message.startsWith("Thanks") ? styles.success : "error"}`}
               role="status"
             >
               {message}

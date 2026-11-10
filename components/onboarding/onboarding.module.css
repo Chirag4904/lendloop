@@ -126,3 +126,19 @@
     padding: 32px;
   }
 }
+.brandMark {
+  width: 31px;
+  height: 31px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--blue);
+  color: #fff;
+  transform: rotate(-13deg);
+}
+.brandMark svg {
+  transform: rotate(13deg);
+}
+.card .success {
+  color: var(--blue);
+}

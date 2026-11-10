@@ -4,6 +4,7 @@ import { PackageOpen } from "lucide-react";
 import { conditions } from "@/components/listings/listing-options";
 import { cn } from "@/lib/utils";
 import { price, relation } from "./tool-display";
+import "./tool-card.css";
 
 export type Tool = {
   id: Id<"tools">;
