@@ -8,6 +8,7 @@ import { Admin } from "../../components/admin/admin";
 import { Onboarding } from "../../components/onboarding/onboarding";
 import { LoanDetail } from "../../components/borrowing/loan-detail";
 import { PublicCatalog } from "../../components/public-catalog";
+import DashboardLoading from "../../app/dashboard/loading";
 const view = new URLSearchParams(location.search).get("view") || "explore";
 createRoot(document.getElementById("root")!).render(
   <>
@@ -50,9 +51,11 @@ createRoot(document.getElementById("root")!).render(
       <Onboarding />
     ) : (
       <DashboardShell>
-        {view === "loan" ||
-        view === "loan-borrower" ||
-        view === "loan-shared" ? (
+        {view === "route-loading" ? (
+          <DashboardLoading />
+        ) : view === "loan" ||
+          view === "loan-borrower" ||
+          view === "loan-shared" ? (
           <LoanDetail loanId={"loan0" as never} />
         ) : view === "listing-new" || view === "listing-edit" ? (
           <ListingForm

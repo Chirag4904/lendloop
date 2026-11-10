@@ -12,6 +12,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
 import "@/components/borrowing/handover-fields.css";
@@ -70,7 +71,7 @@ export function Profile() {
   const [busy, setBusy] = useState(false);
   if (error) return <p role="alert">{error}</p>;
   if (loading || !profile || saved === undefined)
-    return <p role="status">Loading your profile…</p>;
+    return <Loader label="Loading your profile…" />;
   const society = societies?.find((s) => s._id === profile.societyId);
   return (
     <section>

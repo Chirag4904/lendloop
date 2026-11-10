@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMutation, useQuery } from "convex/react";
 import { PackageOpen } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import { ToolCard, type Tool } from "./tool-card";
 import styles from "./my-listings.module.css";
@@ -47,9 +48,7 @@ export function MyListings() {
         </p>
       )}
       {tools === undefined ? (
-        <div className="catalog-state" role="status">
-          Loading your listings…
-        </div>
+        <Loader label="Loading your listings…" />
       ) : tools.length ? (
         <div className={styles.grid}>
           {tools.map((tool) => (

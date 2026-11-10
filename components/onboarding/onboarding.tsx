@@ -7,6 +7,7 @@ import { UserButton } from "@clerk/nextjs";
 import { useMutation, useQuery } from "convex/react";
 import { MapPin, Wrench } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { Button } from "@/components/ui/button";
@@ -110,7 +111,7 @@ export function Onboarding() {
           />
           <div className={styles.results} aria-live="polite">
             {societies === undefined || loading ? (
-              <p className="form-message">Finding nearby places…</p>
+              <Loader label="Finding nearby places…" compact />
             ) : societies.length ? (
               societies.map((s) => (
                 <Button

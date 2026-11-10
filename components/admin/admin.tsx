@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -69,16 +70,14 @@ function More({
   return status === "CanLoadMore" ? (
     <Button onClick={() => loadMore(20)}>Load more</Button>
   ) : status === "LoadingMore" ? (
-    <p role="status">Loading more…</p>
+    <Loader label="Loading more…" compact />
   ) : null;
 }
 function Empty({ loading }: { loading: boolean }) {
-  return (
-    <p className={styles.empty}>
-      {loading
-        ? "Loading records…"
-        : "No matching records in the loaded pages."}
-    </p>
+  return loading ? (
+    <Loader label="Loading records…" compact />
+  ) : (
+    <p className={styles.empty}>No matching records in the loaded pages.</p>
   );
 }
 
@@ -87,8 +86,8 @@ export function Admin({ section }: { section: (typeof nav)[number][0] }) {
   const path = usePathname();
   if (access === undefined)
     return (
-      <main className="app-main" role="status">
-        Checking admin access…
+      <main className="app-main">
+        <Loader label="Checking admin access…" />
       </main>
     );
   if (!access)
@@ -508,7 +507,7 @@ function LoanActivity({
     <div>
       <strong>Automation activity</strong>
       {events === undefined ? (
-        <p>Loading activity…</p>
+        <Loader label="Loading activity…" compact />
       ) : events.length ? (
         events.map((event) => (
           <p key={event.id}>

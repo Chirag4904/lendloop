@@ -10,6 +10,7 @@ import { api } from "@/convex/_generated/api";
 import { useBrowserUpdates } from "@/hooks/use-browser-updates";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { Button } from "@/components/ui/button";
+import { LoadingMark } from "@/components/ui/loader";
 import { cn } from "@/lib/utils";
 import styles from "./dashboard-shell.module.css";
 
@@ -152,9 +153,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ↔ lendloop.
         </Link>
         <div className={styles.loadingContent} role="status" aria-live="polite">
-          <div className={styles.loadingEmblem} aria-hidden="true">
-            <span className={styles.loadingOrbit} />
-            <span className={styles.loadingMark}>↔</span>
+          <div className={styles.loadingEmblem}>
+            <LoadingMark large />
           </div>
           <span className={styles.loadingKicker}>GOOD THINGS GO AROUND</span>
           <h1>

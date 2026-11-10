@@ -85,7 +85,28 @@ for (const width of [390, 1440]) {
   await page.emulateMedia({ reducedMotion: "reduce" });
   assert.equal(
     await page
-      .locator('[class*="loadingOrbit"]')
+      .locator('[class*="orbit"]')
+      .evaluate((el) => getComputedStyle(el).animationName),
+    "none",
+  );
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+}
+for (const width of [390, 1440]) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto("http://localhost:3000/__atlas-qa?view=route-loading");
+  const loader = page
+    .getByRole("status")
+    .filter({ hasText: "Loading your page…" });
+  await loader.waitFor();
+  assert.equal(await loader.locator('[aria-hidden="true"]').count(), 1);
+  await page.screenshot({
+    path: `artifacts/atlas/shared-loader-${width}.png`,
+    fullPage: true,
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  assert.equal(
+    await loader
+      .locator('[class*="orbit"]')
       .evaluate((el) => getComputedStyle(el).animationName),
     "none",
   );

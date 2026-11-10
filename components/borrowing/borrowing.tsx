@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import { BorrowCalendar } from "./borrow-calendar";
 import { dateLabel, money, statusLabel } from "./borrowing-display";
@@ -446,9 +447,7 @@ export function RequestList({ incoming }: { incoming: boolean }) {
         </p>
       )}
       {loading ? (
-        <p role="status" className="catalog-state">
-          Loading requests…
-        </p>
+        <Loader label="Loading requests…" />
       ) : visibleRows.length === 0 ? (
         <div className="app-empty">
           <h2>

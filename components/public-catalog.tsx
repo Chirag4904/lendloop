@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { CSSProperties, ReactNode } from "react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import {
   ArrowUpRight,
   CookingPot,
@@ -70,9 +71,7 @@ function CatalogList({ heading }: { heading: ReactNode }) {
     return (
       <Gallery heading={heading}>
         <div className="shell">
-          <div className="catalog-state" role="status">
-            Looking for available tools…
-          </div>
+          <Loader label="Looking for available tools…" />
         </div>
       </Gallery>
     );

@@ -11,6 +11,7 @@ import {
   RotateCcw,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import "@/components/notifications/automation.css";
@@ -44,7 +45,7 @@ export function LoanDetail({ loanId }: { loanId: Id<"loans"> }) {
     [editing, setEditing] = useState(false),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState("");
-  if (loan === undefined) return <p role="status">Loading loan…</p>;
+  if (loan === undefined) return <Loader label="Loading loan…" />;
   if (loan === null)
     return (
       <div className="app-empty">

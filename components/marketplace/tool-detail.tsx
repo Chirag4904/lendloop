@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useQuery } from "convex/react";
 import { PackageOpen, Pencil } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import type { Id } from "@/convex/_generated/dataModel";
 import { RequestForm } from "@/components/borrowing/borrowing";
 import { conditions } from "@/components/listings/listing-options";
@@ -15,7 +16,7 @@ import styles from "./tool-detail.module.css";
 export function ToolDetail({ toolId }: { toolId: Id<"tools"> }) {
   const tool = useQuery(api.tools.detail, { toolId });
   const [selected, setSelected] = useState(0);
-  if (tool === undefined) return <p role="status">Loading item…</p>;
+  if (tool === undefined) return <Loader label="Loading item…" />;
   if (!tool)
     return (
       <div className="app-empty">

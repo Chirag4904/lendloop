@@ -1,9 +1,5 @@
-import styles from "@/components/dashboard/dashboard-shell.module.css";
+import { Loader } from "@/components/ui/loader";
 
 export default function Loading() {
-  return (
-    <div className={styles.routeLoading} role="status">
-      Loading your page…
-    </div>
-  );
+  return <Loader label="Loading your page…" />;
 }

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight, CalendarClock, Check, Inbox } from "lucide-react";
 import styles from "./notifications.module.css";
@@ -89,7 +90,7 @@ export function Notifications() {
         {readError && <p role="status">Could not mark your updates as read.</p>}
       </div>
       {rows === undefined ? (
-        <p role="status">Loading notifications…</p>
+        <Loader label="Loading notifications…" />
       ) : rows.length === 0 ? (
         <div className="app-empty">
           <h2>No notifications yet</h2>

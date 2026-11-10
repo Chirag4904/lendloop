@@ -242,31 +242,7 @@
   text-align: center;
 }
 .loadingEmblem {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 132px;
-  height: 132px;
   margin-bottom: 40px;
-}
-.loadingOrbit {
-  position: absolute;
-  inset: 0;
-  border: 1px solid var(--border-strong);
-  border-top: 3px solid var(--brand-ink);
-  border-radius: 50%;
-  animation: loading-spin 2s linear infinite;
-}
-.loadingMark {
-  display: grid;
-  place-items: center;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  background: var(--brand-lime);
-  color: var(--brand-ink);
-  font-size: 48px;
-  line-height: 1;
 }
 .loadingKicker {
   font-size: 10px;
@@ -294,22 +270,4 @@
   margin: 0;
   text-align: center;
   font-size: 12px;
-}
-@keyframes loading-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .loadingOrbit {
-    animation: none;
-  }
-}
-
-.routeLoading {
-  min-height: 35vh;
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-  text-align: center;
 }

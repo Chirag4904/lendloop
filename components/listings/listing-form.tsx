@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import type { Id } from "@/convex/_generated/dataModel";
 import { Camera, ImagePlus, PackageOpen, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,8 +31,7 @@ type InitialTool = {
 export function ListingForm({ toolId }: { toolId?: Id<"tools"> }) {
   const tool = useQuery(api.tools.detail, toolId ? { toolId } : "skip") as
     InitialTool | null | undefined;
-  if (toolId && tool === undefined)
-    return <p role="status">Loading listing…</p>;
+  if (toolId && tool === undefined) return <Loader label="Loading listing…" />;
   if (toolId && !tool) return <p role="alert">Listing unavailable.</p>;
   return <ListingEditor toolId={toolId} initial={tool ?? undefined} />;
 }

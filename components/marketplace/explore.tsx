@@ -22,6 +22,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { api } from "@/convex/_generated/api";
+import { Loader } from "@/components/ui/loader";
 import { categories } from "@/components/listings/listing-options";
 import { Button } from "@/components/ui/button";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
@@ -222,9 +223,7 @@ export function ExploreTools() {
       </div>
       <div className="min-w-0">
         {tools === undefined ? (
-          <div className="catalog-state" role="status">
-            Finding nearby tools…
-          </div>
+          <Loader label="Finding nearby tools…" />
         ) : tools.length ? (
           <>
             <div className={styles.resultsHeading} aria-live="polite">
