@@ -233,7 +233,7 @@ assert(
     .getByRole("heading", { name: "Your neighborhood shelf." })
     .isVisible(),
 );
-assert.equal(await page.locator(".explore-page .tool-card").count(), 6);
+assert.equal(await page.getByRole("article").count(), 6);
 await page
   .getByRole("combobox", { name: "Search distance" })
   .selectOption("500");
@@ -242,14 +242,25 @@ assert.equal(
   await page.getByRole("combobox", { name: "Search distance" }).inputValue(),
   "500",
 );
-await page.getByRole("button", { name: "Garden", exact: true }).click();
-assert.equal(await page.locator(".explore-page .tool-card").count(), 1);
+await page.getByRole("button", { name: "Garden", exact: true }).press("Space");
+assert.equal(await page.getByRole("article").count(), 1);
+assert.equal(
+  await page.evaluate(() => window.__atlasExploreArgs.category),
+  "Garden",
+);
 await page.getByRole("combobox", { name: "Sort by" }).selectOption("price");
 assert.equal(
   await page.evaluate(() => window.__atlasExploreArgs.sort),
   "price",
 );
 await page.getByRole("button", { name: "Reset filters" }).click();
+assert.deepEqual(await page.evaluate(() => window.__atlasExploreArgs), {
+  scope: "society",
+  text: "",
+  category: undefined,
+  price: "all",
+  sort: "nearest",
+});
 assert.equal(
   await page.getByRole("combobox", { name: "Search distance" }).inputValue(),
   "society",
@@ -262,10 +273,21 @@ await page
   .getByRole("group", { name: "Price" })
   .getByRole("button", { name: "Free" })
   .click();
-assert.equal(await page.locator(".tool-card").count(), 1);
+assert.equal(await page.getByRole("article").count(), 1);
+assert.equal(
+  await page.evaluate(() => window.__atlasExploreArgs.price),
+  "free",
+);
 await page.getByRole("button", { name: "Reset filters" }).click();
-await page.getByLabel("Search tools").fill("drill");
-assert.equal(await page.locator(".tool-card").count(), 1);
+const toolSearch = page.getByLabel("Search tools");
+await toolSearch.fill("drill");
+assert.equal(await page.getByRole("article").count(), 1);
+await toolSearch.press("Enter");
+assert.equal(
+  await page.evaluate(() => window.__atlasExploreArgs.text),
+  "drill",
+);
+assert(await toolSearch.evaluate((input) => document.activeElement !== input));
 await page.getByLabel("Search tools").fill("no matching item");
 assert(
   await page
@@ -273,7 +295,7 @@ assert(
     .isVisible(),
 );
 await page.getByRole("button", { name: "Clear filters" }).click();
-assert.equal(await page.locator(".explore-page .tool-card").count(), 6);
+assert.equal(await page.getByRole("article").count(), 6);
 await page.goto("http://localhost:3000/__atlas-qa?view=requests");
 const activityNav = page.getByRole("navigation", { name: "Activity views" });
 assert.equal(
