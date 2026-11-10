@@ -88,9 +88,19 @@ export default function Link({
     </a>
   );
 }
+type ListingStatus = "active" | "unlisted" | "archived";
+const listingStatuses = new Map<string, ListingStatus>();
+
 export function useMutation(ref: never) {
-  return async () => {
-    if (getFunctionName(ref) === "loans:saveHandover") return null;
+  const [, refresh] = React.useReducer((version: number) => version + 1, 0);
+  return async (args: { toolId: string; status: ListingStatus }) => {
+    const name = getFunctionName(ref);
+    if (name === "loans:saveHandover") return null;
+    if (name === "tools:setStatus") {
+      listingStatuses.set(args.toolId, args.status);
+      refresh();
+      return null;
+    }
     throw new Error("Mutations disabled in visual QA");
   };
 }
@@ -192,7 +202,16 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
     );
   }
   if (name === "tools:mine")
-    return items.map((x, i) => ({ ...x, isOwner: true, active: i !== 2 }));
+    return items.map((x, i) => {
+      const status =
+        listingStatuses.get(x.id) ?? (i === 2 ? "unlisted" : "active");
+      return {
+        ...x,
+        isOwner: true,
+        active: status === "active",
+        archived: status === "archived",
+      };
+    });
   if (name === "tools:detail")
     return new URLSearchParams(location.search).get("view") === "detail-owner"
       ? { ...items[0], isOwner: true }

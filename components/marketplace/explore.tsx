@@ -25,7 +25,7 @@ import { api } from "@/convex/_generated/api";
 import { categories } from "@/components/listings/listing-options";
 import { Button } from "@/components/ui/button";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
-import { ToolCard } from "./marketplace";
+import { ToolCard } from "./tool-card";
 import styles from "./explore.module.css";
 
 const categoryIcons: Record<string, LucideIcon> = {

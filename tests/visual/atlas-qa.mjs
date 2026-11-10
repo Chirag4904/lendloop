@@ -296,6 +296,27 @@ assert(
 );
 await page.getByRole("button", { name: "Clear filters" }).click();
 assert.equal(await page.getByRole("article").count(), 6);
+await page.goto("http://localhost:3000/__atlas-qa?view=listings");
+const listingCard = page.getByRole("article").filter({
+  has: page.getByRole("heading", { name: "Cordless drill" }),
+});
+assert.equal(
+  await listingCard.getByRole("link", { name: "Edit" }).getAttribute("href"),
+  "/dashboard/listings/tool0/edit",
+);
+await listingCard.getByRole("button", { name: "Unlist" }).click();
+await listingCard.getByText("Unlisted", { exact: true }).waitFor();
+await listingCard.getByRole("button", { name: "Relist" }).click();
+await listingCard.getByText("Active", { exact: true }).waitFor();
+page.once("dialog", (dialog) => void dialog.dismiss());
+const archiveListing = listingCard.getByRole("button", { name: "Archive" });
+await archiveListing.click();
+assert(await listingCard.getByText("Active", { exact: true }).isVisible());
+page.once("dialog", (dialog) => void dialog.accept());
+await archiveListing.click();
+await listingCard.getByText("Archived", { exact: true }).waitFor();
+assert.equal(await listingCard.getByRole("button").count(), 0);
+assert.equal(await listingCard.getByRole("link", { name: "Edit" }).count(), 0);
 await page.goto("http://localhost:3000/__atlas-qa?view=requests");
 const activityNav = page.getByRole("navigation", { name: "Activity views" });
 assert.equal(

@@ -1019,20 +1019,6 @@ p {
   }
 }
 /* Marketplace */
-.market-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  margin-bottom: 30px;
-}
-.market-heading .button-primary {
-  white-space: nowrap;
-  flex: none;
-  min-height: 46px;
-  gap: 9px;
-  font-size: 13px;
-}
 .photo-actions button,
 .photo-actions label,
 .editor-actions > button:not(.button-primary),
@@ -1044,11 +1030,6 @@ p {
   padding: 11px 16px;
   min-height: 48px;
   font-weight: 700;
-}
-.tool-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
 }
 .tool-card {
   min-width: 0;
@@ -1118,26 +1099,6 @@ p {
   font-size: 12px;
   line-height: 1.5;
   margin: 9px 0 0;
-}
-.card-actions {
-  border-top: 1px solid var(--line);
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  padding-top: 15px;
-  margin-top: 18px;
-}
-.card-actions a,
-.card-actions button {
-  background: transparent;
-  border: 0;
-  color: var(--blue);
-  font-weight: 700;
-  font-size: 13px;
-  padding: 8px 0;
-}
-.card-actions button:last-child {
-  color: #a3362e;
 }
 .listing-editor {
   max-width: 860px;
@@ -1385,24 +1346,7 @@ textarea:focus-visible {
   outline: 3px solid var(--tangerine);
   outline-offset: 3px;
 }
-@media (max-width: 900px) {
-  .tool-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 @media (max-width: 700px) {
-  .market-heading {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .market-heading .button-primary {
-    width: auto;
-  }
-  .tool-grid {
-    grid-template-columns: 1fr;
-  }
   .editor-grid {
     grid-template-columns: 1fr;
   }
@@ -3522,10 +3466,6 @@ textarea:focus-visible {
 .app-heading p {
   font-size: 16px;
 }
-.tool-grid {
-  gap: 36px 24px;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
 .tool-card {
   border: 0;
   border-radius: 0;
@@ -3567,16 +3507,6 @@ textarea:focus-visible {
 .tool-card-body p {
   font-size: 13px;
   line-height: 1.6;
-}
-.card-actions {
-  border-top: 1px solid var(--line);
-  padding-top: 12px;
-  gap: 18px;
-}
-.card-actions > * {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
 }
 .app-empty {
   background: var(--surface-muted);
@@ -3674,9 +3604,6 @@ textarea:focus-visible {
   .app-main {
     padding-bottom: calc(110px + env(safe-area-inset-bottom));
   }
-  .tool-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }
 @media (max-width: 600px) {
   .app-main {
@@ -3698,16 +3625,6 @@ textarea:focus-visible {
   }
   .app-header .text-link {
     font-size: 12px;
-  }
-  .market-heading {
-    align-items: flex-start;
-    gap: 16px;
-  }
-  .market-heading .button-primary {
-    min-height: 44px;
-  }
-  .tool-grid {
-    gap: 26px 14px;
   }
   .tool-card-body h2 {
     font-size: 21px;
