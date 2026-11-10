@@ -526,8 +526,10 @@ for (const width of [390, 1280]) {
 }
 await page.setViewportSize({ width: 1280, height: 900 });
 await page.goto("http://localhost:3000/__atlas-qa?view=listing-new");
-await page.getByRole("button", { name: "Preview listing" }).click();
-assert(await page.getByRole("alert").isVisible());
+await page.evaluate(mockStudioSave);
+const publishListing = page.getByRole("button", { name: "Publish listing" });
+await publishListing.click();
+await page.getByRole("alert").filter({ hasText: "Add a name" }).waitFor();
 await page.getByLabel("Item name").fill("A useful drill");
 await page.getByLabel("Description").fill("A drill for small projects.");
 assert(
@@ -560,10 +562,24 @@ assert.equal(
   "rgba(0, 0, 0, 0)",
 );
 assert(await previewPrice.isVisible());
+await page.evaluate(() => {
+  const decode = window.createImageBitmap.bind(window);
+  window.createImageBitmap = (...args) =>
+    new Promise((resolve, reject) => {
+      window.__atlasFinishPhoto = () => {
+        window.createImageBitmap = decode;
+        decode(...args).then(resolve, reject);
+      };
+    });
+});
 await page
   .locator('input[type="file"]')
   .first()
   .setInputFiles("public/images/demo-rizvi/drill.jpg");
+assert(
+  await page.getByRole("button", { name: "Preparing photos…" }).isDisabled(),
+);
+await page.evaluate(() => window.__atlasFinishPhoto());
 await page.getByAltText("Listing cover preview").waitFor();
 await page
   .locator('input[type="file"]')
@@ -594,15 +610,13 @@ assert.equal(
 await page.getByRole("button", { name: "Remove photo 2" }).click();
 assert.equal(await page.getByAltText(/^Listing photo \d+$/).count(), 1);
 await page.getByLabel("Daily rate in INR").fill("0");
-await page.getByRole("button", { name: "Preview listing" }).click();
-assert(await page.getByRole("alert").isVisible());
+await publishListing.click();
+await page
+  .getByRole("alert")
+  .filter({ hasText: "Daily rate must be" })
+  .waitFor();
+assert.equal(await page.evaluate(() => window.__atlasStudioCalls.length), 0);
 await page.getByLabel("Daily rate in INR").fill("175.50");
-await page.getByRole("button", { name: "Preview listing" }).click();
-assert(
-  await page.getByRole("heading", { name: "Review your listing" }).isVisible(),
-);
-await page.getByRole("button", { name: "Back to edit" }).click();
-assert.equal(await page.getByLabel("Item name").inputValue(), "A useful drill");
 
 function mockStudioSave() {
   window.__atlasStudioCalls = [];
@@ -625,23 +639,23 @@ function mockStudioSave() {
   };
 }
 let uploadAttempts = 0;
-await page.route("**/__atlas-photo-upload", (route) => {
+await page.route("**/__atlas-photo-upload", async (route) => {
   assert.equal(route.request().method(), "POST");
   assert.equal(route.request().headers()["content-type"], "image/jpeg");
+  assert(await page.getByLabel("Item name").isDisabled());
   uploadAttempts += 1;
   return uploadAttempts === 1
     ? route.fulfill({ status: 503 })
     : route.fulfill({ json: { storageId: "studio-storage" } });
 });
-await page.evaluate(mockStudioSave);
-await page.getByRole("button", { name: "Preview listing" }).click();
-const publishListing = page.getByRole("button", { name: "Publish listing" });
 await publishListing.click();
 await page
   .getByRole("alert")
   .filter({ hasText: "Your changes are still here" })
   .waitFor();
-assert(await page.getByAltText("Cover preview", { exact: true }).isVisible());
+assert(await listingPreview.getByAltText("Listing cover preview").isVisible());
+assert.equal(await page.getByLabel("Item name").inputValue(), "A useful drill");
+assert(await page.getByLabel("Item name").isEnabled());
 await publishListing.click();
 await page.waitForFunction(
   () => window.__atlasPushedPath === "/dashboard/listings",
@@ -699,7 +713,6 @@ await studioCamera.getByRole("button", { name: "Cancel" }).click();
 await studioCamera.waitFor({ state: "hidden" });
 await page.evaluate(mockStudioSave);
 await page.getByLabel("Item name").fill("Updated cordless drill");
-await page.getByRole("button", { name: "Preview listing" }).click();
 await page.getByRole("button", { name: "Save changes" }).click();
 await page.waitForFunction(
   () => window.__atlasPushedPath === "/dashboard/listings",

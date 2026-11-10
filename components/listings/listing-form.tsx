@@ -1,16 +1,10 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import {
-  ArrowRight,
-  Camera,
-  ImagePlus,
-  PackageOpen,
-  Upload,
-} from "lucide-react";
+import { Camera, ImagePlus, PackageOpen, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { categories, conditions } from "./listing-options";
 import { CameraCapture } from "./camera-capture";
@@ -82,7 +76,7 @@ function ListingEditor({
   );
   const photosRef = useRef<Photo[]>(photos);
   const [camera, setCamera] = useState(false),
-    [review, setReview] = useState(false),
+    [preparingPhotos, setPreparingPhotos] = useState(0),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [createdId, setCreatedId] = useState<Id<"tools">>();
@@ -100,30 +94,36 @@ function ListingEditor({
     [],
   );
   async function add(files: FileList | File[]) {
+    if (saving) return;
     setError("");
     const incoming = Array.from(files);
     if (photosRef.current.length + incoming.length > 5) {
       setError("Choose up to five photos in total.");
       return;
     }
-    for (const file of incoming) {
-      try {
-        const prepared = await prepareImage(file);
-        if (photosRef.current.length >= 5) {
-          setError("Choose up to five photos in total.");
-          break;
+    setPreparingPhotos((count) => count + 1);
+    try {
+      for (const file of incoming) {
+        try {
+          const prepared = await prepareImage(file);
+          if (photosRef.current.length >= 5) {
+            setError("Choose up to five photos in total.");
+            break;
+          }
+          setPhotosState((items) => [
+            ...items,
+            {
+              key: crypto.randomUUID(),
+              file: prepared,
+              url: URL.createObjectURL(prepared),
+            },
+          ]);
+        } catch (e) {
+          setError((e as Error).message);
         }
-        setPhotosState((items) => [
-          ...items,
-          {
-            key: crypto.randomUUID(),
-            file: prepared,
-            url: URL.createObjectURL(prepared),
-          },
-        ]);
-      } catch (e) {
-        setError((e as Error).message);
       }
+    } finally {
+      setPreparingPhotos((count) => count - 1);
     }
   }
   function remove(key: string) {
@@ -152,9 +152,12 @@ function ListingEditor({
       throw new Error("Daily rate must be ₹1–₹10,000.");
     return paise;
   }
-  function reviewListing() {
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (saving || preparingPhotos > 0) return;
+    let dailyAmount: number | undefined;
     try {
-      amount();
+      dailyAmount = amount();
       if (
         !name.trim() ||
         name.trim().length > 80 ||
@@ -164,14 +167,11 @@ function ListingEditor({
         throw new Error(
           "Add a name (up to 80 characters) and description (up to 1000 characters).",
         );
-      setError("");
-      setReview(true);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       setError((e as Error).message);
+      return;
     }
-  }
-  async function save() {
+
     setSaving(true);
     setError("");
     try {
@@ -180,7 +180,7 @@ function ListingEditor({
         category,
         condition,
         description,
-        dailyAmount: amount(),
+        dailyAmount,
       };
       let id = toolId ?? createdId;
       if (id) await update({ toolId: id, ...input });
@@ -243,56 +243,13 @@ function ListingEditor({
             : "Share something useful with neighbors. You can change or unlist it later."}
         </p>
       </div>
-      <div className={review ? styles.reviewLayout : styles.layout}>
-        {review ? (
-          <div className={`${styles.editor} ${styles.review}`}>
-            <h2>Review your listing</h2>
-            <div className={styles.reviewCover}>
-              {cover ? (
-                <img
-                  className="size-full object-cover"
-                  src={cover.url}
-                  alt="Cover preview"
-                />
-              ) : (
-                <span>Photo optional</span>
-              )}
-            </div>
-            <span className="catalog-category">
-              {category} · {conditions[condition]}
-            </span>
-            <h3>{name}</h3>
-            <p>{description}</p>
-            <strong>{paid ? `₹${rate} / day` : "Free to borrow"}</strong>
-            <p>
-              Visible in your society when published. Date availability is not
-              checked yet.
-            </p>
-            <div className={styles.actions}>
-              <Button
-                type="button"
-                variant="outline"
-                className={styles.secondary}
-                onClick={() => setReview(false)}
-              >
-                Back to edit
-              </Button>
-              <Button
-                className={`button-primary ${styles.primary}`}
-                type="button"
-                onClick={() => void save()}
-                disabled={saving}
-              >
-                {saving
-                  ? "Saving…"
-                  : toolId
-                    ? "Save changes"
-                    : "Publish listing"}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className={styles.editor}>
+      <div className={styles.layout}>
+        <form
+          className={styles.editor}
+          noValidate
+          onSubmit={(event) => void save(event)}
+        >
+          <fieldset className="min-w-0" disabled={saving}>
             <h2 className={styles.sectionTitle}>
               <span>01</span> The essentials
             </h2>
@@ -506,78 +463,78 @@ function ListingEditor({
                 </div>
               )}
             </div>
+            {error && (
+              <p className="form-message error" role="alert">
+                {error}
+              </p>
+            )}
             <div className={styles.actions}>
               <Button
-                type="button"
+                type="submit"
                 className={`button-primary ${styles.primary}`}
-                onClick={reviewListing}
+                disabled={preparingPhotos > 0}
               >
-                Preview listing <ArrowRight size={17} aria-hidden="true" />
+                {saving
+                  ? "Saving…"
+                  : preparingPhotos > 0
+                    ? "Preparing photos…"
+                    : toolId
+                      ? "Save changes"
+                      : "Publish listing"}
               </Button>
             </div>
+          </fieldset>
+        </form>
+        <aside className={styles.preview} aria-label="Live listing preview">
+          <div className={styles.previewTop}>
+            <span className="kicker">A LITTLE LOOK AHEAD</span>
+            <h2>Listing preview</h2>
+            <p>Your preview updates as you add details.</p>
           </div>
-        )}
-        {!review && (
-          <aside className={styles.preview} aria-label="Live listing preview">
-            <div className={styles.previewTop}>
-              <span className="kicker">A LITTLE LOOK AHEAD</span>
-              <h2>Listing preview</h2>
-              <p>Your preview updates as you add details.</p>
-            </div>
-            <div className={styles.previewCard}>
-              <div className={styles.previewImage}>
-                {cover ? (
-                  <img
-                    className="size-full object-cover"
-                    src={cover.url}
-                    alt="Listing cover preview"
-                  />
-                ) : (
-                  <div>
-                    <PackageOpen
-                      size={36}
-                      strokeWidth={1.2}
-                      aria-hidden="true"
-                    />
-                    <span>Your item’s photo goes here</span>
-                    <small>Photos are optional</small>
-                  </div>
-                )}
-              </div>
-              <div className={styles.previewContent}>
-                <span className="catalog-category">
-                  {category} · {conditions[condition]}
-                </span>
-                <h3>{name.trim() || "Your item’s name"}</h3>
-                <p>
-                  {description.trim() ||
-                    "A little about your item will appear here."}
-                </p>
-                <div className={styles.previewPrice}>
-                  <span>{paid ? "Daily rate" : "Sharing terms"}</span>
-                  <strong>
-                    {paid
-                      ? rate
-                        ? `₹${rate} / day`
-                        : "Set a daily rate"
-                      : "Free to borrow"}
-                  </strong>
+          <div className={styles.previewCard}>
+            <div className={styles.previewImage}>
+              {cover ? (
+                <img
+                  className="size-full object-cover"
+                  src={cover.url}
+                  alt="Listing cover preview"
+                />
+              ) : (
+                <div>
+                  <PackageOpen size={36} strokeWidth={1.2} aria-hidden="true" />
+                  <span>Your item’s photo goes here</span>
+                  <small>Photos are optional</small>
                 </div>
+              )}
+            </div>
+            <div className={styles.previewContent}>
+              <span className="catalog-category">
+                {category} · {conditions[condition]}
+              </span>
+              <h3>{name.trim() || "Your item’s name"}</h3>
+              <p>
+                {description.trim() ||
+                  "A little about your item will appear here."}
+              </p>
+              <div className={styles.previewPrice}>
+                <span>{paid ? "Daily rate" : "Sharing terms"}</span>
+                <strong>
+                  {paid
+                    ? rate
+                      ? `₹${rate} / day`
+                      : "Set a daily rate"
+                    : "Free to borrow"}
+                </strong>
               </div>
             </div>
-            <p className={styles.previewNote}>
-              {toolId
-                ? "Your saved listing remains visible according to its current status."
-                : "Your listing is visible after you review and publish it."}
-            </p>
-          </aside>
-        )}
+          </div>
+          <p className={styles.previewNote}>
+            {toolId
+              ? "Your saved listing remains visible according to its current status."
+              : "Your listing is visible after you publish it."}
+          </p>
+        </aside>
       </div>
-      {error && (
-        <p className="form-message error" role="alert">
-          {error}
-        </p>
-      )}
       {camera && (
         <CameraCapture
           onUse={(file) => void add([file])}

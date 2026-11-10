@@ -17,10 +17,6 @@
   align-items: start;
 }
 
-.reviewLayout {
-  max-width: 860px;
-}
-
 .editor {
   min-width: 0;
   margin-top: 24px;
@@ -256,38 +252,6 @@
 
 .actions .primary {
   min-height: 50px;
-}
-
-.review h2 {
-  margin-bottom: 16px;
-  font:
-    400 24px Georgia,
-    serif;
-}
-
-.reviewCover {
-  display: grid;
-  place-items: center;
-  width: min(100%, 420px);
-  height: 260px;
-  margin: 20px 0;
-  overflow: hidden;
-  border-radius: 16px;
-  background: var(--blue-soft);
-  color: var(--blue);
-}
-
-.review h3 {
-  margin: 12px 0;
-  font:
-    400 27px Georgia,
-    serif;
-}
-
-.review p {
-  color: var(--muted);
-  line-height: 1.6;
-  white-space: pre-wrap;
 }
 
 .preview {

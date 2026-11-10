@@ -38,7 +38,6 @@ async function listDrill(page: Page, dailyRate?: string) {
     await page.getByLabel("Paid rental").check();
     await page.getByLabel("Daily rate in INR").fill(dailyRate);
   }
-  await page.getByRole("button", { name: "Preview listing" }).click();
   await page.getByRole("button", { name: "Publish listing" }).click();
   await expect(page).toHaveURL(/\/dashboard\/listings$/);
   const card = page

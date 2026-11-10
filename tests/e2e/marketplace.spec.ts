@@ -35,7 +35,6 @@ test("create, edit, discover, unlist and relist a listing", async ({
   await page.getByLabel("Category").selectOption("Power Tools");
   await page.getByLabel("Paid rental").check();
   await page.getByLabel("Daily rate in INR").fill("175.50");
-  await page.getByRole("button", { name: "Preview listing" }).click();
   await expect(page.getByText("₹175.50 / day")).toBeVisible();
   await page.getByRole("button", { name: "Publish listing" }).click();
   await expect(page).toHaveURL(/\/dashboard\/listings$/);
@@ -46,7 +45,6 @@ test("create, edit, discover, unlist and relist a listing", async ({
     .getByRole("link", { name: "Edit" })
     .click();
   await page.getByLabel("Item name").fill(`${name} updated`);
-  await page.getByRole("button", { name: "Preview listing" }).click();
   await page.getByRole("button", { name: "Save changes" }).click();
   await expect(
     page.getByRole("heading", { name: `${name} updated` }),
@@ -115,7 +113,6 @@ test("photo previews, cover order, removal and failed upload retry", async ({
   await page.getByRole("button", { name: "Move photo 2 earlier" }).click();
   await page.getByRole("button", { name: "Remove photo 2" }).click();
   await expect(listingPhotos).toHaveCount(1);
-  await page.getByRole("button", { name: "Preview listing" }).click();
   let failed = false;
   await page.route("**/*", async (route) => {
     if (
