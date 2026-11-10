@@ -1108,43 +1108,6 @@ textarea:focus-visible {
   color: #c3d2cc;
   border-top: 1px solid #ffffff30;
 }
-.journal-intro {
-  padding-block: 90px 70px;
-}
-.journal-intro h1 {
-  font:
-    500 clamp(48px, 8vw, 110px)/1 var(--font-heading),
-    sans-serif;
-  letter-spacing: -0.065em;
-  margin: 25px 0;
-}
-.journal-intro > p {
-  max-width: 550px;
-  line-height: 1.7;
-  color: var(--muted);
-}
-.journal-article {
-  border-top: 1px solid var(--line);
-  padding: 60px 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 70px;
-  scroll-margin-top: 30px;
-}
-.journal-article h2 {
-  font:
-    500 36px/1.15 var(--font-heading),
-    sans-serif;
-  letter-spacing: -1.5px;
-  margin-top: 20px;
-}
-.journal-article p {
-  line-height: 1.8;
-  color: var(--muted);
-}
-.journal-article a {
-  text-decoration: underline;
-}
 @media (max-width: 1000px) {
   .marketing-nav nav {
     gap: 18px;
@@ -1181,13 +1144,6 @@ textarea:focus-visible {
   .footer-bottom {
     gap: 30px;
     line-height: 1.6;
-  }
-  .journal-article {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-  .journal-intro {
-    padding-block: 60px 40px;
   }
 }
 .marketing-nav nav a {
