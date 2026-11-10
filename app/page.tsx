@@ -5,6 +5,7 @@ import {
   MarketingHeader,
   MarketingFooter,
 } from "@/components/marketing/marketing-shell";
+import { ProductDemoVideo } from "@/components/marketing/product-demo-video";
 import { ScrollStory } from "@/components/story/scroll-story";
 import { SocietyShowcase } from "@/components/story/society-showcase";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,25 @@ export default function Home() {
           </div>
         </section>
         <SocietyShowcase />
+        <section className="product-demo" aria-labelledby="product-demo-title">
+          <div className="shell">
+            <div className="product-demo-heading">
+              <span className="kicker">THE PRODUCT, IN MOTION</span>
+              <h2 id="product-demo-title">
+                See LendLoop <em>in action.</em>
+              </h2>
+              <p>
+                A quick look at how useful things move from one neighbor to
+                another.
+              </p>
+            </div>
+            <ProductDemoVideo />
+            <p className="product-demo-hint">
+              Starts muted when it comes into view. Use the player controls for
+              sound or pause.
+            </p>
+          </div>
+        </section>
         <section id="tools" className="catalog-section">
           <PublicCatalog
             heading={
