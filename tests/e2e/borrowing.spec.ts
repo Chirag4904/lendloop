@@ -334,10 +334,14 @@ test("notification center updates live and loan automation fits mobile widths", 
         ),
       ).toBe(true);
     }
-    await lender.page.goto("/dashboard/incoming");
+    await notifications
+      .first()
+      .getByRole("link", { name: "View request" })
+      .click();
     const card = lender.page
       .getByRole("article")
       .filter({ has: lender.page.getByRole("heading", { name }) });
+    await expect(card).toBeInViewport();
     lender.page.once("dialog", (dialog) => dialog.accept());
     await card.getByRole("button", { name: "Approve Request" }).click();
     await card.getByRole("link", { name: "View loan" }).click();

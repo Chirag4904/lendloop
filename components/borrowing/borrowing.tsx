@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
@@ -253,6 +253,20 @@ export function RequestList({ incoming }: { incoming: boolean }) {
   const visibleRows = rows?.filter(
     (row) => !completedOnly || row.loanStatus === "returned",
   );
+  const scrolledToRequest = useRef(false);
+  useEffect(() => {
+    if (
+      !rows ||
+      scrolledToRequest.current ||
+      !window.location.hash.startsWith("#request-")
+    )
+      return;
+    const target = document.getElementById(window.location.hash.slice(1));
+    if (target) {
+      target.scrollIntoView();
+      scrolledToRequest.current = true;
+    }
+  }, [rows]);
   const counterDialog = useRef<HTMLDialogElement>(null);
   const counterRow = rows?.find((row) => row.id === counterId);
   const counterMinor = minorFromRupees(counter);
@@ -400,7 +414,11 @@ export function RequestList({ incoming }: { incoming: boolean }) {
               row.loanStatus !== "returned" &&
               row.endDate < localToday();
             return (
-              <article className={activity.card} key={row.id}>
+              <article
+                id={`request-${row.id}`}
+                className={activity.card}
+                key={row.id}
+              >
                 {row.coverUrl ? (
                   <img className={activity.cover} src={row.coverUrl} alt="" />
                 ) : (

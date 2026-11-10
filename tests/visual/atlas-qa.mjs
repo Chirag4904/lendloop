@@ -368,6 +368,19 @@ await page.goto(
 );
 const notifications = page.getByRole("list", { name: "Notifications" });
 await notifications.getByText("Delivered", { exact: true }).waitFor();
+assert.equal(
+  await notifications
+    .getByRole("link", { name: "View request" })
+    .first()
+    .getAttribute("href"),
+  "/dashboard/incoming#request-request0",
+);
+assert.equal(
+  await notifications
+    .getByRole("link", { name: "View loan" })
+    .getAttribute("href"),
+  "/dashboard/loans/loan1",
+);
 assert(await notifications.getByText("Sent", { exact: true }).isVisible());
 assert(
   await notifications.getByText("Retry pending", { exact: true }).isVisible(),
@@ -406,7 +419,13 @@ await page.evaluate(() => {
 await page
   .getByRole("button", { name: "Enable browser notifications" })
   .click();
-await page.getByText("Browser notifications are enabled.").waitFor();
+await page
+  .getByRole("button", { name: "Enable browser notifications" })
+  .waitFor({ state: "hidden" });
+assert.equal(
+  await page.getByText("Browser notifications are enabled.").count(),
+  0,
+);
 await page.goto("http://localhost:3000/__atlas-qa?view=explore");
 await page.getByRole("link", { name: "Updates", exact: true }).waitFor();
 await page.evaluate(() => {

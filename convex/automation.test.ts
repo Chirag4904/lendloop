@@ -88,6 +88,25 @@ test("successful transitions enqueue once; failed and repeated transitions do no
   ]);
 });
 
+test("updates link participants to the request and loan", async () => {
+  const { lender, borrower, stranger, toolId } = await setup();
+  const requestId = await borrower.mutation(api.requests.create, {
+    toolId,
+    startDate: "2026-11-12",
+    endDate: "2026-11-12",
+  });
+  expect((await lender.query(api.automation.mine, {}))[0]).toMatchObject({
+    type: "borrow_request.created",
+    href: `/dashboard/incoming#request-${requestId}`,
+  });
+  expect(await stranger.query(api.automation.mine, {})).toEqual([]);
+  const loanId = await lender.mutation(api.requests.approve, { requestId });
+  expect((await borrower.query(api.automation.mine, {}))[0]).toMatchObject({
+    type: "borrow_request.approved",
+    href: `/dashboard/loans/${loanId}`,
+  });
+});
+
 test("offer and counter events address the correct participant", async () => {
   const { t, lender, borrower, toolId } = await setup();
   const requestId = await borrower.mutation(api.requests.create, {

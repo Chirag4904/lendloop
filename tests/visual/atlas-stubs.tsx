@@ -340,6 +340,8 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
     return [
       {
         id: "event1",
+        type: "borrow_request.created",
+        href: "/dashboard/incoming#request-request0",
         message: "Your request for the cordless drill was approved.",
         status: "delivered",
         createdAt: 1794200000000,
@@ -347,6 +349,8 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       },
       {
         id: "event2",
+        type: "lender.countered",
+        href: "/dashboard/requests#request-request1",
         message: "The lender suggested a new price.",
         status: "retry_pending",
         createdAt: 1794190000000,
@@ -356,6 +360,8 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         ? [
             {
               id: "event3",
+              type: "overdue",
+              href: "/dashboard/loans/loan1",
               message: "Overdue reminder",
               status: "sent",
               createdAt: 1794180000000,

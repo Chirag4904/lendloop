@@ -324,6 +324,8 @@ export const mine = query({
     v.object({
       id: v.string(),
       message: v.string(),
+      type: v.string(),
+      href: v.string(),
       createdAt: v.number(),
       status: v.string(),
       unreadId: v.union(updateId, v.null()),
@@ -342,8 +344,13 @@ export const mine = query({
           .query("notifications")
           .withIndex("by_event", (q) => q.eq("eventId", event._id))
           .unique();
+        const request = await ctx.db.get(event.requestId);
         return {
           id: event._id,
+          type: event.type,
+          href: event.loanId
+            ? `/dashboard/loans/${event.loanId}`
+            : `/dashboard/${request?.lenderId === me._id ? "incoming" : "requests"}#request-${event.requestId}`,
           message:
             note?.message ??
             event.type.replaceAll("_", " ").replaceAll(".", " · "),
@@ -362,6 +369,8 @@ export const mine = query({
       ...notes,
       ...reminders.map((r) => ({
         id: r._id as string,
+        type: "overdue",
+        href: `/dashboard/loans/${r.loanId}`,
         message: `Overdue reminder · ${r.date}`,
         createdAt: r.sentAt ?? r.claimedAt,
         status: r.status,

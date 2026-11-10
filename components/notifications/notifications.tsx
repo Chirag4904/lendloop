@@ -5,6 +5,7 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
+import { ArrowUpRight, CalendarClock, Check, Inbox } from "lucide-react";
 import styles from "./notifications.module.css";
 import "./automation.css";
 
@@ -68,7 +69,7 @@ export function Notifications() {
       <div className="app-heading">
         <span className="kicker">YOUR UPDATES</span>
         <h1>The latest, from nearby.</h1>
-        <p>Request updates and overdue reminders appear here.</p>
+        <p>Requests, returns, and reminders from your neighborhood.</p>
         {permission === "default" && (
           <Button
             type="button"
@@ -82,7 +83,6 @@ export function Notifications() {
         {permission === "denied" && (
           <p>Allow notifications for LendLoop in your browser settings.</p>
         )}
-        {permission === "granted" && <p>Browser notifications are enabled.</p>}
         {permissionError && (
           <p role="status">Could not request browser permission.</p>
         )}
@@ -103,30 +103,64 @@ export function Notifications() {
           </Button>
         </div>
       ) : (
-        <ol
-          className={`automation-list ${styles.list}`}
-          aria-label="Notifications"
-        >
-          {rows.map((row) => (
-            <li key={row.id}>
-              <strong>{row.message}</strong>
-              <span className={`automation-state state-${row.status}`}>
-                {row.status === "delivered"
-                  ? "Delivered"
-                  : row.status === "sent"
-                    ? "Sent"
-                    : row.status === "retry_pending"
-                      ? "Retry pending"
-                      : row.status}
-              </span>
-              <time dateTime={new Date(row.createdAt).toISOString()}>
-                {new Date(row.createdAt).toLocaleString("en-IN", {
-                  timeZone: "Asia/Kolkata",
-                })}
-              </time>
-            </li>
-          ))}
-        </ol>
+        <div className={styles.feed}>
+          <div className={styles.feedHeading}>
+            <div>
+              <span className="kicker">YOUR ACTIVITY</span>
+              <h2>Recent updates</h2>
+            </div>
+            <span>Latest {rows.length}</span>
+          </div>
+          <ol className={styles.list} aria-label="Notifications">
+            {rows.map((row) => {
+              const isLoan = row.href.includes("/loans/");
+              const isReminder = row.type === "overdue";
+              const Icon = isReminder ? CalendarClock : isLoan ? Check : Inbox;
+              return (
+                <li key={row.id}>
+                  <span className={styles.icon} aria-hidden="true">
+                    <Icon size={20} />
+                  </span>
+                  <div className={styles.content}>
+                    <div className={styles.meta}>
+                      <span>
+                        {isReminder
+                          ? "Reminder"
+                          : isLoan
+                            ? "Loan update"
+                            : "Request update"}
+                      </span>
+                      <time dateTime={new Date(row.createdAt).toISOString()}>
+                        {new Date(row.createdAt).toLocaleString("en-IN", {
+                          timeZone: "Asia/Kolkata",
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </time>
+                    </div>
+                    <strong>{row.message}</strong>
+                    <span className={`automation-state state-${row.status}`}>
+                      {row.status === "delivered"
+                        ? "Delivered"
+                        : row.status === "sent"
+                          ? "Sent"
+                          : row.status === "retry_pending"
+                            ? "Retry pending"
+                            : row.status}
+                    </span>
+                  </div>
+                  <Link className={styles.action} href={row.href}>
+                    {isLoan ? "View loan" : "View request"}{" "}
+                    <ArrowUpRight size={16} aria-hidden="true" />
+                  </Link>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
       )}
     </section>
   );
