@@ -465,11 +465,12 @@ assert.equal(
     .getAttribute("aria-current"),
   "page",
 );
-await page.getByRole("button", { name: "Completed returns" }).click();
+assert.equal(await page.getByRole("article").count(), 2);
+await page.getByRole("button", { name: "History" }).click();
 assert.equal(await page.getByRole("article").count(), 1);
 assert.equal(
   await page
-    .getByRole("button", { name: "Completed returns" })
+    .getByRole("button", { name: "History" })
     .getAttribute("aria-pressed"),
   "true",
 );

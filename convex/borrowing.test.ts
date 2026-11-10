@@ -678,3 +678,73 @@ test("calendar exposes only confirmed reserved dates to authenticated borrowers"
     bob.query(api.requests.reservedDates, { ...args, month: "2026-13" }),
   ).rejects.toThrow("Invalid month");
 });
+
+test("activity pages separate ongoing work from history and preserve participant-only links", async () => {
+  const { t, alice, bob, charlie, toolId } = await setup();
+  const requestId = await bob.mutation(api.requests.create, {
+    toolId,
+    startDate: "2026-11-12",
+    endDate: "2026-11-12",
+  });
+  const loanId = await alice.mutation(api.requests.approve, { requestId });
+  await t.run(async (ctx) => {
+    const request = (await ctx.db.get(requestId))!;
+    const { _id, _creationTime, ...fields } = request;
+    void _id;
+    void _creationTime;
+    for (let i = 0; i < 12; i++)
+      await ctx.db.insert("borrowRequests", { ...fields, status: "declined" });
+  });
+  const active = await alice.query(api.requests.activityPage, {
+    incoming: true,
+    kind: "reserved",
+    paginationOpts: { numItems: 10, cursor: null },
+  });
+  expect(active.page.map((row) => row.id)).toEqual([requestId]);
+  const first = await alice.query(api.requests.activityPage, {
+    incoming: true,
+    kind: "declined",
+    paginationOpts: { numItems: 10, cursor: null },
+  });
+  expect(first.page).toHaveLength(10);
+  expect(first.isDone).toBe(false);
+  const next = await alice.query(api.requests.activityPage, {
+    incoming: true,
+    kind: "declined",
+    paginationOpts: { numItems: 10, cursor: first.continueCursor },
+  });
+  expect(next.page).toHaveLength(2);
+  expect(next.isDone).toBe(true);
+  expect(
+    await charlie.query(api.requests.activityTarget, {
+      incoming: true,
+      id: requestId,
+    }),
+  ).toBeNull();
+  expect(
+    await alice.query(api.requests.activityTarget, {
+      incoming: true,
+      id: requestId,
+    }),
+  ).toMatchObject({ id: requestId });
+  await bob.mutation(api.loans.reportReturn, { loanId });
+  expect(
+    (
+      await alice.query(api.requests.activityPage, {
+        incoming: true,
+        kind: "return_pending",
+        paginationOpts: { numItems: 10, cursor: null },
+      })
+    ).page.map((row) => row.id),
+  ).toEqual([requestId]);
+  await alice.mutation(api.loans.confirmReturn, { loanId });
+  expect(
+    (
+      await alice.query(api.requests.activityPage, {
+        incoming: true,
+        kind: "returned",
+        paginationOpts: { numItems: 10, cursor: null },
+      })
+    ).page.map((row) => row.id),
+  ).toEqual([requestId]);
+});

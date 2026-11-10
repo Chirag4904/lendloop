@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, usePaginatedQuery, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import { BorrowCalendar } from "./borrow-calendar";
@@ -236,10 +236,79 @@ export function RequestForm({
 }
 
 export function RequestList({ incoming }: { incoming: boolean }) {
-  const rows = useQuery(
-    incoming ? api.requests.incoming : api.requests.mine,
-    {},
+  const [history, setHistory] = useState(false);
+  const hash = useSyncExternalStore(
+    (callback) => {
+      window.addEventListener("hashchange", callback);
+      return () => window.removeEventListener("hashchange", callback);
+    },
+    () => window.location.hash,
+    () => "",
   );
+  const [dismissTarget, setDismissTarget] = useState(false);
+  const targetId =
+    !dismissTarget && hash.startsWith("#request-") ? hash.slice(9) : "";
+  const target = useQuery(
+    api.requests.activityTarget,
+    targetId ? { incoming, id: targetId } : "skip",
+  );
+  const showHistory = target
+    ? target.status === "declined" ||
+      target.status === "cancelled" ||
+      target.loanStatus === "returned"
+    : history;
+  const pending = usePaginatedQuery(
+    api.requests.activityPage,
+    !showHistory ? { incoming, kind: "pending" } : "skip",
+    { initialNumItems: 10 },
+  );
+  const awaiting = usePaginatedQuery(
+    api.requests.activityPage,
+    !showHistory ? { incoming, kind: "awaiting_borrower" } : "skip",
+    { initialNumItems: 10 },
+  );
+  const reserved = usePaginatedQuery(
+    api.requests.activityPage,
+    !showHistory ? { incoming, kind: "reserved" } : "skip",
+    { initialNumItems: 10 },
+  );
+  const returnPending = usePaginatedQuery(
+    api.requests.activityPage,
+    !showHistory ? { incoming, kind: "return_pending" } : "skip",
+    { initialNumItems: 10 },
+  );
+  const returned = usePaginatedQuery(
+    api.requests.activityPage,
+    showHistory ? { incoming, kind: "returned" } : "skip",
+    { initialNumItems: 10 },
+  );
+  const declined = usePaginatedQuery(
+    api.requests.activityPage,
+    showHistory ? { incoming, kind: "declined" } : "skip",
+    { initialNumItems: 10 },
+  );
+  const cancelled = usePaginatedQuery(
+    api.requests.activityPage,
+    showHistory ? { incoming, kind: "cancelled" } : "skip",
+    { initialNumItems: 10 },
+  );
+  const pages = showHistory
+    ? [returned, declined, cancelled]
+    : [pending, awaiting, reserved, returnPending];
+  const loading = pages.some((page) => page.status === "LoadingFirstPage");
+  const priority = (row: (typeof pending.results)[number]) =>
+    (incoming && row.status === "pending") ||
+    (!incoming && row.status === "awaiting_borrower") ||
+    (incoming && row.loanStatus === "return_pending")
+      ? 0
+      : 1;
+  const rows = pages
+    .flatMap((page) => page.results)
+    .sort((a, b) => priority(a) - priority(b) || b.createdAt - a.createdAt);
+  const visibleRows =
+    target && !rows.some((row) => row.id === target.id)
+      ? [target, ...rows]
+      : rows;
   const approve = useMutation(api.requests.approve),
     decline = useMutation(api.requests.decline),
     cancel = useMutation(api.requests.cancel),
@@ -249,26 +318,17 @@ export function RequestList({ incoming }: { incoming: boolean }) {
     [error, setError] = useState(""),
     [counterId, setCounterId] = useState<Id<"borrowRequests"> | null>(null),
     [counter, setCounter] = useState("");
-  const [completedOnly, setCompletedOnly] = useState(false);
-  const visibleRows = rows?.filter(
-    (row) => !completedOnly || row.loanStatus === "returned",
-  );
   const scrolledToRequest = useRef(false);
   useEffect(() => {
-    if (
-      !rows ||
-      scrolledToRequest.current ||
-      !window.location.hash.startsWith("#request-")
-    )
-      return;
-    const target = document.getElementById(window.location.hash.slice(1));
-    if (target) {
-      target.scrollIntoView();
+    if (scrolledToRequest.current || !targetId) return;
+    const element = document.getElementById(`request-${targetId}`);
+    if (element) {
+      element.scrollIntoView();
       scrolledToRequest.current = true;
     }
-  }, [rows]);
+  }, [targetId, target, loading, showHistory]);
   const counterDialog = useRef<HTMLDialogElement>(null);
-  const counterRow = rows?.find((row) => row.id === counterId);
+  const counterRow = visibleRows.find((row) => row.id === counterId);
   const counterMinor = minorFromRupees(counter);
   const counterValid =
     !!counterRow?.borrowerOfferMinor &&
@@ -360,18 +420,24 @@ export function RequestList({ incoming }: { incoming: boolean }) {
         <Button
           type="button"
           variant="outline"
-          aria-pressed={!completedOnly}
-          onClick={() => setCompletedOnly(false)}
+          aria-pressed={!showHistory}
+          onClick={() => {
+            setHistory(false);
+            setDismissTarget(true);
+          }}
         >
-          All activity
+          Active
         </Button>
         <Button
           type="button"
           variant="outline"
-          aria-pressed={completedOnly}
-          onClick={() => setCompletedOnly(true)}
+          aria-pressed={showHistory}
+          onClick={() => {
+            setHistory(true);
+            setDismissTarget(true);
+          }}
         >
-          Completed returns
+          History
         </Button>
       </div>
       {error && (
@@ -379,23 +445,25 @@ export function RequestList({ incoming }: { incoming: boolean }) {
           {error}
         </p>
       )}
-      {rows === undefined ? (
+      {loading ? (
         <p role="status" className="catalog-state">
           Loading requests…
         </p>
-      ) : visibleRows?.length === 0 ? (
+      ) : visibleRows.length === 0 ? (
         <div className="app-empty">
           <h2>
-            {completedOnly
-              ? "No completed returns yet"
+            {showHistory
+              ? "No past activity yet"
               : incoming
                 ? "No requests yet"
                 : "Nothing requested yet"}
           </h2>
           <p>
-            {incoming
-              ? "New borrowing requests will appear here."
-              : "Explore your neighborhood to find something useful."}
+            {showHistory
+              ? "Completed and closed requests will appear here."
+              : incoming
+                ? "New borrowing requests will appear here."
+                : "Explore your neighborhood to find something useful."}
           </p>
           <Button asChild className={activity.largeAction}>
             <Link href="/dashboard">Explore tools</Link>
@@ -403,7 +471,7 @@ export function RequestList({ incoming }: { incoming: boolean }) {
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4">
-          {visibleRows?.map((row) => {
+          {visibleRows.map((row) => {
             const requestStatus = requestState(row.status, row.loanStatus);
             const roleStatus =
               row.status === "awaiting_borrower" && incoming
@@ -714,6 +782,26 @@ export function RequestList({ incoming }: { incoming: boolean }) {
             );
           })}
         </div>
+      )}
+      {pages.some(
+        (page) =>
+          page.status === "CanLoadMore" || page.status === "LoadingMore",
+      ) && (
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-6"
+          disabled={pages.some((page) => page.status === "LoadingMore")}
+          onClick={() =>
+            pages.forEach((page) => {
+              if (page.status === "CanLoadMore") page.loadMore(10);
+            })
+          }
+        >
+          {pages.some((page) => page.status === "LoadingMore")
+            ? "Loading…"
+            : "Load more"}
+        </Button>
       )}
       <dialog
         ref={counterDialog}

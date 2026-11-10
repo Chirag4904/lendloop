@@ -145,7 +145,27 @@ export function useMutation(ref: never) {
     throw new Error("Mutations disabled in visual QA");
   };
 }
-export function usePaginatedQuery(ref: never) {
+export function usePaginatedQuery(
+  ref: never,
+  args?: Record<string, unknown> | "skip",
+) {
+  if (getFunctionName(ref) === "requests:activityPage") {
+    if (args === "skip")
+      return { results: [], status: "Exhausted", loadMore: () => {} };
+    const rows = fixtureQuery(ref, args) as {
+      status: string;
+      loanStatus: string | null;
+    }[];
+    return {
+      results: rows.filter((row) =>
+        row.loanStatus
+          ? row.loanStatus === args?.kind
+          : row.status === args?.kind,
+      ),
+      status: "Exhausted",
+      loadMore: () => {},
+    };
+  }
   const results =
     getFunctionName(ref) === "admin:listings"
       ? items.slice(0, 3).map((item, index) => ({
@@ -161,7 +181,8 @@ export function usePaginatedQuery(ref: never) {
       : [];
   return { results, status: "Exhausted", loadMore: () => {} };
 }
-export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
+export const useQuery = fixtureQuery;
+function fixtureQuery(ref: never, args?: Record<string, unknown> | "skip") {
   const name = getFunctionName(ref);
   if (args === "skip") return undefined;
   if (name === "users:me")
@@ -308,8 +329,10 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       ? [{ startDate: "2026-11-10", endDate: "2026-11-12" }]
       : [];
   const pendingOffer =
-    name === "requests:incoming" &&
+    (name === "requests:incoming" ||
+      (name === "requests:activityPage" && args?.incoming)) &&
     new URLSearchParams(location.search).has("pendingOffer");
+  if (name === "requests:activityTarget") return null;
   if (name.startsWith("requests:"))
     return ["pending", "awaiting_borrower", "approved"].map((status, i) => ({
       id: `request${i}`,

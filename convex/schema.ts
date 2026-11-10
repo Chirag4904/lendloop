@@ -120,6 +120,8 @@ export default defineSchema({
     respondedAt: v.optional(v.number()),
   })
     .index("by_borrower", ["borrowerId"])
+    .index("by_borrower_and_status", ["borrowerId", "status"])
+    .index("by_lender_and_status", ["lenderId", "status"])
     .index("by_status", ["status"])
     .index("by_lender", ["lenderId"])
     .index("by_tool_and_borrower", ["toolId", "borrowerId"]),
@@ -153,7 +155,9 @@ export default defineSchema({
       "startDate",
     ])
     .index("by_borrower", ["borrowerId"])
-    .index("by_lender", ["lenderId"]),
+    .index("by_lender", ["lenderId"])
+    .index("by_borrower_and_status", ["borrowerId", "status"])
+    .index("by_lender_and_status", ["lenderId", "status"]),
   savedHandoverDetails: defineTable({
     userId: v.id("users"),
     phone: v.string(),

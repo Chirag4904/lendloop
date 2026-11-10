@@ -1,4 +1,8 @@
 import { v } from "convex/values";
+import {
+  paginationOptsValidator,
+  paginationResultValidator,
+} from "convex/server";
 import { mutation, query } from "./_generated/server";
 import type { MutationCtx, QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
@@ -290,6 +294,89 @@ export const incoming = query({
       .order("desc")
       .take(100);
     return Promise.all(rows.map((r) => view(ctx, r, true)));
+  },
+});
+
+const activityKind = v.union(
+  v.literal("pending"),
+  v.literal("awaiting_borrower"),
+  v.literal("declined"),
+  v.literal("cancelled"),
+  v.literal("reserved"),
+  v.literal("return_pending"),
+  v.literal("returned"),
+);
+
+export const activityPage = query({
+  args: {
+    incoming: v.boolean(),
+    kind: activityKind,
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: paginationResultValidator(requestView),
+  handler: async (ctx, { incoming, kind, paginationOpts }) => {
+    const me = await currentUser(ctx);
+    if (
+      kind === "reserved" ||
+      kind === "return_pending" ||
+      kind === "returned"
+    ) {
+      const source = ctx.db.query("loans");
+      const page = await (
+        incoming
+          ? source.withIndex("by_lender_and_status", (q) =>
+              q.eq("lenderId", me._id).eq("status", kind),
+            )
+          : source.withIndex("by_borrower_and_status", (q) =>
+              q.eq("borrowerId", me._id).eq("status", kind),
+            )
+      )
+        .order("desc")
+        .paginate(paginationOpts);
+      const requests = await Promise.all(
+        page.page.map((loan) => ctx.db.get(loan.requestId)),
+      );
+      return {
+        ...page,
+        page: await Promise.all(
+          requests
+            .filter((r): r is NonNullable<typeof r> => r !== null)
+            .map((r) => view(ctx, r, incoming)),
+        ),
+      };
+    }
+    const source = ctx.db.query("borrowRequests");
+    const page = await (
+      incoming
+        ? source.withIndex("by_lender_and_status", (q) =>
+            q.eq("lenderId", me._id).eq("status", kind),
+          )
+        : source.withIndex("by_borrower_and_status", (q) =>
+            q.eq("borrowerId", me._id).eq("status", kind),
+          )
+    )
+      .order("desc")
+      .paginate(paginationOpts);
+    return {
+      ...page,
+      page: await Promise.all(page.page.map((r) => view(ctx, r, incoming))),
+    };
+  },
+});
+
+export const activityTarget = query({
+  args: { incoming: v.boolean(), id: v.string() },
+  returns: v.union(requestView, v.null()),
+  handler: async (ctx, { incoming, id }) => {
+    const me = await currentUser(ctx);
+    const requestId = ctx.db.normalizeId("borrowRequests", id);
+    const request = requestId && (await ctx.db.get(requestId));
+    if (
+      !request ||
+      (incoming ? request.lenderId : request.borrowerId) !== me._id
+    )
+      return null;
+    return view(ctx, request, incoming);
   },
 });
 
