@@ -7,6 +7,7 @@ const bundle = await build({
   entryPoints: ["tests/visual/atlas-entry.tsx"],
   bundle: true,
   write: false,
+  outdir: "atlas-fixture",
   format: "iife",
   jsx: "automatic",
   // PublicCatalog renders its connected path only when these are present.
@@ -31,6 +32,13 @@ const bundle = await build({
     },
   ],
 });
+const fixtureScript = bundle.outputFiles.find((file) =>
+  file.path.endsWith(".js"),
+);
+const fixtureStyles = bundle.outputFiles.find((file) =>
+  file.path.endsWith(".css"),
+);
+assert(fixtureScript && fixtureStyles);
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const errors = [];
@@ -45,13 +53,16 @@ const shell = await page.evaluate(() => ({
 await page.route("**/__atlas-bundle.js", (r) =>
   r.fulfill({
     contentType: "application/javascript",
-    body: bundle.outputFiles[0].text,
+    body: fixtureScript.text,
   }),
+);
+await page.route("**/__atlas-bundle.css", (r) =>
+  r.fulfill({ contentType: "text/css", body: fixtureStyles.text }),
 );
 await page.route("**/__atlas-qa?*", (r) =>
   r.fulfill({
     contentType: "text/html",
-    body: `<!doctype html><html lang="en" class="${shell.className}"><head>${shell.links}<meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script src="/__atlas-bundle.js"></script></body></html>`,
+    body: `<!doctype html><html lang="en" class="${shell.className}"><head>${shell.links}<link rel="stylesheet" href="/__atlas-bundle.css"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script src="/__atlas-bundle.js"></script></body></html>`,
   }),
 );
 await mkdir("artifacts/atlas", { recursive: true });
@@ -148,11 +159,10 @@ for (const width of [360, 390, 768, 1280, 1440]) {
           name: view === "profile" ? "Edit saved details" : "Edit my details",
         })
         .click();
-      const fields = page.locator(
+      const fields =
         view === "profile"
-          ? ".profile-details-form input, .profile-details-form textarea"
-          : ".handover-form input, .handover-form textarea",
-      );
+          ? page.getByRole("textbox")
+          : page.locator(".handover-form input, .handover-form textarea");
       assert.equal(await fields.count(), 4);
       for (const field of await fields.all()) {
         const style = await field.evaluate((el) => {
@@ -180,6 +190,22 @@ for (const width of [360, 390, 768, 1280, 1440]) {
         path: `artifacts/atlas/${view}-editing-${width}.png`,
         fullPage: true,
       });
+      if (view === "profile" && width === 390) {
+        const phone = page.getByRole("textbox", { name: "Contact phone" });
+        const savedPhone = await phone.inputValue();
+        assert.equal(await phone.getAttribute("type"), "tel");
+        assert.equal(await phone.getAttribute("maxlength"), "20");
+        await phone.fill("+91 12345 67890");
+        await page.getByRole("button", { name: "Save details" }).click();
+        await page
+          .getByRole("alert")
+          .filter({ hasText: "Mutations disabled in visual QA" })
+          .waitFor();
+        assert.equal(await phone.inputValue(), "+91 12345 67890");
+        await page.getByRole("button", { name: "Cancel" }).click();
+        await page.getByRole("button", { name: "Edit saved details" }).click();
+        assert.equal(await phone.inputValue(), savedPhone);
+      }
     }
     if (view === "detail" && width === 390) {
       await page.getByText("Choose dates on a calendar").click();

@@ -1,6 +1,6 @@
 # LendLoop design system
 
-This guide describes the current frontend. Resolve conflicts using the rendered route and the effective cascade in [app/globals.css](../app/globals.css). Several older selectors survive alongside later feature overrides. See [UI architecture](UI_ARCHITECTURE.md) for placement, data boundaries and verification commands.
+This guide describes the current frontend. Resolve conflicts using the rendered route and the effective cascade. Several older selectors survive alongside later feature overrides in [app/globals.css](../app/globals.css). Profile uses the shared Button with local size and shape overrides in [profile.module.css](../components/profile.module.css), and shares handover field styles with Loan Detail. See [UI architecture](UI_ARCHITECTURE.md) for placement, data boundaries and verification commands.
 
 ## Design philosophy
 

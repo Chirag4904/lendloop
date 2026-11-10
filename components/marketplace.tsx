@@ -24,7 +24,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { categories, conditions } from "./listing-form";
-import { useCurrentProfile } from "./use-current-profile";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { RequestForm } from "./borrowing";
 
 type Tool = {

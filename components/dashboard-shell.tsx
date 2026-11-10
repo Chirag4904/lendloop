@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Bell, Compass, Package, UserRound, Activity } from "lucide-react";
-import { useCurrentProfile } from "@/components/use-current-profile";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 
 const items = [
   { href: "/dashboard", label: "Explore", icon: Compass },

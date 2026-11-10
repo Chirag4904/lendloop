@@ -8,7 +8,7 @@ import { useMutation, useQuery } from "convex/react";
 import { MapPin, Wrench } from "lucide-react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import { useCurrentProfile } from "@/components/use-current-profile";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { Button } from "@/components/ui/button";
 
 export function Onboarding() {
