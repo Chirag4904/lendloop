@@ -393,6 +393,51 @@ assert.equal(
     .getAttribute("href"),
   "/dashboard/requests",
 );
+await page.evaluate(() => {
+  window.Notification = class {
+    static permission = "default";
+    static async requestPermission() {
+      this.permission = "granted";
+      return this.permission;
+    }
+  };
+  window.dispatchEvent(new Event("focus"));
+});
+await page
+  .getByRole("button", { name: "Enable browser notifications" })
+  .click();
+await page.getByText("Browser notifications are enabled.").waitFor();
+await page.goto("http://localhost:3000/__atlas-qa?view=explore");
+await page.getByRole("link", { name: "Updates", exact: true }).waitFor();
+await page.evaluate(() => {
+  window.Notification = class {
+    static permission = "granted";
+    constructor(title, options) {
+      window.__atlasBrowserUpdate = { title, body: options.body };
+    }
+  };
+  history.replaceState(null, "", "?view=explore&updates=unread");
+  window.dispatchEvent(new PopStateEvent("popstate"));
+});
+await page.waitForFunction(() => Boolean(window.__atlasBrowserUpdate));
+assert.deepEqual(await page.evaluate(() => window.__atlasBrowserUpdate), {
+  title: "LendLoop",
+  body: "You have a new update.",
+});
+const updatesViewport = page.viewportSize();
+for (const width of [390, 1440]) {
+  await page.setViewportSize({ width, height: 1000 });
+  await page.getByRole("link", { name: "Updates, 1 unread" }).waitFor();
+  await page.screenshot({ path: `artifacts/atlas/updates-badge-${width}.png` });
+}
+if (updatesViewport) await page.setViewportSize(updatesViewport);
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=notifications&updates=unread",
+);
+await page.waitForFunction(() => Boolean(window.__atlasReadArgs));
+assert.deepEqual(await page.evaluate(() => window.__atlasReadArgs), {
+  ids: ["notification1"],
+});
 await page.goto("http://localhost:3000/__atlas-qa?view=requests");
 const activityNav = page.getByRole("navigation", { name: "Activity views" });
 assert.equal(

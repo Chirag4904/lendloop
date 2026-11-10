@@ -206,6 +206,7 @@ export default defineSchema({
     loanId: v.optional(v.id("loans")),
     message: v.string(),
     createdAt: v.number(),
+    readAt: v.optional(v.number()),
   })
     .index("by_event", ["eventId"])
     .index("by_recipient", ["recipientId"]),
@@ -222,6 +223,7 @@ export default defineSchema({
     lease: v.string(),
     claimedAt: v.number(),
     sentAt: v.optional(v.number()),
+    readAt: v.optional(v.number()),
     lastErrorCode: v.optional(v.string()),
   })
     .index("by_key", ["key"])

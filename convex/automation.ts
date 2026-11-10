@@ -1,5 +1,10 @@
 import { v } from "convex/values";
-import { internalMutation, internalQuery, query } from "./_generated/server";
+import {
+  internalMutation,
+  internalQuery,
+  mutation,
+  query,
+} from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import type { Id } from "./_generated/dataModel";
 import { internal } from "./_generated/api";
@@ -311,6 +316,8 @@ export const recoverReminders = internalMutation({
   },
 });
 
+const updateId = v.union(v.id("notifications"), v.id("overdueReminders"));
+
 export const mine = query({
   args: {},
   returns: v.array(
@@ -319,6 +326,7 @@ export const mine = query({
       message: v.string(),
       createdAt: v.number(),
       status: v.string(),
+      unreadId: v.union(updateId, v.null()),
     }),
   ),
   handler: async (ctx) => {
@@ -341,6 +349,7 @@ export const mine = query({
             event.type.replaceAll("_", " ").replaceAll(".", " · "),
           createdAt: note?.createdAt ?? event.createdAt,
           status: event.status,
+          unreadId: note && note.readAt === undefined ? note._id : null,
         };
       }),
     );
@@ -356,10 +365,31 @@ export const mine = query({
         message: `Overdue reminder · ${r.date}`,
         createdAt: r.sentAt ?? r.claimedAt,
         status: r.status,
+        unreadId: r.status === "sent" && r.readAt === undefined ? r._id : null,
       })),
     ]
       .sort((a, b) => b.createdAt - a.createdAt)
       .slice(0, 50);
+  },
+});
+
+export const markRead = mutation({
+  args: { ids: v.array(updateId) },
+  returns: v.null(),
+  handler: async (ctx, { ids }) => {
+    const me = await currentUser(ctx);
+    if (ids.length > 50) throw new Error("Select up to 50 updates");
+    const readAt = Date.now();
+    for (const id of new Set(ids)) {
+      const update = await ctx.db.get(id);
+      if (
+        update?.recipientId === me._id &&
+        update.readAt === undefined &&
+        (!("status" in update) || update.status === "sent")
+      )
+        await ctx.db.patch(id, { readAt });
+    }
+    return null;
   },
 });
 

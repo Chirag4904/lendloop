@@ -5,6 +5,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Bell, Compass, Package, UserRound, Activity } from "lucide-react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import { useBrowserUpdates } from "@/hooks/use-browser-updates";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -19,9 +22,11 @@ const items = [
 
 function DashboardNavigation({
   pathname,
+  unread,
   mobile = false,
 }: {
   pathname: string;
+  unread: number;
   mobile?: boolean;
 }) {
   const nav = useRef<HTMLElement>(null);
@@ -72,6 +77,7 @@ function DashboardNavigation({
     >
       <span ref={marker} className={styles.indicator} aria-hidden="true" />
       {items.map(({ href, label, icon: Icon }) => {
+        const showBadge = label === "Updates" && unread > 0;
         const active =
           pathname === href ||
           (href === "/dashboard/requests" &&
@@ -81,6 +87,7 @@ function DashboardNavigation({
             href={href}
             key={href}
             aria-current={active ? "page" : undefined}
+            aria-label={showBadge ? `Updates, ${unread} unread` : undefined}
             onClick={(event) => {
               if (event.detail === 0 && !active && nav.current)
                 nav.current.dataset.instant = "true";
@@ -88,6 +95,11 @@ function DashboardNavigation({
           >
             <Icon size={19} />
             {label}
+            {showBadge && (
+              <span className={styles.updatesBadge} aria-hidden="true">
+                {unread}
+              </span>
+            )}
           </Link>
         );
       })}
@@ -99,6 +111,16 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const { profile, loading, error } = useCurrentProfile();
   const pathname = usePathname();
   const router = useRouter();
+  const updates = useQuery(
+    api.automation.mine,
+    profile?.societyId ? {} : "skip",
+  );
+  const unread = updates?.filter((row) => row.unreadId).length ?? 0;
+  useBrowserUpdates(
+    profile?._id,
+    updates,
+    pathname === "/dashboard/notifications",
+  );
   useEffect(() => {
     if (profile && !profile.societyId) router.replace("/onboarding");
   }, [profile, router]);
@@ -122,7 +144,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <Link className="wordmark" href="/">
             ↔ lendloop.
           </Link>
-          <DashboardNavigation pathname={pathname} />
+          <DashboardNavigation pathname={pathname} unread={unread} />
           <Button asChild variant="outline" className={styles.profileLink}>
             <Link href="/dashboard/profile" aria-label="Profile">
               <UserRound size={18} />
@@ -138,7 +160,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
       <main className="app-main">{children}</main>
-      <DashboardNavigation pathname={pathname} mobile />
+      <DashboardNavigation pathname={pathname} unread={unread} mobile />
     </div>
   );
 }

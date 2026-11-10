@@ -1,20 +1,92 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "convex/react";
+import { useEffect, useState, useSyncExternalStore } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { Button } from "@/components/ui/button";
 import styles from "./notifications.module.css";
 import "./automation.css";
 
+const permissionChange = "lendloop:notification-permission";
+const unsupported = () => "unsupported" as const;
+
+function subscribePermission(callback: () => void) {
+  window.addEventListener("focus", callback);
+  window.addEventListener(permissionChange, callback);
+  return () => {
+    window.removeEventListener("focus", callback);
+    window.removeEventListener(permissionChange, callback);
+  };
+}
+
+function browserPermission() {
+  return window.isSecureContext && "Notification" in window
+    ? Notification.permission
+    : unsupported();
+}
+
 export function Notifications() {
   const rows = useQuery(api.automation.mine, {});
+  const markRead = useMutation(api.automation.markRead);
+  const [readError, setReadError] = useState(false);
+  const [permissionError, setPermissionError] = useState(false);
+  const permission = useSyncExternalStore(
+    subscribePermission,
+    browserPermission,
+    unsupported,
+  );
+
+  useEffect(() => {
+    const ids = rows?.flatMap((row) => (row.unreadId ? [row.unreadId] : []));
+    if (!ids?.length) return;
+    const visibleIds = ids;
+    function readVisible() {
+      if (document.visibilityState === "visible")
+        void markRead({ ids: visibleIds }).then(
+          () => setReadError(false),
+          () => setReadError(true),
+        );
+    }
+    readVisible();
+    document.addEventListener("visibilitychange", readVisible);
+    return () => document.removeEventListener("visibilitychange", readVisible);
+  }, [rows, markRead]);
+
+  async function enableBrowserNotifications() {
+    try {
+      await Notification.requestPermission();
+      setPermissionError(false);
+      window.dispatchEvent(new Event(permissionChange));
+    } catch {
+      setPermissionError(true);
+    }
+  }
+
   return (
     <section className={styles.page}>
       <div className="app-heading">
         <span className="kicker">YOUR UPDATES</span>
         <h1>The latest, from nearby.</h1>
         <p>Request updates and overdue reminders appear here.</p>
+        {permission === "default" && (
+          <Button
+            type="button"
+            variant="outline"
+            className="mt-3"
+            onClick={enableBrowserNotifications}
+          >
+            Enable browser notifications
+          </Button>
+        )}
+        {permission === "denied" && (
+          <p>Allow notifications for LendLoop in your browser settings.</p>
+        )}
+        {permission === "granted" && <p>Browser notifications are enabled.</p>}
+        {permissionError && (
+          <p role="status">Could not request browser permission.</p>
+        )}
+        {readError && <p role="status">Could not mark your updates as read.</p>}
       </div>
       {rows === undefined ? (
         <p role="status">Loading notifications…</p>

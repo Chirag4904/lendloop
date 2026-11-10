@@ -129,6 +129,45 @@ test("offer and counter events address the correct participant", async () => {
   expect(JSON.stringify(claim)).not.toMatch(/phone|pickupPoint|address|clerk/i);
 });
 
+test("only the recipient can clear a delivered update", async () => {
+  const { t, lender, borrower, toolId } = await setup();
+  const requestId = await borrower.mutation(api.requests.create, {
+    toolId,
+    startDate: "2026-11-12",
+    endDate: "2026-11-12",
+  });
+  expect((await lender.query(api.automation.mine, {}))[0].unreadId).toBeNull();
+  const event = await t.run((ctx) =>
+    ctx.db
+      .query("automationEvents")
+      .withIndex("by_request", (q) => q.eq("requestId", requestId))
+      .unique(),
+  );
+  await t.mutation(internal.automation.claimEvent, {
+    eventId: event!._id,
+    lease: "delivery",
+  });
+  await t.mutation(internal.automation.deliverEvent, {
+    eventId: event!._id,
+    lease: "delivery",
+    message: "New borrow request",
+  });
+
+  const [row] = await lender.query(api.automation.mine, {});
+  expect(row.unreadId).toBeTruthy();
+  expect(await borrower.query(api.automation.mine, {})).toEqual([]);
+  await borrower.mutation(api.automation.markRead, { ids: [row.unreadId!] });
+  expect((await lender.query(api.automation.mine, {}))[0].unreadId).toEqual(
+    row.unreadId,
+  );
+  await lender.mutation(api.automation.markRead, { ids: [row.unreadId!] });
+  expect((await lender.query(api.automation.mine, {}))[0]).toMatchObject({
+    message: "New borrow request",
+    status: "delivered",
+    unreadId: null,
+  });
+});
+
 test("HMAC rejects missing, malformed and stale signatures", async () => {
   const secret = "a-test-secret",
     body = '{"eventId":"one"}',
@@ -214,11 +253,18 @@ test("nonce replay and reminder claims are transactional and idempotent", async 
   expect(await stranger.query(api.automation.loanActivity, { loanId })).toEqual(
     [],
   );
+  const reminder = (await borrower.query(api.automation.mine, {})).find(
+    (x) => x.status === "sent",
+  );
+  expect(reminder?.unreadId).toBeTruthy();
+  await borrower.mutation(api.automation.markRead, {
+    ids: [reminder!.unreadId!],
+  });
   expect(
-    (await borrower.query(api.automation.mine, {})).some((x) =>
-      x.message.includes("Overdue"),
-    ),
-  ).toBe(true);
+    (await borrower.query(api.automation.mine, {})).find(
+      (x) => x.status === "sent",
+    )?.unreadId,
+  ).toBeNull();
   await borrower.mutation(api.loans.reportReturn, { loanId });
   vi.setSystemTime(new Date("2026-11-14T20:00:00Z"));
   expect((await t.query(internal.automation.overduePage, {})).loans).toEqual([
