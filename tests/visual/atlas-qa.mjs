@@ -84,6 +84,7 @@ for (const width of [360, 390, 768, 1280, 1440]) {
     "detail-owner",
     "notifications",
     "profile",
+    "onboarding",
     "loan",
     "loan-borrower",
     "admin",
@@ -552,6 +553,44 @@ assert.equal(await adminListings.count(), 0);
 await adminStatus.selectOption("removed");
 assert(await drill.isVisible());
 assert.equal(await remove.count(), 0);
+
+await page.setViewportSize({ width: 390, height: 900 });
+await page.goto("http://localhost:3000/__atlas-qa?view=onboarding");
+const societySearch = page.getByLabel("Society, locality, or city");
+const societyResult = page.getByRole("button", { name: /Paper Gardens/ });
+await societySearch.fill("No such neighborhood");
+await page.getByText(/No matching societies yet/).waitFor();
+assert.equal(await societyResult.count(), 0);
+await societySearch.fill("demo city");
+await societyResult.waitFor();
+await page
+  .getByRole("region", { name: "Your society suggestions" })
+  .getByText("Oak Court: pending")
+  .waitFor();
+await page.evaluate(() => {
+  window.__atlasOnboardingCalls = [];
+  window.__atlasMutation = (name, args) => {
+    window.__atlasOnboardingCalls.push({ name, args });
+    return null;
+  };
+});
+await page.getByText("Can’t find your society? Suggest it").press("Enter");
+const suggestionName = page.getByLabel("Society name *");
+await suggestionName.fill("Cedar Court");
+await page.getByLabel("Locality (optional)").fill("West End");
+await page.getByRole("button", { name: "Send suggestion" }).click();
+await page.getByRole("status").filter({ hasText: "sent for review" }).waitFor();
+assert.equal(await suggestionName.inputValue(), "");
+await societyResult.press("Enter");
+await page.waitForFunction(() => window.__atlasReplacedPath === "/dashboard");
+assert.deepEqual(await page.evaluate(() => window.__atlasOnboardingCalls), [
+  {
+    name: "suggestions:create",
+    args: { name: "Cedar Court", locality: "West End", city: undefined },
+  },
+  { name: "users:selectSociety", args: { societyId: "society1" } },
+]);
+
 for (const width of [390, 1280]) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("http://localhost:3000/__atlas-qa?view=explore");
@@ -732,7 +771,7 @@ await page.getByLabel("Daily rate in INR").fill("175.50");
 
 function mockStudioSave() {
   window.__atlasStudioCalls = [];
-  window.__atlasStudioMutation = (name, args) => {
+  window.__atlasMutation = (name, args) => {
     window.__atlasStudioCalls.push({ name, args });
     switch (name) {
       case "tools:create":
@@ -870,6 +909,6 @@ for (const width of [390, 1440]) {
 }
 assert.deepEqual(errors, []);
 console.log(
-  "70 viewport/page renders + edit form and sharing checks passed. Fixture UI only.",
+  "75 viewport/page renders and interaction checks passed. Fixture UI only.",
 );
 await browser.close();

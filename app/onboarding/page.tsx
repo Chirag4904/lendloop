@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { Onboarding } from "@/components/onboarding";
+import { Onboarding } from "@/components/onboarding/onboarding";
 
 export default async function OnboardingPage() {
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) redirect("/sign-in");

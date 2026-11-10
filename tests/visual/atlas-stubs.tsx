@@ -61,7 +61,8 @@ export const UserButton = () => (
   </button>
 );
 export const useRouter = () => ({
-  replace: () => {},
+  replace: (path: string) =>
+    Object.assign(window, { __atlasReplacedPath: path }),
   push: (path: string) => Object.assign(window, { __atlasPushedPath: path }),
 });
 export const usePathname = () => {
@@ -105,12 +106,12 @@ export function useMutation(ref: never) {
       | { loanId: string },
   ) => {
     const name = getFunctionName(ref);
-    const studioMutation = (
+    const fixtureMutation = (
       window as Window & {
-        __atlasStudioMutation?: (name: string, args: unknown) => unknown;
+        __atlasMutation?: (name: string, args: unknown) => unknown;
       }
-    ).__atlasStudioMutation;
-    if (studioMutation) return studioMutation(name, args);
+    ).__atlasMutation;
+    if (fixtureMutation) return fixtureMutation(name, args);
     if (name === "loans:saveHandover") {
       Object.assign(window, { __atlasHandoverArgs: args });
       return null;
@@ -157,7 +158,10 @@ export function usePaginatedQuery(ref: never) {
 export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
   const name = getFunctionName(ref);
   if (args === "skip") return undefined;
-  if (name === "users:me") return profile;
+  if (name === "users:me")
+    return new URLSearchParams(location.search).get("view") === "onboarding"
+      ? { ...profile, societyId: undefined }
+      : profile;
   if (name === "handover:mine")
     return {
       phone: "+91 98765 43210",
@@ -240,7 +244,15 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         locality: "Illustrative neighborhood",
         city: "Demo city",
       },
-    ];
+    ].filter((s) =>
+      `${s.name} ${s.locality} ${s.city}`.toLowerCase().includes(
+        String(args?.term ?? "")
+          .trim()
+          .toLowerCase(),
+      ),
+    );
+  if (name === "suggestions:mine")
+    return [{ name: "Oak Court", status: "pending", societyName: null }];
   if (name === "tools:publicList")
     return items.map(({ name, category }) => ({
       name: `Demo · ${name}`,

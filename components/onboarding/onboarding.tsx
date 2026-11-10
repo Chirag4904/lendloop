@@ -10,6 +10,7 @@ import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
 import { Button } from "@/components/ui/button";
+import styles from "./onboarding.module.css";
 
 export function Onboarding() {
   const router = useRouter();
@@ -67,8 +68,8 @@ export function Onboarding() {
   }
 
   return (
-    <main className="onboard">
-      <header className="onboard-header">
+    <main className="min-h-screen bg-[var(--cream)] px-6 pt-[30px] pb-[70px]">
+      <header className={styles.header}>
         <Link className="brand" href="/">
           <span className="brand-mark">
             <Wrench size={20} />
@@ -77,8 +78,8 @@ export function Onboarding() {
         </Link>
         <UserButton />
       </header>
-      <div className="onboard-grid">
-        <div className="onboard-intro">
+      <div className={styles.layout}>
+        <div className={styles.intro}>
           <span className="kicker">ONE SMALL STEP TO BEGIN</span>
           <h1>
             Where do you
@@ -90,7 +91,7 @@ export function Onboarding() {
             selection is self-declared and doesn’t verify residency.
           </p>
         </div>
-        <div className="onboard-card">
+        <div className={styles.card}>
           <h2>Find your society</h2>
           <p>
             Search LendLoop’s neighborhood directory by society, locality, or
@@ -107,13 +108,14 @@ export function Onboarding() {
             placeholder="Start typing a name…"
             autoComplete="off"
           />
-          <div className="result-list" aria-live="polite">
+          <div className={styles.results} aria-live="polite">
             {societies === undefined || loading ? (
               <p className="form-message">Finding nearby places…</p>
             ) : societies.length ? (
               societies.map((s) => (
-                <button
-                  className="result-button"
+                <Button
+                  className={styles.result}
+                  variant="outline"
                   key={s._id}
                   onClick={() => void choose(s._id)}
                   disabled={busy || !profile}
@@ -126,7 +128,7 @@ export function Onboarding() {
                       {s.locality}, {s.city}
                     </small>
                   </span>
-                </button>
+                </Button>
               ))
             ) : (
               <p className="form-message">
@@ -148,7 +150,7 @@ export function Onboarding() {
               {message}
             </p>
           )}
-          <details className="suggestion-box">
+          <details className={styles.suggestions}>
             <summary>Can’t find your society? Suggest it</summary>
             <form onSubmit={submitSuggestion}>
               <label className="field-label" htmlFor="suggest-name">
@@ -194,7 +196,7 @@ export function Onboarding() {
           </details>
           {suggestions && suggestions.length > 0 && (
             <section
-              className="suggestion-box"
+              className={styles.suggestions}
               aria-label="Your society suggestions"
             >
               <h3>Your suggestions</h3>
