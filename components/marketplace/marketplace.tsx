@@ -14,7 +14,6 @@ import {
   MapPin,
   Package,
   PackageOpen,
-  Pencil,
   Plug,
   Plus,
   Search,
@@ -23,9 +22,9 @@ import {
   Tent,
   type LucideIcon,
 } from "lucide-react";
-import { categories, conditions } from "@/components/listings/listing-form";
+import { categories, conditions } from "@/components/listings/listing-options";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
-import { RequestForm } from "@/components/borrowing/borrowing";
+import { price, relation } from "./tool-display";
 
 type Tool = {
   id: Id<"tools">;
@@ -42,16 +41,6 @@ type Tool = {
   trustedLender: boolean;
   photos: { id: Id<"listingPhotos">; url: string | null }[];
 };
-const price = (amount: number | null) =>
-  amount === null
-    ? "Free to borrow"
-    : `${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 }).format(amount / 100)} / day`;
-const relation = (distance: number) =>
-  distance === 0
-    ? "Your society"
-    : distance < 0
-      ? "Nearby society"
-      : `About ${Math.round(distance)} m away`;
 const categoryIcons: Record<string, LucideIcon> = {
   "": LayoutGrid,
   "Power Tools": Drill,
@@ -410,148 +399,5 @@ export function MyListings() {
         </div>
       )}
     </section>
-  );
-}
-
-export function ToolDetail({ toolId }: { toolId: Id<"tools"> }) {
-  const tool = useQuery(api.tools.detail, { toolId }) as
-    Tool | null | undefined;
-  const [selected, setSelected] = useState(0);
-  if (tool === undefined) return <p role="status">Loading item…</p>;
-  if (!tool)
-    return (
-      <div className="app-empty">
-        <h1>Item unavailable</h1>
-        <Link href="/dashboard">Back to Explore</Link>
-      </div>
-    );
-  return (
-    <article className="detail-page">
-      <nav className="detail-breadcrumb" aria-label="Breadcrumb">
-        <Link href={tool.isOwner ? "/dashboard/listings" : "/dashboard"}>
-          {tool.isOwner ? "My Listings" : "Explore"}
-        </Link>
-        <span aria-hidden="true"> / </span>
-        <span>{tool.category}</span>
-      </nav>
-      <div className="detail-layout">
-        <div className="detail-editorial">
-          <div className="detail-image">
-            {tool.photos[selected]?.url ? (
-              <img
-                src={tool.photos[selected].url!}
-                alt={`${tool.name}, photo ${selected + 1}`}
-              />
-            ) : (
-              <PackageOpen size={64} strokeWidth={1.2} />
-            )}
-          </div>
-          {tool.photos.length > 1 && (
-            <div className="thumb-row" aria-label="Listing photos">
-              {tool.photos.map((photo, index) => (
-                <button
-                  type="button"
-                  aria-label={`Show photo ${index + 1}`}
-                  aria-pressed={selected === index}
-                  onClick={() => setSelected(index)}
-                  key={photo.id}
-                >
-                  {photo.url && <img src={photo.url} alt="" />}
-                </button>
-              ))}
-            </div>
-          )}
-          <section className="detail-about">
-            <h2>About this item</h2>
-            <p>{tool.description}</p>
-            <dl className="detail-facts">
-              <div>
-                <dt>Condition</dt>
-                <dd>{conditions[tool.condition]}</dd>
-              </div>
-              <div>
-                <dt>Category</dt>
-                <dd>{tool.category}</dd>
-              </div>
-            </dl>
-          </section>
-          {!tool.isOwner && (
-            <section className="detail-lender" aria-label="Lender">
-              <span className="lender-avatar" aria-hidden="true">
-                {tool.ownerName.slice(0, 1).toLocaleUpperCase()}
-              </span>
-              <div>
-                <span>Shared by</span>
-                <strong>{tool.ownerName}</strong>
-              </div>
-              {tool.trustedLender && (
-                <span className="lender-badge">Trusted Lender</span>
-              )}
-            </section>
-          )}
-          {!tool.isOwner && (
-            <section className="detail-how">
-              <h2>How borrowing works</h2>
-              <ol>
-                <li>
-                  <strong>Request</strong>
-                  <span>Choose dates and ask to borrow.</span>
-                </li>
-                <li>
-                  <strong>Get confirmation</strong>
-                  <span>The owner reviews your request.</span>
-                </li>
-                <li>
-                  <strong>Borrow &amp; return</strong>
-                  <span>Coordinate, use and return the item.</span>
-                </li>
-              </ol>
-              <p>LendLoop does not collect payments.</p>
-            </section>
-          )}
-        </div>
-        <div className="detail-copy">
-          <span className="catalog-category">{tool.category}</span>
-          <h1>{tool.name}</h1>
-          <p className="detail-proximity">{relation(tool.distanceMeters)}</p>
-          {tool.isOwner ? (
-            <div className="owner-listing-panel">
-              <div className="owner-listing-status">
-                <span className="owner-status-dot" />
-                {tool.archived
-                  ? "Archived"
-                  : tool.active
-                    ? "Listed"
-                    : "Unlisted"}
-              </div>
-              <span className="owner-listing-label">YOUR LISTING</span>
-              <p className="owner-listing-price">{price(tool.dailyAmount)}</p>
-              <p>
-                {tool.archived
-                  ? "This listing is archived."
-                  : tool.active
-                    ? "Your neighbors can discover and request this item."
-                    : "This item is hidden from Explore."}
-              </p>
-              {!tool.archived && (
-                <Link
-                  href={`/dashboard/listings/${tool.id}/edit`}
-                  className="button-primary owner-edit-link"
-                >
-                  <Pencil size={17} /> Edit listing
-                </Link>
-              )}
-              <Link className="owner-shelf-link" href="/dashboard/listings">
-                Manage my listings →
-              </Link>
-            </div>
-          ) : tool.active && !tool.archived ? (
-            <RequestForm toolId={tool.id} dailyAmount={tool.dailyAmount} />
-          ) : (
-            <p className="detail-price">{price(tool.dailyAmount)}</p>
-          )}
-        </div>
-      </div>
-    </article>
   );
 }

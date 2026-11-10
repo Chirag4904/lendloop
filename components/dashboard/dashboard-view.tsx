@@ -1,6 +1,6 @@
 import { Profile } from "@/components/profile/profile";
 import { RequestList } from "@/components/borrowing/borrowing";
-import { ExploreTools, MyListings } from "@/components/marketplace";
+import { ExploreTools, MyListings } from "@/components/marketplace/marketplace";
 import { Notifications } from "@/components/notifications";
 
 export function DashboardView({

@@ -1,0 +1,100 @@
+.panel {
+  margin-top: 22px;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--paper);
+  box-shadow: 0 12px 35px #152d3b0c;
+}
+
+.rate strong {
+  font:
+    600 30px var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.04em;
+}
+
+.rate span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.choices button {
+  flex: 1 1 140px;
+  min-height: 42px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.choices button[aria-pressed="true"] {
+  background: var(--brand-lime);
+}
+
+.choices button:focus-visible {
+  outline-offset: 2px;
+}
+
+@media (width > 700px) {
+  .choices button {
+    flex: 1;
+  }
+}
+
+.form .total {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  margin-top: 14px;
+  padding: 10px 0;
+}
+
+.total span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.form .availability {
+  margin-top: 14px;
+  font-size: 13px;
+}
+
+.form .available {
+  color: #365a38;
+}
+
+.form .reassurance {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+  white-space: normal;
+}
+
+.submit {
+  min-height: 54px;
+  padding-inline: 25px;
+  font-size: 14px;
+  font-weight: 700;
+  transition:
+    background 0.2s,
+    transform 0.2s;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .submit:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.submit:disabled {
+  pointer-events: auto;
+  cursor: not-allowed;
+  opacity: 0.55;
+}

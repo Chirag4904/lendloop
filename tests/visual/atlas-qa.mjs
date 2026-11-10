@@ -106,6 +106,10 @@ for (const width of [360, 390, 768, 1280, 1440]) {
           .count(),
         0,
       );
+      assert.equal(
+        await page.getByRole("region", { name: "Borrow this item" }).count(),
+        0,
+      );
     }
     if (view === "loan" || view === "loan-borrower") {
       assert(
@@ -320,16 +324,18 @@ assert(
   await suggestPrice.evaluate((button) => button === document.activeElement),
 );
 await page.goto("http://localhost:3000/__atlas-qa?view=detail");
-assert.equal(await page.locator(".thumb-row").count(), 0);
+const gallery = page.getByRole("group", { name: "Listing photos" });
+assert.equal(await gallery.count(), 0);
 await page.goto("http://localhost:3000/__atlas-qa?view=detail-multi");
-assert.equal(await page.getByRole("button", { name: /Show photo/ }).count(), 2);
-await page.getByRole("button", { name: "Show photo 2" }).click();
+assert.equal(await gallery.getByRole("button").count(), 2);
+await gallery.getByRole("button", { name: "Show photo 2" }).press("Space");
 assert.equal(
-  await page
+  await gallery
     .getByRole("button", { name: "Show photo 2" })
     .getAttribute("aria-pressed"),
   "true",
 );
+assert(await page.getByRole("img", { name: /, photo 2$/ }).isVisible());
 await page.goto("http://localhost:3000/__atlas-qa?view=detail");
 assert.equal(await page.locator("input[type=date]").count(), 0);
 await page.getByText("Choose dates on a calendar").click();

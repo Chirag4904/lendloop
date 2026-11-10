@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { DashboardShell } from "../../components/dashboard/dashboard-shell";
 import { DashboardView } from "../../components/dashboard/dashboard-view";
-import { ToolDetail } from "../../components/marketplace";
+import { ToolDetail } from "../../components/marketplace/tool-detail";
 import { ListingForm } from "../../components/listings/listing-form";
 import { Admin } from "../../components/admin";
 import { LoanDetail } from "../../components/borrowing/borrowing";

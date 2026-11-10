@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { BorrowCalendar } from "./borrow-calendar";
 import type { Id } from "@/convex/_generated/dataModel";
 import activity from "./activity.module.css";
+import requestForm from "./request-form.module.css";
 
 const money = (minor: number) =>
   minor === 0
@@ -117,16 +118,21 @@ export function RequestForm({
     }
   }
   return (
-    <section className="borrow-panel" aria-label="Borrow this item">
-      <div className="borrow-panel-intro">
-        <div className="borrow-rate">
-          <strong>{dailyAmount === null ? "Free" : money(dailyAmount)}</strong>
-          <span>{dailyAmount === null ? "to borrow" : "/ day"}</span>
-        </div>
+    <section className={requestForm.panel} aria-label="Borrow this item">
+      <div
+        className={`flex items-baseline gap-1.5 whitespace-nowrap ${requestForm.rate}`}
+      >
+        <strong>{dailyAmount === null ? "Free" : money(dailyAmount)}</strong>
+        <span>{dailyAmount === null ? "to borrow" : "/ day"}</span>
       </div>
-      <div className="borrow-choices" role="group" aria-label="Request type">
-        <button
+      <div
+        className={`mt-[18px] flex flex-wrap rounded-xl bg-[var(--brand-paper)] p-1 ${requestForm.choices}`}
+        role="group"
+        aria-label="Request type"
+      >
+        <Button
           type="button"
+          variant="ghost"
           aria-pressed={mode === "standard"}
           onClick={() => {
             setMode("standard");
@@ -135,20 +141,25 @@ export function RequestForm({
           {dailyAmount === null
             ? "Request to Borrow"
             : "Request at Listed Price"}
-        </button>
+        </Button>
         {dailyAmount !== null && (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             aria-pressed={mode === "offer"}
             onClick={() => {
               setMode("offer");
             }}
           >
             Make an Offer
-          </button>
+          </Button>
         )}
       </div>
-      <form id="request-form" onSubmit={submit} className="borrow-form">
+      <form
+        id="request-form"
+        onSubmit={submit}
+        className={`mt-[18px] ${requestForm.form}`}
+      >
         {mode === "offer" && (
           <>
             <label className="offer-field">
@@ -188,7 +199,7 @@ export function RequestForm({
           }}
         />
         {count > 0 && (mode !== "offer" || validOffer) && (
-          <p className="borrow-total">
+          <p className={requestForm.total}>
             <strong>
               {count} {count === 1 ? "day" : "days"} ×{" "}
               {money(
@@ -216,12 +227,15 @@ export function RequestForm({
           </p>
         )}
         {valid && available === undefined && (
-          <p role="status" className="borrow-checking">
+          <p role="status" className={requestForm.availability}>
             Checking these dates…
           </p>
         )}
         {valid && available === true && (
-          <p role="status" className="borrow-available">
+          <p
+            role="status"
+            className={`${requestForm.availability} ${requestForm.available}`}
+          >
             Dates are available to request.
           </p>
         )}
@@ -235,9 +249,9 @@ export function RequestForm({
             {error}
           </p>
         )}
-        <button
+        <Button
           type="submit"
-          className="button-primary"
+          className={`mt-3.5 w-full ${requestForm.submit}`}
           disabled={
             !valid ||
             available !== true ||
@@ -246,8 +260,8 @@ export function RequestForm({
           }
         >
           {busy ? "Sending…" : mode === "offer" ? "Send Offer" : "Send request"}
-        </button>
-        <p className="borrow-reassurance">
+        </Button>
+        <p className={requestForm.reassurance}>
           The owner reviews your request. No payment is collected on LendLoop.
         </p>
       </form>
