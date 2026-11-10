@@ -8,7 +8,7 @@ export default async function OnboardingPage() {
   if (!process.env.NEXT_PUBLIC_CONVEX_URL)
     return (
       <main className="app-main">
-        Convex is not configured yet. See the README for setup.
+        We couldn’t connect right now. Please try again later.
       </main>
     );
   return <Onboarding />;

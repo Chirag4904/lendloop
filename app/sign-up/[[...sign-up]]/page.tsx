@@ -20,10 +20,7 @@ export default function SignUpPage() {
           fallbackRedirectUrl="/onboarding"
         />
       ) : (
-        <p>
-          Sign-up will be available after Clerk keys are configured. See the
-          README for setup.
-        </p>
+        <p>Sign-up is temporarily unavailable. Please try again later.</p>
       )}
     </AuthPage>
   );

@@ -370,3 +370,30 @@ test("touch scrolling and changing motion preferences preserve the story", async
   await expect(page.locator("#handover h2")).toBeVisible();
   await context.close();
 });
+
+for (const width of [390, 1440]) {
+  test(`branded not found page at ${width}px`, async ({ page }, testInfo) => {
+    await page.setViewportSize({ width, height: 900 });
+    const response = await page.goto("/this-neighborhood-page-does-not-exist");
+    expect(response?.status()).toBe(404);
+    await expect(
+      page.getByRole("heading", { name: "Looks like this page wandered off." }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("link", { name: "Back to home" }),
+    ).toHaveAttribute("href", "/");
+    await expect(page.getByRole("link", { name: "Back to home" })).toHaveCSS(
+      "color",
+      "rgb(255, 255, 255)",
+    );
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await page.screenshot({
+      path: testInfo.outputPath(`not-found-${width}.png`),
+      fullPage: true,
+    });
+  });
+}

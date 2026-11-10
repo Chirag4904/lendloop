@@ -44,8 +44,9 @@ const profile = {
   trustedBorrower: true,
 };
 export const useConvexAuth = () => ({
-  isAuthenticated: true,
-  isLoading: false,
+  isAuthenticated:
+    new URLSearchParams(location.search).get("view") !== "loading",
+  isLoading: new URLSearchParams(location.search).get("view") === "loading",
 });
 export const useUser = () => ({ user: null });
 export const UserButton = () => (

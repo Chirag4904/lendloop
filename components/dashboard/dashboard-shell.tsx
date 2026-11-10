@@ -128,13 +128,33 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   if (error)
     return (
       <main className="app-main" role="alert">
-        Could not load your profile: {error}
+        We couldn’t load your profile. Please refresh the page to try again.
       </main>
     );
   if (loading || !profile?.societyId)
     return (
-      <main className="app-main" role="status">
-        Preparing your neighborhood…
+      <main className={styles.loadingPage}>
+        <Link
+          className={cn("wordmark", styles.loadingBrand)}
+          href="/"
+          aria-label="LendLoop home"
+        >
+          ↔ lendloop.
+        </Link>
+        <div className={styles.loadingContent} role="status" aria-live="polite">
+          <div className={styles.loadingEmblem} aria-hidden="true">
+            <span className={styles.loadingOrbit} />
+            <span className={styles.loadingMark}>↔</span>
+          </div>
+          <span className={styles.loadingKicker}>GOOD THINGS GO AROUND</span>
+          <h1>
+            Preparing your neighborhood<span>.</span>
+          </h1>
+          <p>Getting everything ready for you.</p>
+        </div>
+        <p className={styles.loadingFooter}>
+          A little less owning. A lot more possibility.
+        </p>
       </main>
     );
   return (

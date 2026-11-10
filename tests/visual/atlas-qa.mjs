@@ -66,6 +66,31 @@ await page.route("**/__atlas-qa?*", (r) =>
   }),
 );
 await mkdir("artifacts/atlas", { recursive: true });
+for (const width of [390, 1440]) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto("http://localhost:3000/__atlas-qa?view=loading");
+  await page
+    .getByRole("status")
+    .getByRole("heading", { name: "Preparing your neighborhood." })
+    .waitFor();
+  assert(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  );
+  await page.screenshot({
+    path: `artifacts/atlas/loading-${width}.png`,
+    fullPage: true,
+  });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  assert.equal(
+    await page
+      .locator('[class*="loadingOrbit"]')
+      .evaluate((el) => getComputedStyle(el).animationName),
+    "none",
+  );
+  await page.emulateMedia({ reducedMotion: "no-preference" });
+}
 await page.goto("http://localhost:3000/__atlas-qa?view=loan-shared");
 assert(await page.getByLabel(/Contact phone/).isChecked());
 assert(

@@ -1,0 +1,87 @@
+.page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  background: var(--brand-paper);
+}
+.header {
+  padding: 27px clamp(24px, 5vw, 72px);
+  border-bottom: 1px solid var(--line);
+  font-size: 26px;
+}
+.content {
+  flex: 1;
+  width: min(100% - 48px, 1120px);
+  margin: 0 auto;
+  display: grid;
+  align-items: center;
+  gap: 36px;
+  padding: 56px 0;
+}
+.art {
+  position: relative;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1.35;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--brand-ink);
+  color: var(--brand-paper);
+}
+.artNumber {
+  font:
+    500 clamp(100px, 22vw, 250px) / 1 var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.09em;
+  opacity: 0.16;
+}
+.artMark {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: clamp(75px, 15vw, 130px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--brand-lime);
+  color: var(--brand-ink);
+  font-size: clamp(40px, 8vw, 68px);
+}
+.copy h1 {
+  margin: 16px 0;
+  max-width: 600px;
+  font:
+    500 clamp(38px, 5vw, 68px) / 1.04 var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.055em;
+}
+.copy h1 span {
+  color: #789922;
+}
+.copy p {
+  max-width: 430px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+.action {
+  color: white;
+  margin-top: 16px;
+  min-height: 52px;
+}
+.footer {
+  padding: 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  text-align: center;
+  font-size: 12px;
+}
+@media (min-width: 800px) {
+  .content {
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+  }
+  .art {
+    order: 2;
+    aspect-ratio: 1;
+  }
+}

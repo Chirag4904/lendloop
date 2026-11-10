@@ -223,3 +223,7 @@ The reference sheets compare cropped screenshots from the current app and labele
 | Admin count cards and records                      | Overview desktop `artifacts/atlas/admin-1440.png`, Overview mobile `artifacts/atlas/admin-390.png`, Listings desktop `artifacts/atlas/admin-listings-1440.png`, Listings mobile `artifacts/atlas/admin-listings-390.png`                                                                                                                   |
 
 Catalog loading was captured by holding the Convex connection in the browser. Other loading treatments are documented from the component markup. Other populated admin sections and the signed-in Clerk menu are source-only in this audit.
+
+### Loading and not found
+
+Dashboard profile loading uses a centered arrow emblem on Warm Paper, with an ink orbit indicating ongoing work. The orbit is static under reduced motion; the status text remains available to assistive technology. The root 404 pairs a large ink-and-lime 404 illustration with a clear route home, stacking on narrow screens.

@@ -20,10 +20,7 @@ export default function SignInPage() {
           fallbackRedirectUrl="/dashboard"
         />
       ) : (
-        <p>
-          Sign-in will be available after Clerk keys are configured. See the
-          README for setup.
-        </p>
+        <p>Sign-in is temporarily unavailable. Please try again later.</p>
       )}
     </AuthPage>
   );

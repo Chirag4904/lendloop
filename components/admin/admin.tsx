@@ -910,8 +910,7 @@ function Automation() {
   return (
     <>
       <p className={styles.muted}>
-        Delivery states come from Convex. This view does not depend on n8n being
-        online.
+        Review the status of notification deliveries.
       </p>
       <label className={styles.search}>
         Delivery status
