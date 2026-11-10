@@ -1,0 +1,37 @@
+.page {
+  background: linear-gradient(140deg, var(--blue-soft), var(--cream) 55%);
+}
+.panel {
+  width: min(100%, 500px);
+  padding: 38px;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  box-shadow: 0 20px 70px #152d3b14;
+}
+.panel h1 {
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: -0.062em;
+  font-weight: 400;
+  font-size: clamp(32px, 10vw, 48px);
+  line-height: 1.1;
+  margin: 16px 0 30px;
+}
+.panel h1 em {
+  font-weight: 400;
+  color: var(--blue);
+}
+.panel p {
+  color: var(--muted);
+  line-height: 1.6;
+}
+.panel :global(.cl-rootBox),
+.panel :global(.cl-cardBox) {
+  min-width: 0;
+  max-width: 100%;
+}
+@media (max-width: 480px) {
+  .panel {
+    padding-inline: 20px;
+  }
+}

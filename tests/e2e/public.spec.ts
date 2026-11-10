@@ -282,6 +282,28 @@ test("protected routes require sign-in", async ({ page }) => {
   await expect(page).toHaveURL(/\/sign-in/);
 });
 
+test("auth pages fit on narrow phones", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 900 });
+  for (const [route, name] of [
+    ["/sign-in", /Good to see you/],
+    ["/sign-up", /Meet your new/],
+  ] as const) {
+    await page.goto(route);
+    const heading = page.getByRole("heading", { level: 1, name });
+    await expect(heading).toBeVisible();
+    if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+      await expect(page.locator(".cl-cardBox")).toBeVisible();
+    }
+    await page.evaluate(() => document.fonts.ready);
+    expect(
+      await heading.evaluate((node) => node.scrollWidth <= node.clientWidth),
+    ).toBe(true);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(360);
+  }
+});
+
 test("stable landing screenshots", async ({ page }) => {
   test.skip(
     process.platform !== "darwin",

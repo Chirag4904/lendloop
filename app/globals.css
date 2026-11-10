@@ -156,8 +156,7 @@ p {
 .hero h1,
 .section h2,
 .catalog-section h2,
-.society-section h2,
-.auth-panel h1 {
+.society-section h2 {
   font-family: var(--font-heading), sans-serif;
   letter-spacing: -0.062em;
   font-weight: 400;
@@ -171,8 +170,7 @@ p {
 .hero h1 em,
 .section h2 em,
 .catalog-section h2 em,
-.society-section h2 em,
-.auth-panel h1 em {
+.society-section h2 em {
   font-weight: 400;
   color: var(--blue);
 }
@@ -512,32 +510,6 @@ p {
 }
 .footer .brand {
   color: var(--ink);
-}
-.auth-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  flex-direction: column;
-  gap: 45px;
-  padding: 40px 24px;
-  background: linear-gradient(140deg, #e8eddf, var(--cream) 55%);
-}
-.auth-panel {
-  width: min(100%, 500px);
-  padding: 38px;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  box-shadow: 0 20px 70px #152d3b14;
-}
-.auth-panel h1 {
-  font-size: 48px;
-  line-height: 1.1;
-  margin: 16px 0 30px;
-}
-.auth-panel p {
-  color: var(--muted);
-  line-height: 1.6;
 }
 .app-layout {
   min-height: 100vh;
