@@ -102,14 +102,19 @@ test("photo previews, cover order, removal and failed upload retry", async ({
       { name: "one.png", mimeType: "image/png", buffer: png },
       { name: "two.png", mimeType: "image/png", buffer: png },
     ]);
-  await expect(page.locator(".photo-tile")).toHaveCount(2);
+  const listingPhotos = page.getByAltText(/^Listing photo \d+$/);
+  await expect(listingPhotos).toHaveCount(2);
+  const secondPhoto = await page
+    .getByAltText("Listing photo 2")
+    .getAttribute("src");
   await page.getByRole("button", { name: "Set photo 2 as cover" }).click();
-  await expect(
-    page.locator(".photo-tile").first().locator(".cover-tag"),
-  ).toBeVisible();
+  await expect(page.getByAltText("Listing cover preview")).toHaveAttribute(
+    "src",
+    secondPhoto!,
+  );
   await page.getByRole("button", { name: "Move photo 2 earlier" }).click();
   await page.getByRole("button", { name: "Remove photo 2" }).click();
-  await expect(page.locator(".photo-tile")).toHaveCount(1);
+  await expect(listingPhotos).toHaveCount(1);
   await page.getByRole("button", { name: "Preview listing" }).click();
   let failed = false;
   await page.route("**/*", async (route) => {
@@ -203,7 +208,7 @@ test("camera capture supports retake, use and releases the stream", async ({
     .toBeGreaterThan(0);
   await page.getByRole("button", { name: "Capture", exact: true }).click();
   await page.getByRole("button", { name: "Use photo" }).click();
-  await expect(page.locator(".photo-tile")).toHaveCount(1);
+  await expect(page.getByAltText(/^Listing photo \d+$/)).toHaveCount(1);
   await expect
     .poll(() =>
       page.evaluate(

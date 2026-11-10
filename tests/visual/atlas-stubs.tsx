@@ -60,7 +60,10 @@ export const UserButton = () => (
     AM
   </button>
 );
-export const useRouter = () => ({ replace: () => {} });
+export const useRouter = () => ({
+  replace: () => {},
+  push: (path: string) => Object.assign(window, { __atlasPushedPath: path }),
+});
 export const usePathname = () => {
   const search = React.useSyncExternalStore(
     (callback) => {
@@ -95,6 +98,12 @@ export function useMutation(ref: never) {
   const [, refresh] = React.useReducer((version: number) => version + 1, 0);
   return async (args: { toolId: string; status: ListingStatus }) => {
     const name = getFunctionName(ref);
+    const studioMutation = (
+      window as Window & {
+        __atlasStudioMutation?: (name: string, args: unknown) => unknown;
+      }
+    ).__atlasStudioMutation;
+    if (studioMutation) return studioMutation(name, args);
     if (name === "loans:saveHandover") return null;
     if (name === "tools:setStatus") {
       listingStatuses.set(args.toolId, args.status);

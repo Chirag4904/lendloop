@@ -538,10 +538,17 @@ assert(
 );
 await page.getByLabel("Paid rental").check();
 await page.getByLabel("Daily rate in INR").fill("175.50");
-const descriptionBox = await page
-  .locator(".studio-preview-content p")
+const listingPreview = page.getByRole("complementary", {
+  name: "Live listing preview",
+});
+const previewPrice = listingPreview.getByText("₹175.50 / day", { exact: true });
+const descriptionBox = await listingPreview
+  .getByText("A drill for small projects.")
   .boundingBox();
-const priceBox = await page.locator(".studio-preview-price").boundingBox();
+const priceBox = await listingPreview
+  .getByText("Daily rate", { exact: true })
+  .locator("..")
+  .boundingBox();
 assert(
   descriptionBox &&
     priceBox &&
@@ -549,17 +556,10 @@ assert(
   "Preview price needs breathing room",
 );
 assert.equal(
-  await page
-    .locator(".studio-preview-price strong")
-    .evaluate((el) => getComputedStyle(el).backgroundColor),
+  await previewPrice.evaluate((el) => getComputedStyle(el).backgroundColor),
   "rgba(0, 0, 0, 0)",
 );
-assert(
-  await page
-    .getByRole("complementary", { name: "Live listing preview" })
-    .getByText("₹175.50 / day")
-    .isVisible(),
-);
+assert(await previewPrice.isVisible());
 await page
   .locator('input[type="file"]')
   .first()
@@ -571,8 +571,12 @@ await page
   .setInputFiles("public/images/demo-rizvi/ladder.jpg");
 for (const width of [360, 768, 1280, 1600]) {
   await page.setViewportSize({ width, height: 900 });
-  const firstPhoto = await page.locator(".photo-tile").nth(0).boundingBox();
-  const secondPhoto = await page.locator(".photo-tile").nth(1).boundingBox();
+  const firstPhoto = await page
+    .getByAltText("Listing photo 1", { exact: true })
+    .boundingBox();
+  const secondPhoto = await page
+    .getByAltText("Listing photo 2", { exact: true })
+    .boundingBox();
   assert(
     firstPhoto &&
       secondPhoto &&
@@ -588,7 +592,7 @@ assert.equal(
   await page.getByAltText("Listing photo 1").getAttribute("src"),
 );
 await page.getByRole("button", { name: "Remove photo 2" }).click();
-assert.equal(await page.locator(".photo-tile").count(), 1);
+assert.equal(await page.getByAltText(/^Listing photo \d+$/).count(), 1);
 await page.getByLabel("Daily rate in INR").fill("0");
 await page.getByRole("button", { name: "Preview listing" }).click();
 assert(await page.getByRole("alert").isVisible());
@@ -599,9 +603,114 @@ assert(
 );
 await page.getByRole("button", { name: "Back to edit" }).click();
 assert.equal(await page.getByLabel("Item name").inputValue(), "A useful drill");
+
+function mockStudioSave() {
+  window.__atlasStudioCalls = [];
+  window.__atlasStudioMutation = (name, args) => {
+    window.__atlasStudioCalls.push({ name, args });
+    switch (name) {
+      case "tools:create":
+        return "studio-draft";
+      case "photos:uploadUrl":
+        return { url: "/__atlas-photo-upload", ticketId: "studio-ticket" };
+      case "photos:register":
+        return "studio-photo";
+      case "tools:update":
+      case "photos:setForTool":
+      case "tools:setStatus":
+        return null;
+      default:
+        throw new Error(`Unexpected Studio mutation: ${name}`);
+    }
+  };
+}
+let uploadAttempts = 0;
+await page.route("**/__atlas-photo-upload", (route) => {
+  assert.equal(route.request().method(), "POST");
+  assert.equal(route.request().headers()["content-type"], "image/jpeg");
+  uploadAttempts += 1;
+  return uploadAttempts === 1
+    ? route.fulfill({ status: 503 })
+    : route.fulfill({ json: { storageId: "studio-storage" } });
+});
+await page.evaluate(mockStudioSave);
+await page.getByRole("button", { name: "Preview listing" }).click();
+const publishListing = page.getByRole("button", { name: "Publish listing" });
+await publishListing.click();
+await page
+  .getByRole("alert")
+  .filter({ hasText: "Your changes are still here" })
+  .waitFor();
+assert(await page.getByAltText("Cover preview", { exact: true }).isVisible());
+await publishListing.click();
+await page.waitForFunction(
+  () => window.__atlasPushedPath === "/dashboard/listings",
+);
+assert.equal(uploadAttempts, 2);
+const studioCalls = await page.evaluate(() => window.__atlasStudioCalls);
+assert.deepEqual(
+  studioCalls.map(({ name }) => name),
+  [
+    "tools:create",
+    "photos:uploadUrl",
+    "tools:update",
+    "photos:uploadUrl",
+    "photos:register",
+    "photos:setForTool",
+    "tools:setStatus",
+  ],
+);
+assert.equal(studioCalls[2].args.toolId, "studio-draft");
+assert.deepEqual(studioCalls[5].args, {
+  toolId: "studio-draft",
+  photoIds: ["studio-photo"],
+});
+assert.deepEqual(studioCalls[6].args, {
+  toolId: "studio-draft",
+  status: "active",
+});
+
+await page.setViewportSize({ width: 390, height: 900 });
 await page.goto("http://localhost:3000/__atlas-qa?view=listing-edit");
 assert.equal(await page.getByLabel("Item name").inputValue(), "Cordless drill");
-assert(await page.getByAltText("Listing cover preview").isVisible());
+const savedCover = await listingPreview
+  .getByAltText("Listing cover preview")
+  .boundingBox();
+const savedTitle = await listingPreview
+  .getByRole("heading", { name: "Cordless drill" })
+  .boundingBox();
+assert(
+  savedCover && savedTitle && savedTitle.y >= savedCover.y + savedCover.height,
+  "The mobile preview title should sit below the saved cover",
+);
+await page.evaluate(() => {
+  Object.defineProperty(navigator.mediaDevices, "getUserMedia", {
+    value: async () => {
+      throw new Error("denied");
+    },
+  });
+});
+await page.getByRole("button", { name: "Take Photo" }).click();
+const studioCamera = page.getByRole("dialog", { name: "Take photo" });
+await studioCamera
+  .getByLabel("Use device camera")
+  .waitFor({ state: "attached" });
+await studioCamera.getByRole("button", { name: "Cancel" }).click();
+await studioCamera.waitFor({ state: "hidden" });
+await page.evaluate(mockStudioSave);
+await page.getByLabel("Item name").fill("Updated cordless drill");
+await page.getByRole("button", { name: "Preview listing" }).click();
+await page.getByRole("button", { name: "Save changes" }).click();
+await page.waitForFunction(
+  () => window.__atlasPushedPath === "/dashboard/listings",
+);
+const editCalls = await page.evaluate(() => window.__atlasStudioCalls);
+assert.deepEqual(
+  editCalls.map(({ name }) => name),
+  ["tools:update", "photos:setForTool"],
+);
+assert.equal(editCalls[0].args.name, "Updated cordless drill");
+assert.deepEqual(editCalls[1].args, { toolId: "tool0", photoIds: ["photo0"] });
 assert.deepEqual(errors, []);
 for (const width of [390, 1440]) {
   await page.setViewportSize({ width, height: 900 });

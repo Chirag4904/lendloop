@@ -11,9 +11,11 @@ import {
   PackageOpen,
   Upload,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { categories, conditions } from "./listing-options";
 import { CameraCapture } from "./camera-capture";
 import { prepareImage, uploadWithProgress } from "./image-processing";
+import styles from "./listing-form.module.css";
 
 type Photo = {
   key: string;
@@ -225,9 +227,10 @@ function ListingEditor({
       setSaving(false);
     }
   }
+  const cover = photos[0];
   return (
-    <section className="listing-editor">
-      <div className="app-heading studio-heading">
+    <section className={styles.studio}>
+      <div className={`app-heading ${styles.heading}`}>
         <span className="kicker">THE LISTING STUDIO</span>
         <h1>
           {toolId
@@ -240,13 +243,17 @@ function ListingEditor({
             : "Share something useful with neighbors. You can change or unlist it later."}
         </p>
       </div>
-      <div className={`studio-layout ${review ? "is-review" : ""}`}>
+      <div className={review ? styles.reviewLayout : styles.layout}>
         {review ? (
-          <div className="editor-card review-card">
+          <div className={`${styles.editor} ${styles.review}`}>
             <h2>Review your listing</h2>
-            <div className="listing-cover">
-              {photos[0] ? (
-                <img src={photos[0].url} alt="Cover preview" />
+            <div className={styles.reviewCover}>
+              {cover ? (
+                <img
+                  className="size-full object-cover"
+                  src={cover.url}
+                  alt="Cover preview"
+                />
               ) : (
                 <span>Photo optional</span>
               )}
@@ -261,12 +268,17 @@ function ListingEditor({
               Visible in your society when published. Date availability is not
               checked yet.
             </p>
-            <div className="editor-actions">
-              <button type="button" onClick={() => setReview(false)}>
+            <div className={styles.actions}>
+              <Button
+                type="button"
+                variant="outline"
+                className={styles.secondary}
+                onClick={() => setReview(false)}
+              >
                 Back to edit
-              </button>
-              <button
-                className="button-primary"
+              </Button>
+              <Button
+                className={`button-primary ${styles.primary}`}
                 type="button"
                 onClick={() => void save()}
                 disabled={saving}
@@ -276,18 +288,18 @@ function ListingEditor({
                   : toolId
                     ? "Save changes"
                     : "Publish listing"}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
-          <div className="editor-card">
-            <h2 className="studio-section-title">
+          <div className={styles.editor}>
+            <h2 className={styles.sectionTitle}>
               <span>01</span> The essentials
             </h2>
-            <p className="studio-section-hint">
+            <p className={styles.hint}>
               Tell neighbors what makes your item useful.
             </p>
-            <div className="editor-grid">
+            <div className={styles.fields}>
               <div>
                 <label className="field-label" htmlFor="item-name">
                   Item name
@@ -354,13 +366,12 @@ function ListingEditor({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            <div className="photo-section">
-              <h2>
-                <span className="studio-section-number">02</span> Photos{" "}
-                <small>Optional · up to 5</small>
+            <div className={styles.subsection}>
+              <h2 className={styles.sectionTitle}>
+                <span>02</span> Photos <small>Optional · up to 5</small>
               </h2>
-              <div className="photo-actions">
-                <label className="upload-button">
+              <div className={styles.photoActions}>
+                <label className={styles.upload}>
                   <Upload size={17} aria-hidden="true" /> Upload Photos
                   <input
                     type="file"
@@ -372,12 +383,17 @@ function ListingEditor({
                     }}
                   />
                 </label>
-                <button type="button" onClick={() => setCamera(true)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={styles.secondary}
+                  onClick={() => setCamera(true)}
+                >
                   <Camera size={17} aria-hidden="true" /> Take Photo
-                </button>
+                </Button>
               </div>
               <div
-                className="drop-zone"
+                className={styles.dropZone}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -391,45 +407,55 @@ function ListingEditor({
                 </span>
               </div>
               {photos.length > 0 && (
-                <div className="photo-grid">
+                <div className={styles.photoGrid}>
                   {photos.map((photo, index) => (
-                    <div className="photo-tile" key={photo.key}>
-                      <img src={photo.url} alt={`Listing photo ${index + 1}`} />
-                      {index === 0 && <span className="cover-tag">Cover</span>}
-                      <div className="photo-controls">
+                    <div className={styles.photoTile} key={photo.key}>
+                      <img
+                        className="size-full object-cover"
+                        src={photo.url}
+                        alt={`Listing photo ${index + 1}`}
+                      />
+                      {index === 0 && (
+                        <span className={styles.coverTag}>Cover</span>
+                      )}
+                      <div className={styles.photoControls}>
                         {index > 0 && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
                             onClick={() => makeCover(index)}
                             aria-label={`Set photo ${index + 1} as cover`}
                             title="Set as cover"
                           >
                             ★
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           disabled={index === 0}
                           onClick={() => move(index, -1)}
                           aria-label={`Move photo ${index + 1} earlier`}
                         >
                           ←
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           disabled={index === photos.length - 1}
                           onClick={() => move(index, 1)}
                           aria-label={`Move photo ${index + 1} later`}
                         >
                           →
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => remove(photo.key)}
                           aria-label={`Remove photo ${index + 1}`}
                         >
                           ×
-                        </button>
+                        </Button>
                       </div>
                       {photo.progress !== undefined && (
                         <small>Upload {photo.progress}%</small>
@@ -439,14 +465,14 @@ function ListingEditor({
                 </div>
               )}
             </div>
-            <div className="price-section">
-              <h2>
-                <span className="studio-section-number">03</span> Your terms
+            <div className={styles.subsection}>
+              <h2 className={styles.sectionTitle}>
+                <span>03</span> Your terms
               </h2>
-              <p className="studio-section-hint">
+              <p className={styles.hint}>
                 Choose whether to lend for free or set a daily price.
               </p>
-              <label className="radio-row">
+              <label className={styles.radio}>
                 <input
                   type="radio"
                   name="price-kind"
@@ -455,7 +481,7 @@ function ListingEditor({
                 />{" "}
                 Free to borrow
               </label>
-              <label className="radio-row">
+              <label className={styles.radio}>
                 <input
                   type="radio"
                   name="price-kind"
@@ -465,7 +491,7 @@ function ListingEditor({
                 Paid rental
               </label>
               {paid && (
-                <div>
+                <div className="max-w-[260px]">
                   <label className="field-label" htmlFor="daily-rate">
                     Daily rate in INR
                   </label>
@@ -480,28 +506,32 @@ function ListingEditor({
                 </div>
               )}
             </div>
-            <div className="editor-actions">
-              <button
+            <div className={styles.actions}>
+              <Button
                 type="button"
-                className="button-primary"
+                className={`button-primary ${styles.primary}`}
                 onClick={reviewListing}
               >
                 Preview listing <ArrowRight size={17} aria-hidden="true" />
-              </button>
+              </Button>
             </div>
           </div>
         )}
         {!review && (
-          <aside className="studio-preview" aria-label="Live listing preview">
-            <div className="studio-preview-top">
+          <aside className={styles.preview} aria-label="Live listing preview">
+            <div className={styles.previewTop}>
               <span className="kicker">A LITTLE LOOK AHEAD</span>
               <h2>Listing preview</h2>
               <p>Your preview updates as you add details.</p>
             </div>
-            <div className="studio-preview-card">
-              <div className="studio-preview-image">
-                {photos[0] ? (
-                  <img src={photos[0].url} alt="Listing cover preview" />
+            <div className={styles.previewCard}>
+              <div className={styles.previewImage}>
+                {cover ? (
+                  <img
+                    className="size-full object-cover"
+                    src={cover.url}
+                    alt="Listing cover preview"
+                  />
                 ) : (
                   <div>
                     <PackageOpen
@@ -514,7 +544,7 @@ function ListingEditor({
                   </div>
                 )}
               </div>
-              <div className="studio-preview-content">
+              <div className={styles.previewContent}>
                 <span className="catalog-category">
                   {category} · {conditions[condition]}
                 </span>
@@ -523,7 +553,7 @@ function ListingEditor({
                   {description.trim() ||
                     "A little about your item will appear here."}
                 </p>
-                <div className="studio-preview-price">
+                <div className={styles.previewPrice}>
                   <span>{paid ? "Daily rate" : "Sharing terms"}</span>
                   <strong>
                     {paid
@@ -535,7 +565,7 @@ function ListingEditor({
                 </div>
               </div>
             </div>
-            <p className="studio-preview-note">
+            <p className={styles.previewNote}>
               {toolId
                 ? "Your saved listing remains visible according to its current status."
                 : "Your listing is visible after you review and publish it."}

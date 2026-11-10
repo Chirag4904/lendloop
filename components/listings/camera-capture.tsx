@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import styles from "./camera-capture.module.css";
 
 export function CameraCapture({
   onUse,
@@ -79,23 +81,29 @@ export function CameraCapture({
   }
   return (
     <div
-      className="camera-backdrop"
+      className={styles.backdrop}
       role="presentation"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <section
-        className="camera-dialog"
+        className={styles.dialog}
         role="dialog"
         aria-modal="true"
         aria-label="Take photo"
       >
-        <div className="camera-head">
+        <div className={styles.heading}>
           <h2>Take a photo</h2>
-          <button type="button" onClick={onClose} aria-label="Close camera">
+          <Button
+            type="button"
+            variant="ghost"
+            className={styles.close}
+            onClick={onClose}
+            aria-label="Close camera"
+          >
             ×
-          </button>
+          </Button>
         </div>
         {error ? (
           <p role="alert">{error}</p>
@@ -110,9 +118,9 @@ export function CameraCapture({
             aria-label="Camera preview"
           />
         )}
-        <div className="camera-actions">
+        <div className={styles.actions}>
           {error && (
-            <label className="upload-button">
+            <label className={styles.upload}>
               Use device camera
               <input
                 type="file"
@@ -128,31 +136,41 @@ export function CameraCapture({
               />
             </label>
           )}
-          <button type="button" onClick={onClose}>
+          <Button
+            type="button"
+            variant="outline"
+            className={styles.secondary}
+            onClick={onClose}
+          >
             Cancel
-          </button>
+          </Button>
           {!error &&
             (shot ? (
               <>
-                <button type="button" onClick={() => setShot(undefined)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={styles.secondary}
+                  onClick={() => setShot(undefined)}
+                >
                   Retake
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   className="button-primary"
                   onClick={() => void confirmPhoto()}
                 >
                   Use photo
-                </button>
+                </Button>
               </>
             ) : (
-              <button
+              <Button
                 type="button"
                 className="button-primary"
                 onClick={capture}
               >
                 Capture
-              </button>
+              </Button>
             ))}
         </div>
       </section>
