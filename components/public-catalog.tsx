@@ -16,6 +16,7 @@ import {
   Plus,
   Tent,
 } from "lucide-react";
+import "./public-catalog.css";
 
 const categoryIcons = {
   "Power Tools": Drill,
