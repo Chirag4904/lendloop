@@ -591,16 +591,18 @@ assert.deepEqual(await page.evaluate(() => window.__atlasOnboardingCalls), [
   { name: "users:selectSociety", args: { societyId: "society1" } },
 ]);
 
-for (const width of [390, 1280]) {
+for (const width of [390, 1000, 1001, 1280]) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("http://localhost:3000/__atlas-qa?view=explore");
   const nav = page.getByRole("navigation", {
-    name: width < 1000 ? "Mobile dashboard navigation" : "Dashboard navigation",
+    name:
+      width <= 1000 ? "Mobile dashboard navigation" : "Dashboard navigation",
+    exact: true,
   });
   await page.waitForFunction(() =>
     document.querySelector('nav[data-ready="true"]'),
   );
-  const marker = nav.locator(".nav-indicator");
+  const marker = nav.locator(':scope > [aria-hidden="true"]');
   const first = await marker.boundingBox();
   await page.evaluate(() => {
     history.pushState({}, "", "/__atlas-qa?view=requests");
