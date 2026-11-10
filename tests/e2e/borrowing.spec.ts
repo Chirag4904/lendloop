@@ -320,11 +320,12 @@ test("notification center updates live and loan automation fits mobile widths", 
     await expect(
       lender.page.getByRole("heading", { name: "The latest, from nearby." }),
     ).toBeVisible();
-    const before = await lender.page.locator(".automation-list li").count();
+    const notifications = lender.page
+      .getByRole("list", { name: "Notifications" })
+      .getByRole("listitem");
+    const before = await notifications.count();
     await request(borrower.page, href);
-    await expect
-      .poll(() => lender.page.locator(".automation-list li").count())
-      .toBeGreaterThan(before);
+    await expect.poll(() => notifications.count()).toBeGreaterThan(before);
     for (const width of [360, 390]) {
       await lender.page.setViewportSize({ width, height: 800 });
       expect(

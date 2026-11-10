@@ -317,6 +317,36 @@ await archiveListing.click();
 await listingCard.getByText("Archived", { exact: true }).waitFor();
 assert.equal(await listingCard.getByRole("button").count(), 0);
 assert.equal(await listingCard.getByRole("link", { name: "Edit" }).count(), 0);
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=notifications&updates=sent",
+);
+const notifications = page.getByRole("list", { name: "Notifications" });
+await notifications.getByText("Delivered", { exact: true }).waitFor();
+assert(await notifications.getByText("Sent", { exact: true }).isVisible());
+assert(
+  await notifications.getByText("Retry pending", { exact: true }).isVisible(),
+);
+assert.equal(
+  await notifications.locator("time").first().getAttribute("datetime"),
+  new Date(1794200000000).toISOString(),
+);
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=notifications&updates=loading",
+);
+await page
+  .getByRole("status")
+  .filter({ hasText: "Loading notifications…" })
+  .waitFor();
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=notifications&updates=empty",
+);
+await page.getByRole("heading", { name: "No notifications yet" }).waitFor();
+assert.equal(
+  await page
+    .getByRole("link", { name: "View your activity →" })
+    .getAttribute("href"),
+  "/dashboard/requests",
+);
 await page.goto("http://localhost:3000/__atlas-qa?view=requests");
 const activityNav = page.getByRole("navigation", { name: "Activity views" });
 assert.equal(

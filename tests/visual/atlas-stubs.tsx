@@ -268,7 +268,10 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       createdAt: 1794200000000,
       lenderRespondedAt: 1794200010000,
     }));
-  if (name === "automation:mine")
+  if (name === "automation:mine") {
+    const state = new URLSearchParams(location.search).get("updates");
+    if (state === "loading") return undefined;
+    if (state === "empty") return [];
     return [
       {
         id: "event1",
@@ -282,7 +285,18 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         status: "retry_pending",
         createdAt: 1794190000000,
       },
+      ...(state === "sent"
+        ? [
+            {
+              id: "event3",
+              message: "Overdue reminder",
+              status: "sent",
+              createdAt: 1794180000000,
+            },
+          ]
+        : []),
     ];
+  }
   if (name === "admin:access") return true;
   if (name === "admin:overview")
     return {

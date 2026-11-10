@@ -1268,11 +1268,6 @@ textarea:focus-visible {
   background: #f8dfd6;
   color: #8b321e;
 }
-.notification-page {
-  max-width: 760px;
-  margin: 0 auto;
-  padding: 24px 16px 100px;
-}
 .automation-list {
   list-style: none;
   padding: 0;
@@ -3262,20 +3257,6 @@ textarea:focus-visible {
 }
 .loan-hero h1 {
   font-family: var(--font-heading), sans-serif;
-}
-.notification-page {
-  max-width: 940px;
-}
-.notification-page .automation-list {
-  margin-top: 36px;
-}
-.notification-page .automation-list li {
-  border: 0;
-  border-bottom: 1px solid var(--line);
-  border-radius: 0;
-  background: transparent;
-  padding: 25px 0;
-  box-shadow: none;
 }
 .automation-list strong {
   font-weight: 500;
