@@ -4,12 +4,20 @@ import Link from "next/link";
 import { useAuth, UserButton } from "@clerk/nextjs";
 import { Suspense } from "react";
 import { ArrowUpRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import styles from "./marketing-shell.module.css";
 
-const signInLink = (
-  <Link className="nav-cta" href="/sign-in">
-    Sign in <ArrowUpRight size={16} />
-  </Link>
-);
+function AccountLink({ href, children }: { href: string; children: string }) {
+  return (
+    <Button asChild variant="outline" className={styles.accountLink}>
+      <Link href={href}>
+        {children} <ArrowUpRight size={16} />
+      </Link>
+    </Button>
+  );
+}
+
+const signInLink = <AccountLink href="/sign-in">Sign in</AccountLink>;
 
 function AccountNav() {
   const { isSignedIn } = useAuth();
@@ -17,9 +25,7 @@ function AccountNav() {
   if (!isSignedIn) return signInLink;
   return (
     <>
-      <Link className="nav-cta" href="/dashboard">
-        Go to dashboard <ArrowUpRight size={16} />
-      </Link>
+      <AccountLink href="/dashboard">Go to dashboard</AccountLink>
       <UserButton />
     </>
   );

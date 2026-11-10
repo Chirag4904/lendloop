@@ -9,6 +9,7 @@ import { useGSAP } from "@gsap/react";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { DrillArtwork } from "./drill";
 import { SceneArt, HAND_POSES } from "./scene-art";
+import "./scroll-story.css";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger, CustomEase);
 const HAND_EASE = CustomEase.create("handover", "0.77,0,0.175,1");

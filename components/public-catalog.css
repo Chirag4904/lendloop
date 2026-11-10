@@ -1,0 +1,345 @@
+.catalog-section h2 {
+  font-family: var(--font-heading), sans-serif;
+  letter-spacing: -0.062em;
+  font-weight: 400;
+}
+.catalog-section h2 em {
+  font-weight: 400;
+  color: var(--blue);
+}
+.catalog-section {
+  padding-block: 115px;
+}
+.section-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 40px;
+  margin-bottom: 48px;
+}
+.catalog-section h2 {
+  font-size: clamp(44px, 5vw, 68px);
+  line-height: 1.08;
+  margin: 17px 0 0;
+}
+.section-heading > p {
+  max-width: 345px;
+  line-height: 1.6;
+  color: var(--muted);
+  font-size: 15px;
+  margin-bottom: 5px;
+}
+.catalog-section {
+  background: #f2f0eb;
+}
+@media (max-width: 700px) {
+  .catalog-section {
+    padding-block: 75px;
+  }
+  .section-heading {
+    display: block;
+    margin-bottom: 35px;
+  }
+  .catalog-section h2 {
+    font-size: 50px;
+  }
+  .section-heading > p {
+    margin-top: 25px;
+  }
+}
+.catalog-section h2 em {
+  font-family: Georgia, serif;
+  font-weight: 400;
+}
+.catalog-section {
+  background: #eeebe1;
+}
+.catalog-section h2 {
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 500;
+}
+/* Neighborhood shelf: a horizontal gallery of tag-shaped cards. By default it
+   is a native swipe carousel; supporting desktops pin it and let vertical
+   scroll drive the track through a CSS scroll-driven animation. */
+.catalog-section {
+  padding-top: 0;
+  overflow-x: clip;
+}
+.shelf-gallery {
+  --card: clamp(250px, 21vw, 320px);
+  --gap: 22px;
+  --pad: max(24px, calc((100vw - 1240px) / 2));
+  position: relative;
+}
+.shelf-pin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-top: clamp(72px, 10svh, 115px);
+}
+.shelf-pin .section-heading {
+  position: relative;
+  margin-bottom: 40px;
+}
+.shelf-word {
+  position: absolute;
+  top: 54%;
+  left: 0;
+  color: transparent;
+  font:
+    500 clamp(140px, 19vw, 300px) / 0.8 var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.06em;
+  white-space: nowrap;
+  -webkit-text-stroke: 1.5px #152d3b2e;
+  pointer-events: none;
+  user-select: none;
+}
+.shelf-track {
+  position: relative;
+  display: flex;
+  gap: var(--gap);
+  margin: 0;
+  padding: 10px var(--pad) 28px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding-inline: var(--pad);
+  scrollbar-width: none;
+}
+.shelf-track::-webkit-scrollbar {
+  display: none;
+}
+.shelf-track > li {
+  flex: none;
+  width: var(--card);
+  scroll-snap-align: start;
+}
+/* Tag-shaped card echoing the journey tag: notched corners and a punched hole. */
+.shelf-gallery .catalog-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: clamp(340px, 50svh, 440px);
+  padding: 22px 24px 24px;
+  border-radius: 6px 22px 22px 6px;
+  background: var(--paper);
+  color: var(--ink);
+  clip-path: polygon(
+    0 22px,
+    22px 0,
+    100% 0,
+    100% 100%,
+    22px 100%,
+    0 calc(100% - 22px)
+  );
+  transition: transform 0.35s var(--ease-out, ease);
+}
+.shelf-gallery .catalog-card::before {
+  content: "";
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #eeebe1;
+  box-shadow: inset 0 1px 2px #152d3b40;
+}
+.shelf-card-top {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-right: 30px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+}
+.shelf-card-top > span:first-child {
+  opacity: 0.6;
+}
+.shelf-card-art {
+  flex: 1;
+  display: grid;
+  place-items: center;
+}
+.shelf-card-art svg {
+  width: 44%;
+  height: auto;
+  aspect-ratio: 1;
+  padding: 12%;
+  border-radius: 50%;
+  background: #152d3b0d;
+  box-sizing: content-box;
+  transition: transform 0.45s var(--ease-out, ease);
+}
+.shelf-card-foot h3 {
+  margin: 0;
+  font:
+    500 clamp(24px, 2.1vw, 30px) / 1.08 var(--font-heading),
+    sans-serif;
+  letter-spacing: -0.04em;
+}
+.shelf-card-sample {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.7;
+}
+.catalog-card.is-ink {
+  background: var(--ink);
+  color: var(--cream);
+}
+.catalog-card.is-ink .shelf-card-art svg {
+  background: #d9f36a1f;
+  color: var(--brand-lime);
+}
+.catalog-card.is-ink::before {
+  background: #eeebe1;
+}
+.catalog-card.is-lime {
+  background: var(--brand-lime);
+}
+.catalog-card.is-lime .shelf-card-art svg {
+  background: #152d3b14;
+}
+.catalog-card.is-sand {
+  background: #e4ddcd;
+}
+.catalog-card.is-sand .shelf-card-art svg {
+  background: var(--brand-lime);
+}
+.shelf-gallery .catalog-card.is-next {
+  border: 1.5px dashed var(--border-strong);
+  background: transparent;
+  clip-path: none;
+  border-radius: 22px;
+}
+.catalog-card.is-next::before {
+  display: none;
+}
+.catalog-card.is-next .shelf-card-art svg {
+  background: none;
+  border: 1.5px dashed var(--border-strong);
+}
+.catalog-card.is-next .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-top: 6px;
+  font-weight: 700;
+}
+@media (hover: hover) and (pointer: fine) {
+  .shelf-gallery .catalog-card:hover {
+    transform: translateY(-10px) rotate(-1.2deg);
+  }
+  .shelf-gallery .catalog-card:hover .shelf-card-art svg {
+    transform: rotate(-8deg) scale(1.06);
+  }
+}
+.shelf-progress {
+  display: none;
+  width: min(240px, 40vw);
+  height: 2px;
+  margin: 20px var(--pad) 0;
+  background: #152d3b1f;
+}
+.shelf-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--ink);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+/* Unpinned on wider screens (reduced motion or no scroll-driven support): wrap into rows. */
+@media (min-width: 761px) {
+  .shelf-track {
+    flex-wrap: wrap;
+    overflow-x: visible;
+    scroll-snap-type: none;
+  }
+}
+@supports (animation-timeline: view()) {
+  @media (min-width: 761px) and (min-height: 600px) and (prefers-reduced-motion: no-preference) {
+    .is-pinned .shelf-track {
+      flex-wrap: nowrap;
+    }
+    /* Track width minus the viewport; the section grows by the same amount. */
+    .shelf-gallery.is-pinned {
+      --track: calc(
+        var(--n) * var(--card) + (var(--n) - 1) * var(--gap) + 2 * var(--pad)
+      );
+      --travel: max(0px, calc(var(--track) - 100vw));
+      height: calc(100svh + var(--travel));
+      view-timeline: --shelf block;
+    }
+    .is-pinned .shelf-pin {
+      position: sticky;
+      top: 0;
+      height: 100svh;
+      overflow: hidden;
+    }
+    .is-pinned .shelf-track {
+      flex: 1;
+      align-items: center;
+      overflow: visible;
+      animation: shelf-slide linear both;
+      animation-timeline: --shelf;
+      animation-range: contain 0% contain 100%;
+    }
+    .is-pinned .shelf-track > li:nth-child(even) {
+      translate: 0 36px;
+    }
+    .is-pinned .shelf-word {
+      animation: shelf-drift linear both;
+      animation-timeline: --shelf;
+      animation-range: contain 0% contain 100%;
+    }
+    .is-pinned .shelf-progress {
+      display: block;
+      margin-bottom: clamp(24px, 5svh, 48px);
+    }
+    .is-pinned .shelf-progress > span {
+      animation: shelf-progress linear both;
+      animation-timeline: --shelf;
+      animation-range: contain 0% contain 100%;
+    }
+  }
+}
+@keyframes shelf-slide {
+  to {
+    transform: translateX(calc(-1 * var(--travel)));
+  }
+}
+@keyframes shelf-drift {
+  from {
+    transform: translateX(-24%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+@keyframes shelf-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+@media (max-width: 760px) {
+  .shelf-gallery {
+    --card: 240px;
+    --gap: 14px;
+  }
+  .shelf-gallery .catalog-card {
+    height: 320px;
+  }
+  .shelf-word {
+    top: 48%;
+    font-size: 130px;
+  }
+}

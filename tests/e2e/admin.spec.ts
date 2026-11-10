@@ -77,7 +77,6 @@ async function newListing(page: import("@playwright/test").Page) {
   await page.getByLabel("Item name").fill(name);
   await page.getByLabel("Description").fill("A drill for the admin flow test.");
   await page.getByLabel("Category").selectOption("Power Tools");
-  await page.getByRole("button", { name: "Preview listing" }).click();
   await page.getByRole("button", { name: "Publish listing" }).click();
   const card = page
     .getByRole("article")
@@ -233,7 +232,7 @@ test("admin inspects a confirmed loan without private handover details", async (
     await incoming.getByRole("button", { name: "Approve Request" }).click();
     await admin.page.goto("/admin/loans");
     await admin.page.getByLabel("Search loaded records").fill(name);
-    const row = admin.page.locator(".admin-loan").filter({ hasText: name });
+    const row = admin.page.locator("details").filter({ hasText: name });
     await expect(row).toBeVisible();
     await row.locator("summary").click();
     await expect(row).toContainText("Agreed rate");

@@ -5,6 +5,7 @@ import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
+import "./borrow-calendar.css";
 
 export function BorrowCalendar({
   toolId,

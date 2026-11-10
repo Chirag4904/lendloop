@@ -1,4 +1,4 @@
-import { ToolDetail } from "@/components/marketplace";
+import { ToolDetail } from "@/components/marketplace/tool-detail";
 import type { Id } from "@/convex/_generated/dataModel";
 export default async function ToolPage({
   params,

@@ -50,13 +50,13 @@ An optional borrower offer on the existing request distinguishes negotiation fro
 
 ## Phase 6 admin boundary
 
-`convex/admin.ts` is the only public admin data/action surface. Each query and mutation resolves the Clerk subject and requires the stored `admin` role. `admin:provisionInitial` is an internal mutation callable only through deployment-operator tooling, and only before any admin exists. Admin actions and their minimal `adminAudit` rows commit in the same Convex transaction. `app/admin` requires Clerk authentication, while `components/admin.tsx` provides role-aware navigation and bounded pages. The backend remains the security boundary. Admin loan projections deliberately omit `loanHandoverDetails`, phone, pickup point, and instructions. Phase 5 delivery and overdue rules remain unchanged.
+`convex/admin.ts` is the only public admin data/action surface. Each query and mutation resolves the Clerk subject and requires the stored `admin` role. `admin:provisionInitial` is an internal mutation callable only through deployment-operator tooling, and only before any admin exists. Admin actions and their minimal `adminAudit` rows commit in the same Convex transaction. `app/admin` requires Clerk authentication, while `components/admin/admin.tsx` provides role-aware navigation and bounded pages. The backend remains the security boundary. Admin loan projections deliberately omit `loanHandoverDetails`, phone, pickup point, and instructions. Phase 5 delivery and overdue rules remain unchanged.
 
 ## Phase 7 frontend boundary
 
 `app/page.tsx` composes the marketing shell, homepage-only `ScrollStory` client component, `SocietyShowcase` client control and existing `PublicCatalog`. The story uses GSAP, ScrollTrigger and `@gsap/react`; one SVG instance moves through coordinated scene layers, with scoped contexts and media cleanup. CSS sticky positioning retains native scrolling; stacked layouts reduce the stage to a 46svh block. All narrative copy is server-rendered and remains available without animation. Reduced-motion mode does not create a timeline.
 
-`components/auth-nav.tsx` keeps the sign-in link visible during Clerk loading and switches to the dashboard for authenticated users. Server-rendered `/journal` and `/for-communities` share the editorial shell. Shared tokens and `next/font` update the restrained authenticated UI; no Convex APIs, permissions, transaction state or deployment configuration changed. Public catalog privacy remains the explicit name/category projection. See [design system](DESIGN_SYSTEM.md) and [QA](PHASE7_QA.md).
+`components/marketing/auth-nav.tsx` keeps the sign-in link visible during Clerk loading and switches to the dashboard for authenticated users. Server-rendered `/journal` and `/for-communities` share the editorial shell. Shared tokens and `next/font` update the restrained authenticated UI; no Convex APIs, permissions, transaction state or deployment configuration changed. Public catalog privacy remains the explicit name/category projection. See [design system](DESIGN_SYSTEM.md) and [QA](PHASE7_QA.md).
 
 ## Internal editorial redesign
 

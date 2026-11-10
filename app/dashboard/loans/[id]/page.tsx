@@ -1,4 +1,4 @@
-import { LoanDetail } from "@/components/borrowing";
+import { LoanDetail } from "@/components/borrowing/loan-detail";
 import type { Id } from "@/convex/_generated/dataModel";
 
 export default async function LoanPage({

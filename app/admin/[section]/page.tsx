@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Admin } from "@/components/admin";
+import { Admin } from "@/components/admin/admin";
 const sections = [
   "users",
   "listings",

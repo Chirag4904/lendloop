@@ -1,9 +1,14 @@
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { PublicCatalog } from "@/components/public-catalog";
-import { MarketingHeader, MarketingFooter } from "@/components/marketing-shell";
+import {
+  MarketingHeader,
+  MarketingFooter,
+} from "@/components/marketing/marketing-shell";
 import { ScrollStory } from "@/components/story/scroll-story";
 import { SocietyShowcase } from "@/components/story/society-showcase";
+import { Button } from "@/components/ui/button";
+import "./home.css";
 
 export default function Home() {
   return (
@@ -73,9 +78,11 @@ export default function Home() {
           <div className="shell">
             <div className="catalog-entry">
               <span>Have something useful sitting idle?</span>
-              <Link href="/dashboard" className="button-primary">
-                Sign in to lend or borrow <ArrowUpRight size={18} />
-              </Link>
+              <Button asChild className="button-primary">
+                <Link href="/dashboard">
+                  Sign in to lend or borrow <ArrowUpRight size={18} />
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -119,9 +126,11 @@ export default function Home() {
               <br />
               <em>Do more.</em>
             </h2>
-            <Link href="/dashboard" className="button-primary lime-button">
-              Find your neighborhood <ArrowUpRight size={20} />
-            </Link>
+            <Button asChild className="button-primary lime-button">
+              <Link href="/dashboard">
+                Find your neighborhood <ArrowUpRight size={20} />
+              </Link>
+            </Button>
             <p>One small exchange can be the start of something good.</p>
           </div>
         </section>

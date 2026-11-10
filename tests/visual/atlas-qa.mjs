@@ -7,6 +7,7 @@ const bundle = await build({
   entryPoints: ["tests/visual/atlas-entry.tsx"],
   bundle: true,
   write: false,
+  outdir: "atlas-fixture",
   format: "iife",
   jsx: "automatic",
   // PublicCatalog renders its connected path only when these are present.
@@ -31,6 +32,13 @@ const bundle = await build({
     },
   ],
 });
+const fixtureScript = bundle.outputFiles.find((file) =>
+  file.path.endsWith(".js"),
+);
+const fixtureStyles = bundle.outputFiles.find((file) =>
+  file.path.endsWith(".css"),
+);
+assert(fixtureScript && fixtureStyles);
 const browser = await chromium.launch();
 const page = await browser.newPage();
 const errors = [];
@@ -45,13 +53,16 @@ const shell = await page.evaluate(() => ({
 await page.route("**/__atlas-bundle.js", (r) =>
   r.fulfill({
     contentType: "application/javascript",
-    body: bundle.outputFiles[0].text,
+    body: fixtureScript.text,
   }),
+);
+await page.route("**/__atlas-bundle.css", (r) =>
+  r.fulfill({ contentType: "text/css", body: fixtureStyles.text }),
 );
 await page.route("**/__atlas-qa?*", (r) =>
   r.fulfill({
     contentType: "text/html",
-    body: `<!doctype html><html lang="en" class="${shell.className}"><head>${shell.links}<meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script src="/__atlas-bundle.js"></script></body></html>`,
+    body: `<!doctype html><html lang="en" class="${shell.className}"><head>${shell.links}<link rel="stylesheet" href="/__atlas-bundle.css"><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script src="/__atlas-bundle.js"></script></body></html>`,
   }),
 );
 await mkdir("artifacts/atlas", { recursive: true });
@@ -73,6 +84,7 @@ for (const width of [360, 390, 768, 1280, 1440]) {
     "detail-owner",
     "notifications",
     "profile",
+    "onboarding",
     "loan",
     "loan-borrower",
     "admin",
@@ -93,6 +105,10 @@ for (const width of [360, 390, 768, 1280, 1440]) {
         await page
           .getByRole("heading", { name: "How borrowing works" })
           .count(),
+        0,
+      );
+      assert.equal(
+        await page.getByRole("region", { name: "Borrow this item" }).count(),
         0,
       );
     }
@@ -117,6 +133,13 @@ for (const width of [360, 390, 768, 1280, 1440]) {
           .isVisible(),
       );
       assert(await page.getByLabel(/Contact phone/).isChecked());
+      assert.deepEqual(await page.evaluate(() => window.__atlasHandoverArgs), {
+        loanId: "loan0",
+        phone: "+91 98765 43210",
+        pickupPoint: "",
+        instructions: "",
+        returnInstructions: "",
+      });
       assert(
         await page
           .getByRole("button", { name: "Update shared details" })
@@ -148,11 +171,7 @@ for (const width of [360, 390, 768, 1280, 1440]) {
           name: view === "profile" ? "Edit saved details" : "Edit my details",
         })
         .click();
-      const fields = page.locator(
-        view === "profile"
-          ? ".profile-details-form input, .profile-details-form textarea"
-          : ".handover-form input, .handover-form textarea",
-      );
+      const fields = page.getByRole("textbox");
       assert.equal(await fields.count(), 4);
       for (const field of await fields.all()) {
         const style = await field.evaluate((el) => {
@@ -180,6 +199,42 @@ for (const width of [360, 390, 768, 1280, 1440]) {
         path: `artifacts/atlas/${view}-editing-${width}.png`,
         fullPage: true,
       });
+      if (view === "loan-borrower" && width === 390) {
+        await page
+          .getByRole("textbox", { name: "Pickup point (optional)" })
+          .fill("Library entrance");
+        await page.getByRole("button", { name: "Save details" }).click();
+        await page
+          .getByRole("status")
+          .filter({ hasText: "updated for this loan" })
+          .waitFor();
+        assert.deepEqual(
+          await page.evaluate(() => window.__atlasHandoverArgs),
+          {
+            loanId: "loan0",
+            phone: "",
+            pickupPoint: "Library entrance",
+            instructions: "",
+            returnInstructions: "",
+          },
+        );
+      }
+      if (view === "profile" && width === 390) {
+        const phone = page.getByRole("textbox", { name: "Contact phone" });
+        const savedPhone = await phone.inputValue();
+        assert.equal(await phone.getAttribute("type"), "tel");
+        assert.equal(await phone.getAttribute("maxlength"), "20");
+        await phone.fill("+91 12345 67890");
+        await page.getByRole("button", { name: "Save details" }).click();
+        await page
+          .getByRole("alert")
+          .filter({ hasText: "Mutations disabled in visual QA" })
+          .waitFor();
+        assert.equal(await phone.inputValue(), "+91 12345 67890");
+        await page.getByRole("button", { name: "Cancel" }).click();
+        await page.getByRole("button", { name: "Edit saved details" }).click();
+        assert.equal(await phone.inputValue(), savedPhone);
+      }
     }
     if (view === "detail" && width === 390) {
       await page.getByText("Choose dates on a calendar").click();
@@ -203,7 +258,7 @@ assert(
     .getByRole("heading", { name: "Your neighborhood shelf." })
     .isVisible(),
 );
-assert.equal(await page.locator(".explore-page .tool-card").count(), 6);
+assert.equal(await page.getByRole("article").count(), 6);
 await page
   .getByRole("combobox", { name: "Search distance" })
   .selectOption("500");
@@ -212,14 +267,25 @@ assert.equal(
   await page.getByRole("combobox", { name: "Search distance" }).inputValue(),
   "500",
 );
-await page.getByRole("button", { name: "Garden", exact: true }).click();
-assert.equal(await page.locator(".explore-page .tool-card").count(), 1);
+await page.getByRole("button", { name: "Garden", exact: true }).press("Space");
+assert.equal(await page.getByRole("article").count(), 1);
+assert.equal(
+  await page.evaluate(() => window.__atlasExploreArgs.category),
+  "Garden",
+);
 await page.getByRole("combobox", { name: "Sort by" }).selectOption("price");
 assert.equal(
   await page.evaluate(() => window.__atlasExploreArgs.sort),
   "price",
 );
 await page.getByRole("button", { name: "Reset filters" }).click();
+assert.deepEqual(await page.evaluate(() => window.__atlasExploreArgs), {
+  scope: "society",
+  text: "",
+  category: undefined,
+  price: "all",
+  sort: "nearest",
+});
 assert.equal(
   await page.getByRole("combobox", { name: "Search distance" }).inputValue(),
   "society",
@@ -232,10 +298,21 @@ await page
   .getByRole("group", { name: "Price" })
   .getByRole("button", { name: "Free" })
   .click();
-assert.equal(await page.locator(".tool-card").count(), 1);
+assert.equal(await page.getByRole("article").count(), 1);
+assert.equal(
+  await page.evaluate(() => window.__atlasExploreArgs.price),
+  "free",
+);
 await page.getByRole("button", { name: "Reset filters" }).click();
-await page.getByLabel("Search tools").fill("drill");
-assert.equal(await page.locator(".tool-card").count(), 1);
+const toolSearch = page.getByLabel("Search tools");
+await toolSearch.fill("drill");
+assert.equal(await page.getByRole("article").count(), 1);
+await toolSearch.press("Enter");
+assert.equal(
+  await page.evaluate(() => window.__atlasExploreArgs.text),
+  "drill",
+);
+assert(await toolSearch.evaluate((input) => document.activeElement !== input));
 await page.getByLabel("Search tools").fill("no matching item");
 assert(
   await page
@@ -243,36 +320,141 @@ assert(
     .isVisible(),
 );
 await page.getByRole("button", { name: "Clear filters" }).click();
-assert.equal(await page.locator(".explore-page .tool-card").count(), 6);
-await page.goto("http://localhost:3000/__atlas-qa?view=requests");
-await page.getByRole("button", { name: "Completed returns" }).click();
-assert.equal(await page.locator(".request-card").count(), 1);
-await page.goto("http://localhost:3000/__atlas-qa?view=incoming");
+assert.equal(await page.getByRole("article").count(), 6);
+await page.goto("http://localhost:3000/__atlas-qa?view=listings");
+const listingCard = page.getByRole("article").filter({
+  has: page.getByRole("heading", { name: "Cordless drill" }),
+});
+assert.equal(
+  await listingCard.getByRole("link", { name: "Edit" }).getAttribute("href"),
+  "/dashboard/listings/tool0/edit",
+);
+await listingCard.getByRole("button", { name: "Unlist" }).click();
+await listingCard.getByText("Unlisted", { exact: true }).waitFor();
+await listingCard.getByRole("button", { name: "Relist" }).click();
+await listingCard.getByText("Active", { exact: true }).waitFor();
+page.once("dialog", (dialog) => void dialog.dismiss());
+const archiveListing = listingCard.getByRole("button", { name: "Archive" });
+await archiveListing.click();
+assert(await listingCard.getByText("Active", { exact: true }).isVisible());
+page.once("dialog", (dialog) => void dialog.accept());
+await archiveListing.click();
+await listingCard.getByText("Archived", { exact: true }).waitFor();
+assert.equal(await listingCard.getByRole("button").count(), 0);
+assert.equal(await listingCard.getByRole("link", { name: "Edit" }).count(), 0);
+await page.goto("http://localhost:3000/__atlas-qa?view=loan-borrower");
+const backToRequests = page.getByRole("link", { name: /Back to requests/ });
+assert.equal(await backToRequests.getAttribute("href"), "/dashboard/requests");
+await page.getByRole("button", { name: "I’ve Returned the Item" }).click();
+await page.getByText("Waiting for the lender to confirm the return.").waitFor();
+assert(
+  await page.getByText("Borrower reported return", { exact: true }).isVisible(),
+);
+await page.goto("http://localhost:3000/__atlas-qa?view=loan&pendingReturn");
+assert.equal(await backToRequests.getAttribute("href"), "/dashboard/incoming");
+assert(await page.getByText("Sent", { exact: true }).isVisible());
+assert(await page.getByText("Retry pending", { exact: true }).isVisible());
+await page.getByRole("button", { name: "Confirm Return" }).click();
+await page.getByText("Return confirmed. This loan is complete.").waitFor();
+assert(
+  await page.getByText("Lender confirmed return", { exact: true }).isVisible(),
+);
+assert.equal(
+  await page.getByRole("button", { name: "Confirm Return" }).count(),
+  0,
+);
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=notifications&updates=sent",
+);
+const notifications = page.getByRole("list", { name: "Notifications" });
+await notifications.getByText("Delivered", { exact: true }).waitFor();
+assert(await notifications.getByText("Sent", { exact: true }).isVisible());
+assert(
+  await notifications.getByText("Retry pending", { exact: true }).isVisible(),
+);
+assert.equal(
+  await notifications.locator("time").first().getAttribute("datetime"),
+  new Date(1794200000000).toISOString(),
+);
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=notifications&updates=loading",
+);
+await page
+  .getByRole("status")
+  .filter({ hasText: "Loading notifications…" })
+  .waitFor();
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=notifications&updates=empty",
+);
+await page.getByRole("heading", { name: "No notifications yet" }).waitFor();
 assert.equal(
   await page
-    .locator(".request-progress")
-    .filter({ hasText: "Your decision" })
-    .count(),
+    .getByRole("link", { name: "View your activity →" })
+    .getAttribute("href"),
+  "/dashboard/requests",
+);
+await page.goto("http://localhost:3000/__atlas-qa?view=requests");
+const activityNav = page.getByRole("navigation", { name: "Activity views" });
+assert.equal(
+  await activityNav
+    .getByRole("link", { name: "Things I’m borrowing" })
+    .getAttribute("aria-current"),
+  "page",
+);
+await page.getByRole("button", { name: "Completed returns" }).click();
+assert.equal(await page.getByRole("article").count(), 1);
+assert.equal(
+  await page
+    .getByRole("button", { name: "Completed returns" })
+    .getAttribute("aria-pressed"),
+  "true",
+);
+await page.goto("http://localhost:3000/__atlas-qa?view=incoming");
+const recordedProgress = page.getByRole("list", { name: "Recorded progress" });
+assert.equal(
+  await recordedProgress.filter({ hasText: "Your decision" }).count(),
   0,
 );
 assert.equal(
-  await page
-    .locator(".request-progress")
-    .filter({ hasText: "Waiting for borrower" })
-    .count(),
+  await recordedProgress.filter({ hasText: "Waiting for borrower" }).count(),
   1,
 );
+await page.goto("http://localhost:3000/__atlas-qa?view=incoming&pendingOffer");
+const suggestPrice = page.getByRole("button", {
+  name: "Suggest Another Price",
+});
+await suggestPrice.click();
+const counteroffer = page.getByRole("dialog", {
+  name: "Suggest Another Price",
+});
+const counterInput = counteroffer.getByRole("textbox", {
+  name: "Your final daily price in rupees",
+});
+const sendPrice = counteroffer.getByRole("button", {
+  name: "Send final price",
+});
+await counterInput.fill("100");
+assert(await sendPrice.isDisabled());
+await counterInput.fill("125");
+assert(await sendPrice.isEnabled());
+await page.keyboard.press("Escape");
+await counteroffer.waitFor({ state: "hidden" });
+assert(
+  await suggestPrice.evaluate((button) => button === document.activeElement),
+);
 await page.goto("http://localhost:3000/__atlas-qa?view=detail");
-assert.equal(await page.locator(".thumb-row").count(), 0);
+const gallery = page.getByRole("group", { name: "Listing photos" });
+assert.equal(await gallery.count(), 0);
 await page.goto("http://localhost:3000/__atlas-qa?view=detail-multi");
-assert.equal(await page.getByRole("button", { name: /Show photo/ }).count(), 2);
-await page.getByRole("button", { name: "Show photo 2" }).click();
+assert.equal(await gallery.getByRole("button").count(), 2);
+await gallery.getByRole("button", { name: "Show photo 2" }).press("Space");
 assert.equal(
-  await page
+  await gallery
     .getByRole("button", { name: "Show photo 2" })
     .getAttribute("aria-pressed"),
   "true",
 );
+assert(await page.getByRole("img", { name: /, photo 2$/ }).isVisible());
 await page.goto("http://localhost:3000/__atlas-qa?view=detail");
 assert.equal(await page.locator("input[type=date]").count(), 0);
 await page.getByText("Choose dates on a calendar").click();
@@ -329,21 +511,98 @@ await page.getByLabel("Your daily offer in rupees").fill("100");
 assert(await page.getByRole("button", { name: "Send Offer" }).isEnabled());
 await page.getByRole("button", { name: "Request at Listed Price" }).click();
 assert.equal(await page.getByLabel("Your daily offer in rupees").count(), 0);
+await page.goto(
+  "http://localhost:3000/__atlas-qa?view=admin-listings&adminDenied",
+);
+await page.getByRole("alert").getByText("Admin access required.").waitFor();
+assert.equal(await page.getByRole("article").count(), 0);
+
 await page.goto("http://localhost:3000/__atlas-qa?view=admin-listings");
-assert.equal(await page.locator(".admin-listing").count(), 3);
-for (const row of await page.locator(".admin-listing").all()) {
-  assert((await row.locator(".admin-listing-info").boundingBox()).width > 100);
+await page.getByRole("heading", { name: "Listings" }).waitFor();
+const adminListings = page.getByRole("article");
+assert.equal(await adminListings.count(), 3);
+for (const row of await adminListings.all()) {
+  assert((await row.locator(":scope > div").boundingBox()).width > 100);
 }
-for (const width of [390, 1280]) {
+const adminSearch = page.getByRole("searchbox", {
+  name: "Search loaded records",
+});
+const adminStatus = page.getByRole("combobox", { name: /^Status/ });
+const adminCategory = page.getByRole("combobox", { name: /^Category/ });
+await adminSearch.fill("drill");
+await adminCategory.selectOption("Garden");
+assert.equal(await adminListings.count(), 0);
+await adminCategory.selectOption("Power Tools");
+await page.getByRole("combobox", { name: /^Society/ }).selectOption("society1");
+await adminStatus.selectOption("active");
+assert.equal(await adminListings.count(), 1);
+const drill = adminListings.filter({ hasText: "Cordless drill" });
+await drill.getByText("Inspect listing").click();
+assert(await drill.getByText(/Condition: good/).isVisible());
+const remove = drill.getByRole("button", { name: "Remove" });
+page.once("dialog", (dialog) => dialog.dismiss());
+await remove.click();
+assert(await remove.isEnabled());
+page.once("dialog", (dialog) => dialog.accept());
+await remove.click();
+await page
+  .getByRole("status")
+  .getByText("Listing removed from discovery.")
+  .waitFor();
+assert.equal(await adminListings.count(), 0);
+await adminStatus.selectOption("removed");
+assert(await drill.isVisible());
+assert.equal(await remove.count(), 0);
+
+await page.setViewportSize({ width: 390, height: 900 });
+await page.goto("http://localhost:3000/__atlas-qa?view=onboarding");
+const societySearch = page.getByLabel("Society, locality, or city");
+const societyResult = page.getByRole("button", { name: /Paper Gardens/ });
+await societySearch.fill("No such neighborhood");
+await page.getByText(/No matching societies yet/).waitFor();
+assert.equal(await societyResult.count(), 0);
+await societySearch.fill("demo city");
+await societyResult.waitFor();
+await page
+  .getByRole("region", { name: "Your society suggestions" })
+  .getByText("Oak Court: pending")
+  .waitFor();
+await page.evaluate(() => {
+  window.__atlasOnboardingCalls = [];
+  window.__atlasMutation = (name, args) => {
+    window.__atlasOnboardingCalls.push({ name, args });
+    return null;
+  };
+});
+await page.getByText("Can’t find your society? Suggest it").press("Enter");
+const suggestionName = page.getByLabel("Society name *");
+await suggestionName.fill("Cedar Court");
+await page.getByLabel("Locality (optional)").fill("West End");
+await page.getByRole("button", { name: "Send suggestion" }).click();
+await page.getByRole("status").filter({ hasText: "sent for review" }).waitFor();
+assert.equal(await suggestionName.inputValue(), "");
+await societyResult.press("Enter");
+await page.waitForFunction(() => window.__atlasReplacedPath === "/dashboard");
+assert.deepEqual(await page.evaluate(() => window.__atlasOnboardingCalls), [
+  {
+    name: "suggestions:create",
+    args: { name: "Cedar Court", locality: "West End", city: undefined },
+  },
+  { name: "users:selectSociety", args: { societyId: "society1" } },
+]);
+
+for (const width of [390, 1000, 1001, 1280]) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("http://localhost:3000/__atlas-qa?view=explore");
   const nav = page.getByRole("navigation", {
-    name: width < 1000 ? "Mobile dashboard navigation" : "Dashboard navigation",
+    name:
+      width <= 1000 ? "Mobile dashboard navigation" : "Dashboard navigation",
+    exact: true,
   });
   await page.waitForFunction(() =>
     document.querySelector('nav[data-ready="true"]'),
   );
-  const marker = nav.locator(".nav-indicator");
+  const marker = nav.locator(':scope > [aria-hidden="true"]');
   const first = await marker.boundingBox();
   await page.evaluate(() => {
     history.pushState({}, "", "/__atlas-qa?view=requests");
@@ -420,8 +679,10 @@ for (const width of [390, 1280]) {
 }
 await page.setViewportSize({ width: 1280, height: 900 });
 await page.goto("http://localhost:3000/__atlas-qa?view=listing-new");
-await page.getByRole("button", { name: "Preview listing" }).click();
-assert(await page.getByRole("alert").isVisible());
+await page.evaluate(mockStudioSave);
+const publishListing = page.getByRole("button", { name: "Publish listing" });
+await publishListing.click();
+await page.getByRole("alert").filter({ hasText: "Add a name" }).waitFor();
 await page.getByLabel("Item name").fill("A useful drill");
 await page.getByLabel("Description").fill("A drill for small projects.");
 assert(
@@ -432,10 +693,17 @@ assert(
 );
 await page.getByLabel("Paid rental").check();
 await page.getByLabel("Daily rate in INR").fill("175.50");
-const descriptionBox = await page
-  .locator(".studio-preview-content p")
+const listingPreview = page.getByRole("complementary", {
+  name: "Live listing preview",
+});
+const previewPrice = listingPreview.getByText("₹175.50 / day", { exact: true });
+const descriptionBox = await listingPreview
+  .getByText("A drill for small projects.")
   .boundingBox();
-const priceBox = await page.locator(".studio-preview-price").boundingBox();
+const priceBox = await listingPreview
+  .getByText("Daily rate", { exact: true })
+  .locator("..")
+  .boundingBox();
 assert(
   descriptionBox &&
     priceBox &&
@@ -443,21 +711,28 @@ assert(
   "Preview price needs breathing room",
 );
 assert.equal(
-  await page
-    .locator(".studio-preview-price strong")
-    .evaluate((el) => getComputedStyle(el).backgroundColor),
+  await previewPrice.evaluate((el) => getComputedStyle(el).backgroundColor),
   "rgba(0, 0, 0, 0)",
 );
-assert(
-  await page
-    .getByRole("complementary", { name: "Live listing preview" })
-    .getByText("₹175.50 / day")
-    .isVisible(),
-);
+assert(await previewPrice.isVisible());
+await page.evaluate(() => {
+  const decode = window.createImageBitmap.bind(window);
+  window.createImageBitmap = (...args) =>
+    new Promise((resolve, reject) => {
+      window.__atlasFinishPhoto = () => {
+        window.createImageBitmap = decode;
+        decode(...args).then(resolve, reject);
+      };
+    });
+});
 await page
   .locator('input[type="file"]')
   .first()
   .setInputFiles("public/images/demo-rizvi/drill.jpg");
+assert(
+  await page.getByRole("button", { name: "Preparing photos…" }).isDisabled(),
+);
+await page.evaluate(() => window.__atlasFinishPhoto());
 await page.getByAltText("Listing cover preview").waitFor();
 await page
   .locator('input[type="file"]')
@@ -465,8 +740,12 @@ await page
   .setInputFiles("public/images/demo-rizvi/ladder.jpg");
 for (const width of [360, 768, 1280, 1600]) {
   await page.setViewportSize({ width, height: 900 });
-  const firstPhoto = await page.locator(".photo-tile").nth(0).boundingBox();
-  const secondPhoto = await page.locator(".photo-tile").nth(1).boundingBox();
+  const firstPhoto = await page
+    .getByAltText("Listing photo 1", { exact: true })
+    .boundingBox();
+  const secondPhoto = await page
+    .getByAltText("Listing photo 2", { exact: true })
+    .boundingBox();
   assert(
     firstPhoto &&
       secondPhoto &&
@@ -482,20 +761,122 @@ assert.equal(
   await page.getByAltText("Listing photo 1").getAttribute("src"),
 );
 await page.getByRole("button", { name: "Remove photo 2" }).click();
-assert.equal(await page.locator(".photo-tile").count(), 1);
+assert.equal(await page.getByAltText(/^Listing photo \d+$/).count(), 1);
 await page.getByLabel("Daily rate in INR").fill("0");
-await page.getByRole("button", { name: "Preview listing" }).click();
-assert(await page.getByRole("alert").isVisible());
+await publishListing.click();
+await page
+  .getByRole("alert")
+  .filter({ hasText: "Daily rate must be" })
+  .waitFor();
+assert.equal(await page.evaluate(() => window.__atlasStudioCalls.length), 0);
 await page.getByLabel("Daily rate in INR").fill("175.50");
-await page.getByRole("button", { name: "Preview listing" }).click();
-assert(
-  await page.getByRole("heading", { name: "Review your listing" }).isVisible(),
-);
-await page.getByRole("button", { name: "Back to edit" }).click();
+
+function mockStudioSave() {
+  window.__atlasStudioCalls = [];
+  window.__atlasMutation = (name, args) => {
+    window.__atlasStudioCalls.push({ name, args });
+    switch (name) {
+      case "tools:create":
+        return "studio-draft";
+      case "photos:uploadUrl":
+        return { url: "/__atlas-photo-upload", ticketId: "studio-ticket" };
+      case "photos:register":
+        return "studio-photo";
+      case "tools:update":
+      case "photos:setForTool":
+      case "tools:setStatus":
+        return null;
+      default:
+        throw new Error(`Unexpected Studio mutation: ${name}`);
+    }
+  };
+}
+let uploadAttempts = 0;
+await page.route("**/__atlas-photo-upload", async (route) => {
+  assert.equal(route.request().method(), "POST");
+  assert.equal(route.request().headers()["content-type"], "image/jpeg");
+  assert(await page.getByLabel("Item name").isDisabled());
+  uploadAttempts += 1;
+  return uploadAttempts === 1
+    ? route.fulfill({ status: 503 })
+    : route.fulfill({ json: { storageId: "studio-storage" } });
+});
+await publishListing.click();
+await page
+  .getByRole("alert")
+  .filter({ hasText: "Your changes are still here" })
+  .waitFor();
+assert(await listingPreview.getByAltText("Listing cover preview").isVisible());
 assert.equal(await page.getByLabel("Item name").inputValue(), "A useful drill");
+assert(await page.getByLabel("Item name").isEnabled());
+await publishListing.click();
+await page.waitForFunction(
+  () => window.__atlasPushedPath === "/dashboard/listings",
+);
+assert.equal(uploadAttempts, 2);
+const studioCalls = await page.evaluate(() => window.__atlasStudioCalls);
+assert.deepEqual(
+  studioCalls.map(({ name }) => name),
+  [
+    "tools:create",
+    "photos:uploadUrl",
+    "tools:update",
+    "photos:uploadUrl",
+    "photos:register",
+    "photos:setForTool",
+    "tools:setStatus",
+  ],
+);
+assert.equal(studioCalls[2].args.toolId, "studio-draft");
+assert.deepEqual(studioCalls[5].args, {
+  toolId: "studio-draft",
+  photoIds: ["studio-photo"],
+});
+assert.deepEqual(studioCalls[6].args, {
+  toolId: "studio-draft",
+  status: "active",
+});
+
+await page.setViewportSize({ width: 390, height: 900 });
 await page.goto("http://localhost:3000/__atlas-qa?view=listing-edit");
 assert.equal(await page.getByLabel("Item name").inputValue(), "Cordless drill");
-assert(await page.getByAltText("Listing cover preview").isVisible());
+const savedCover = await listingPreview
+  .getByAltText("Listing cover preview")
+  .boundingBox();
+const savedTitle = await listingPreview
+  .getByRole("heading", { name: "Cordless drill" })
+  .boundingBox();
+assert(
+  savedCover && savedTitle && savedTitle.y >= savedCover.y + savedCover.height,
+  "The mobile preview title should sit below the saved cover",
+);
+await page.evaluate(() => {
+  Object.defineProperty(navigator.mediaDevices, "getUserMedia", {
+    value: async () => {
+      throw new Error("denied");
+    },
+  });
+});
+await page.getByRole("button", { name: "Take Photo" }).click();
+const studioCamera = page.getByRole("dialog", { name: "Take photo" });
+await studioCamera
+  .getByLabel("Use device camera")
+  .waitFor({ state: "attached" });
+await studioCamera.getByRole("button", { name: "Cancel" }).click();
+await studioCamera.waitFor({ state: "hidden" });
+await page.evaluate(mockStudioSave);
+await page.getByLabel("Item name").fill("Updated cordless drill");
+await page.getByRole("button", { name: "Save changes" }).click();
+await page.waitForFunction(
+  () => window.__atlasPushedPath === "/dashboard/listings",
+);
+const editCalls = await page.evaluate(() => window.__atlasStudioCalls);
+assert.deepEqual(
+  editCalls.map(({ name }) => name),
+  ["tools:update", "photos:setForTool"],
+);
+assert.equal(editCalls[0].args.name, "Updated cordless drill");
+assert.deepEqual(editCalls[1].args, { toolId: "tool0", photoIds: ["photo0"] });
 assert.deepEqual(errors, []);
 for (const width of [390, 1440]) {
   await page.setViewportSize({ width, height: 900 });
@@ -530,6 +911,6 @@ for (const width of [390, 1440]) {
 }
 assert.deepEqual(errors, []);
 console.log(
-  "70 viewport/page renders + edit form and sharing checks passed. Fixture UI only.",
+  "75 viewport/page renders and interaction checks passed. Fixture UI only.",
 );
 await browser.close();

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { DashboardView } from "@/components/dashboard-view";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
 
 const sections = [
   "listings",

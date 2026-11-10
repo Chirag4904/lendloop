@@ -1,0 +1,39 @@
+.handover-fields {
+  gap: 18px;
+}
+.handover-fields label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--ink);
+}
+.handover-fields input,
+.handover-fields textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid #aebcb8;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  padding: 12px 14px;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.handover-fields textarea {
+  min-height: 84px;
+  resize: vertical;
+}
+.handover-fields input::placeholder,
+.handover-fields textarea::placeholder {
+  color: #778985;
+  opacity: 1;
+}
+.handover-fields :is(input, textarea):focus-visible {
+  outline: 2px solid #608b70;
+  outline-offset: 2px;
+  border-color: #608b70;
+}

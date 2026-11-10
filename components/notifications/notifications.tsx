@@ -3,11 +3,14 @@
 import Link from "next/link";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { Button } from "@/components/ui/button";
+import styles from "./notifications.module.css";
+import "./automation.css";
 
 export function Notifications() {
   const rows = useQuery(api.automation.mine, {});
   return (
-    <section className="notification-page">
+    <section className={styles.page}>
       <div className="app-heading">
         <span className="kicker">YOUR UPDATES</span>
         <h1>The latest, from nearby.</h1>
@@ -19,12 +22,19 @@ export function Notifications() {
         <div className="app-empty">
           <h2>No notifications yet</h2>
           <p>Updates about your requests will appear here.</p>
-          <Link className="text-link" href="/dashboard/requests">
-            View your activity →
-          </Link>
+          <Button
+            asChild
+            variant="ghost"
+            className="text-link min-h-0 rounded-none p-0 leading-[inherit] hover:bg-transparent"
+          >
+            <Link href="/dashboard/requests">View your activity →</Link>
+          </Button>
         </div>
       ) : (
-        <ol className="automation-list">
+        <ol
+          className={`automation-list ${styles.list}`}
+          aria-label="Notifications"
+        >
           {rows.map((row) => (
             <li key={row.id}>
               <strong>{row.message}</strong>

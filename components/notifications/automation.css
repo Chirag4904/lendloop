@@ -1,0 +1,48 @@
+.automation-list {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 0;
+  display: grid;
+  gap: 10px;
+}
+.automation-list li {
+  background: #f6f2e9;
+  border: 1px solid #d7d9df;
+  border-radius: 14px;
+  padding: 12px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  color: #152d3b;
+  min-width: 0;
+}
+.automation-list strong {
+  flex: 1 1 190px;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+  font-size: 18px;
+}
+.automation-list time {
+  flex-basis: 100%;
+  color: var(--muted);
+  font-size: 13px;
+}
+.automation-state {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #e8edf9;
+  color: #152d3b;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.state-failed {
+  background: #fde4df;
+  color: #8a2f23;
+}
+.state-retry_pending,
+.state-processing {
+  background: #ffe3bd;
+  color: #70410c;
+}

@@ -1,0 +1,72 @@
+.offer-field {
+  display: grid;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.offer-field input {
+  width: 100%;
+  min-width: 0;
+  font: inherit;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+.offer-field input:focus-visible {
+  outline: 3px solid #d9f36a;
+  outline-offset: 2px;
+}
+.borrow-form {
+  background: #fff;
+  border: 1px solid #d6deec;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px #152d3b0b;
+  margin-top: 14px;
+  padding: 22px;
+}
+.borrow-form p {
+  color: var(--muted);
+}
+.request-status {
+  display: inline-block;
+  border-radius: 99px;
+  padding: 5px 11px;
+  background: #dce6fb;
+  color: #193a96;
+  font-size: 13px;
+  font-weight: 800;
+}
+.status-approved,
+.status-reserved {
+  background: #dcefe2;
+  color: #175b38;
+}
+.status-returned {
+  background: #e7e9ed;
+  color: #344253;
+}
+.status-declined,
+.status-cancelled {
+  background: #f4e9e5;
+  color: #85412c;
+}
+.status-return_pending {
+  background: #fff0d9;
+  color: #68400c;
+}
+@media (max-width: 700px) {
+  .borrow-form {
+    padding: 16px;
+  }
+}
+
+.status-overdue {
+  background: #f8dfd6;
+  color: #8b321e;
+}
+.status-pending,
+.status-awaiting_borrower {
+  background: var(--surface-selected);
+  color: var(--ink);
+}

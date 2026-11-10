@@ -4,7 +4,7 @@
 
 An original lime-and-graphite SVG drill stays continuous across a Midnight Ink story: unused shelf, nearby discovery, illustrative request, handover, and a return loop. Warm Paper benefits and discovery lead into the real catalog. GSAP/ScrollTrigger and `@gsap/react` drive the homepage only; native scrolling, responsive media cleanup and reduced-motion text remain available. Space Grotesk and DM Sans use `next/font`.
 
-Main implementation: `app/page.tsx`, `app/globals.css`, `app/layout.tsx`, `components/story/`, `components/marketing-shell.tsx`, `components/auth-nav.tsx`, `app/journal/page.tsx`, and `app/for-communities/page.tsx`. Tests, CI artifact retention and the design/product/architecture documentation were updated. ESLint now ignores generated Playwright reports so running browser QA does not lint third-party trace-viewer bundles.
+Main implementation: `app/page.tsx`, `app/globals.css`, `app/layout.tsx`, `components/story/`, `components/marketing/marketing-shell.tsx`, `components/marketing/auth-nav.tsx`, `app/journal/page.tsx`, and `app/for-communities/page.tsx`. Tests, CI artifact retention and the design/product/architecture documentation were updated. ESLint now ignores generated Playwright reports so running browser QA does not lint third-party trace-viewer bundles.
 
 ## Actual checks
 

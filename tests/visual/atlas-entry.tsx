@@ -1,11 +1,12 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { DashboardShell } from "../../components/dashboard-shell";
-import { DashboardView } from "../../components/dashboard-view";
-import { ToolDetail } from "../../components/marketplace";
-import { ListingForm } from "../../components/listing-form";
-import { Admin } from "../../components/admin";
-import { LoanDetail } from "../../components/borrowing";
+import { DashboardShell } from "../../components/dashboard/dashboard-shell";
+import { DashboardView } from "../../components/dashboard/dashboard-view";
+import { ToolDetail } from "../../components/marketplace/tool-detail";
+import { ListingForm } from "../../components/listings/listing-form";
+import { Admin } from "../../components/admin/admin";
+import { Onboarding } from "../../components/onboarding/onboarding";
+import { LoanDetail } from "../../components/borrowing/loan-detail";
 import { PublicCatalog } from "../../components/public-catalog";
 const view = new URLSearchParams(location.search).get("view") || "explore";
 createRoot(document.getElementById("root")!).render(
@@ -45,6 +46,8 @@ createRoot(document.getElementById("root")!).render(
       </main>
     ) : view === "admin" || view === "admin-listings" ? (
       <Admin section={view === "admin" ? "overview" : "listings"} />
+    ) : view === "onboarding" ? (
+      <Onboarding />
     ) : (
       <DashboardShell>
         {view === "loan" ||

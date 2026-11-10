@@ -5,7 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { UserButton } from "@clerk/nextjs";
 import { Bell, Compass, Package, UserRound, Activity } from "lucide-react";
-import { useCurrentProfile } from "@/components/use-current-profile";
+import { useCurrentProfile } from "@/hooks/use-current-profile";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import styles from "./dashboard-shell.module.css";
 
 const items = [
   { href: "/dashboard", label: "Explore", icon: Compass },
@@ -22,11 +25,11 @@ function DashboardNavigation({
   mobile?: boolean;
 }) {
   const nav = useRef<HTMLElement>(null);
+  const marker = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
     const container = nav.current;
-    if (!container) return;
-    const indicator = container.querySelector<HTMLElement>(".nav-indicator");
-    if (!indicator) return;
+    const indicator = marker.current;
+    if (!container || !indicator) return;
     function position() {
       if (!container || !indicator || !container.offsetWidth) return;
       const active = container.querySelector<HTMLElement>(
@@ -59,12 +62,15 @@ function DashboardNavigation({
   return (
     <nav
       ref={nav}
-      className={mobile ? "mobile-nav" : "desktop-nav"}
+      className={cn(
+        styles.navigation,
+        mobile ? styles.mobileNav : styles.desktopNav,
+      )}
       aria-label={
         mobile ? "Mobile dashboard navigation" : "Dashboard navigation"
       }
     >
-      <span className="nav-indicator" aria-hidden="true" />
+      <span ref={marker} className={styles.indicator} aria-hidden="true" />
       {items.map(({ href, label, icon: Icon }) => {
         const active =
           pathname === href ||
@@ -74,7 +80,6 @@ function DashboardNavigation({
           <Link
             href={href}
             key={href}
-            className={active ? "active" : ""}
             aria-current={active ? "page" : undefined}
             onClick={(event) => {
               if (event.detail === 0 && !active && nav.current)
@@ -111,21 +116,19 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       </main>
     );
   return (
-    <div className="app-layout">
-      <header className="app-header">
-        <div className="shell app-header-inner">
+    <div className={styles.layout}>
+      <header className={styles.header}>
+        <div className={cn("shell", styles.headerInner)}>
           <Link className="wordmark" href="/">
             ↔ lendloop.
           </Link>
           <DashboardNavigation pathname={pathname} />
-          <Link
-            className="profile-link"
-            href="/dashboard/profile"
-            aria-label="Profile"
-          >
-            <UserRound size={18} />
-            <span>Profile</span>
-          </Link>
+          <Button asChild variant="outline" className={styles.profileLink}>
+            <Link href="/dashboard/profile" aria-label="Profile">
+              <UserRound size={18} />
+              <span>Profile</span>
+            </Link>
+          </Button>
           {profile.role === "admin" && (
             <Link className="text-link" href="/admin">
               Admin

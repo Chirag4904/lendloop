@@ -1,36 +1,16 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import type { Id } from "@/convex/_generated/dataModel";
-import {
-  ArrowRight,
-  Camera,
-  ImagePlus,
-  PackageOpen,
-  Upload,
-} from "lucide-react";
+import { Camera, ImagePlus, PackageOpen, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { categories, conditions } from "./listing-options";
 import { CameraCapture } from "./camera-capture";
 import { prepareImage, uploadWithProgress } from "./image-processing";
+import styles from "./listing-form.module.css";
 
-export const categories = [
-  "Power Tools",
-  "Garden",
-  "Kitchen",
-  "Electronics",
-  "Camping & Outdoors",
-  "Sports & Fitness",
-  "Home & Cleaning",
-  "Other",
-] as const;
-export const conditions = {
-  likeNew: "Like New",
-  good: "Good",
-  fair: "Fair",
-  wellUsed: "Well Used",
-  new: "Like New",
-} as const;
 type Photo = {
   key: string;
   id?: Id<"listingPhotos">;
@@ -96,7 +76,7 @@ function ListingEditor({
   );
   const photosRef = useRef<Photo[]>(photos);
   const [camera, setCamera] = useState(false),
-    [review, setReview] = useState(false),
+    [preparingPhotos, setPreparingPhotos] = useState(0),
     [saving, setSaving] = useState(false),
     [error, setError] = useState(""),
     [createdId, setCreatedId] = useState<Id<"tools">>();
@@ -114,30 +94,36 @@ function ListingEditor({
     [],
   );
   async function add(files: FileList | File[]) {
+    if (saving) return;
     setError("");
     const incoming = Array.from(files);
     if (photosRef.current.length + incoming.length > 5) {
       setError("Choose up to five photos in total.");
       return;
     }
-    for (const file of incoming) {
-      try {
-        const prepared = await prepareImage(file);
-        if (photosRef.current.length >= 5) {
-          setError("Choose up to five photos in total.");
-          break;
+    setPreparingPhotos((count) => count + 1);
+    try {
+      for (const file of incoming) {
+        try {
+          const prepared = await prepareImage(file);
+          if (photosRef.current.length >= 5) {
+            setError("Choose up to five photos in total.");
+            break;
+          }
+          setPhotosState((items) => [
+            ...items,
+            {
+              key: crypto.randomUUID(),
+              file: prepared,
+              url: URL.createObjectURL(prepared),
+            },
+          ]);
+        } catch (e) {
+          setError((e as Error).message);
         }
-        setPhotosState((items) => [
-          ...items,
-          {
-            key: crypto.randomUUID(),
-            file: prepared,
-            url: URL.createObjectURL(prepared),
-          },
-        ]);
-      } catch (e) {
-        setError((e as Error).message);
       }
+    } finally {
+      setPreparingPhotos((count) => count - 1);
     }
   }
   function remove(key: string) {
@@ -166,9 +152,12 @@ function ListingEditor({
       throw new Error("Daily rate must be ₹1–₹10,000.");
     return paise;
   }
-  function reviewListing() {
+  async function save(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (saving || preparingPhotos > 0) return;
+    let dailyAmount: number | undefined;
     try {
-      amount();
+      dailyAmount = amount();
       if (
         !name.trim() ||
         name.trim().length > 80 ||
@@ -178,14 +167,11 @@ function ListingEditor({
         throw new Error(
           "Add a name (up to 80 characters) and description (up to 1000 characters).",
         );
-      setError("");
-      setReview(true);
-      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (e) {
       setError((e as Error).message);
+      return;
     }
-  }
-  async function save() {
+
     setSaving(true);
     setError("");
     try {
@@ -194,7 +180,7 @@ function ListingEditor({
         category,
         condition,
         description,
-        dailyAmount: amount(),
+        dailyAmount,
       };
       let id = toolId ?? createdId;
       if (id) await update({ toolId: id, ...input });
@@ -241,9 +227,10 @@ function ListingEditor({
       setSaving(false);
     }
   }
+  const cover = photos[0];
   return (
-    <section className="listing-editor">
-      <div className="app-heading studio-heading">
+    <section className={styles.studio}>
+      <div className={`app-heading ${styles.heading}`}>
         <span className="kicker">THE LISTING STUDIO</span>
         <h1>
           {toolId
@@ -256,54 +243,20 @@ function ListingEditor({
             : "Share something useful with neighbors. You can change or unlist it later."}
         </p>
       </div>
-      <div className={`studio-layout ${review ? "is-review" : ""}`}>
-        {review ? (
-          <div className="editor-card review-card">
-            <h2>Review your listing</h2>
-            <div className="listing-cover">
-              {photos[0] ? (
-                <img src={photos[0].url} alt="Cover preview" />
-              ) : (
-                <span>Photo optional</span>
-              )}
-            </div>
-            <span className="catalog-category">
-              {category} · {conditions[condition]}
-            </span>
-            <h3>{name}</h3>
-            <p>{description}</p>
-            <strong>{paid ? `₹${rate} / day` : "Free to borrow"}</strong>
-            <p>
-              Visible in your society when published. Date availability is not
-              checked yet.
-            </p>
-            <div className="editor-actions">
-              <button type="button" onClick={() => setReview(false)}>
-                Back to edit
-              </button>
-              <button
-                className="button-primary"
-                type="button"
-                onClick={() => void save()}
-                disabled={saving}
-              >
-                {saving
-                  ? "Saving…"
-                  : toolId
-                    ? "Save changes"
-                    : "Publish listing"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="editor-card">
-            <h2 className="studio-section-title">
+      <div className={styles.layout}>
+        <form
+          className={styles.editor}
+          noValidate
+          onSubmit={(event) => void save(event)}
+        >
+          <fieldset className="min-w-0" disabled={saving}>
+            <h2 className={styles.sectionTitle}>
               <span>01</span> The essentials
             </h2>
-            <p className="studio-section-hint">
+            <p className={styles.hint}>
               Tell neighbors what makes your item useful.
             </p>
-            <div className="editor-grid">
+            <div className={styles.fields}>
               <div>
                 <label className="field-label" htmlFor="item-name">
                   Item name
@@ -370,13 +323,12 @@ function ListingEditor({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
             />
-            <div className="photo-section">
-              <h2>
-                <span className="studio-section-number">02</span> Photos{" "}
-                <small>Optional · up to 5</small>
+            <div className={styles.subsection}>
+              <h2 className={styles.sectionTitle}>
+                <span>02</span> Photos <small>Optional · up to 5</small>
               </h2>
-              <div className="photo-actions">
-                <label className="upload-button">
+              <div className={styles.photoActions}>
+                <label className={styles.upload}>
                   <Upload size={17} aria-hidden="true" /> Upload Photos
                   <input
                     type="file"
@@ -388,12 +340,17 @@ function ListingEditor({
                     }}
                   />
                 </label>
-                <button type="button" onClick={() => setCamera(true)}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className={styles.secondary}
+                  onClick={() => setCamera(true)}
+                >
                   <Camera size={17} aria-hidden="true" /> Take Photo
-                </button>
+                </Button>
               </div>
               <div
-                className="drop-zone"
+                className={styles.dropZone}
                 onDragOver={(e) => e.preventDefault()}
                 onDrop={(e) => {
                   e.preventDefault();
@@ -407,45 +364,55 @@ function ListingEditor({
                 </span>
               </div>
               {photos.length > 0 && (
-                <div className="photo-grid">
+                <div className={styles.photoGrid}>
                   {photos.map((photo, index) => (
-                    <div className="photo-tile" key={photo.key}>
-                      <img src={photo.url} alt={`Listing photo ${index + 1}`} />
-                      {index === 0 && <span className="cover-tag">Cover</span>}
-                      <div className="photo-controls">
+                    <div className={styles.photoTile} key={photo.key}>
+                      <img
+                        className="size-full object-cover"
+                        src={photo.url}
+                        alt={`Listing photo ${index + 1}`}
+                      />
+                      {index === 0 && (
+                        <span className={styles.coverTag}>Cover</span>
+                      )}
+                      <div className={styles.photoControls}>
                         {index > 0 && (
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
                             onClick={() => makeCover(index)}
                             aria-label={`Set photo ${index + 1} as cover`}
                             title="Set as cover"
                           >
                             ★
-                          </button>
+                          </Button>
                         )}
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           disabled={index === 0}
                           onClick={() => move(index, -1)}
                           aria-label={`Move photo ${index + 1} earlier`}
                         >
                           ←
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           disabled={index === photos.length - 1}
                           onClick={() => move(index, 1)}
                           aria-label={`Move photo ${index + 1} later`}
                         >
                           →
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => remove(photo.key)}
                           aria-label={`Remove photo ${index + 1}`}
                         >
                           ×
-                        </button>
+                        </Button>
                       </div>
                       {photo.progress !== undefined && (
                         <small>Upload {photo.progress}%</small>
@@ -455,14 +422,14 @@ function ListingEditor({
                 </div>
               )}
             </div>
-            <div className="price-section">
-              <h2>
-                <span className="studio-section-number">03</span> Your terms
+            <div className={styles.subsection}>
+              <h2 className={styles.sectionTitle}>
+                <span>03</span> Your terms
               </h2>
-              <p className="studio-section-hint">
+              <p className={styles.hint}>
                 Choose whether to lend for free or set a daily price.
               </p>
-              <label className="radio-row">
+              <label className={styles.radio}>
                 <input
                   type="radio"
                   name="price-kind"
@@ -471,7 +438,7 @@ function ListingEditor({
                 />{" "}
                 Free to borrow
               </label>
-              <label className="radio-row">
+              <label className={styles.radio}>
                 <input
                   type="radio"
                   name="price-kind"
@@ -481,7 +448,7 @@ function ListingEditor({
                 Paid rental
               </label>
               {paid && (
-                <div>
+                <div className="max-w-[260px]">
                   <label className="field-label" htmlFor="daily-rate">
                     Daily rate in INR
                   </label>
@@ -496,74 +463,78 @@ function ListingEditor({
                 </div>
               )}
             </div>
-            <div className="editor-actions">
-              <button
-                type="button"
-                className="button-primary"
-                onClick={reviewListing}
+            {error && (
+              <p className="form-message error" role="alert">
+                {error}
+              </p>
+            )}
+            <div className={styles.actions}>
+              <Button
+                type="submit"
+                className={`button-primary ${styles.primary}`}
+                disabled={preparingPhotos > 0}
               >
-                Preview listing <ArrowRight size={17} aria-hidden="true" />
-              </button>
+                {saving
+                  ? "Saving…"
+                  : preparingPhotos > 0
+                    ? "Preparing photos…"
+                    : toolId
+                      ? "Save changes"
+                      : "Publish listing"}
+              </Button>
+            </div>
+          </fieldset>
+        </form>
+        <aside className={styles.preview} aria-label="Live listing preview">
+          <div className={styles.previewTop}>
+            <span className="kicker">A LITTLE LOOK AHEAD</span>
+            <h2>Listing preview</h2>
+            <p>Your preview updates as you add details.</p>
+          </div>
+          <div className={styles.previewCard}>
+            <div className={styles.previewImage}>
+              {cover ? (
+                <img
+                  className="size-full object-cover"
+                  src={cover.url}
+                  alt="Listing cover preview"
+                />
+              ) : (
+                <div>
+                  <PackageOpen size={36} strokeWidth={1.2} aria-hidden="true" />
+                  <span>Your item’s photo goes here</span>
+                  <small>Photos are optional</small>
+                </div>
+              )}
+            </div>
+            <div className={styles.previewContent}>
+              <span className="catalog-category">
+                {category} · {conditions[condition]}
+              </span>
+              <h3>{name.trim() || "Your item’s name"}</h3>
+              <p>
+                {description.trim() ||
+                  "A little about your item will appear here."}
+              </p>
+              <div className={styles.previewPrice}>
+                <span>{paid ? "Daily rate" : "Sharing terms"}</span>
+                <strong>
+                  {paid
+                    ? rate
+                      ? `₹${rate} / day`
+                      : "Set a daily rate"
+                    : "Free to borrow"}
+                </strong>
+              </div>
             </div>
           </div>
-        )}
-        {!review && (
-          <aside className="studio-preview" aria-label="Live listing preview">
-            <div className="studio-preview-top">
-              <span className="kicker">A LITTLE LOOK AHEAD</span>
-              <h2>Listing preview</h2>
-              <p>Your preview updates as you add details.</p>
-            </div>
-            <div className="studio-preview-card">
-              <div className="studio-preview-image">
-                {photos[0] ? (
-                  <img src={photos[0].url} alt="Listing cover preview" />
-                ) : (
-                  <div>
-                    <PackageOpen
-                      size={36}
-                      strokeWidth={1.2}
-                      aria-hidden="true"
-                    />
-                    <span>Your item’s photo goes here</span>
-                    <small>Photos are optional</small>
-                  </div>
-                )}
-              </div>
-              <div className="studio-preview-content">
-                <span className="catalog-category">
-                  {category} · {conditions[condition]}
-                </span>
-                <h3>{name.trim() || "Your item’s name"}</h3>
-                <p>
-                  {description.trim() ||
-                    "A little about your item will appear here."}
-                </p>
-                <div className="studio-preview-price">
-                  <span>{paid ? "Daily rate" : "Sharing terms"}</span>
-                  <strong>
-                    {paid
-                      ? rate
-                        ? `₹${rate} / day`
-                        : "Set a daily rate"
-                      : "Free to borrow"}
-                  </strong>
-                </div>
-              </div>
-            </div>
-            <p className="studio-preview-note">
-              {toolId
-                ? "Your saved listing remains visible according to its current status."
-                : "Your listing is visible after you review and publish it."}
-            </p>
-          </aside>
-        )}
+          <p className={styles.previewNote}>
+            {toolId
+              ? "Your saved listing remains visible according to its current status."
+              : "Your listing is visible after you publish it."}
+          </p>
+        </aside>
       </div>
-      {error && (
-        <p className="form-message error" role="alert">
-          {error}
-        </p>
-      )}
       {camera && (
         <CameraCapture
           onUse={(file) => void add([file])}

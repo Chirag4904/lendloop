@@ -60,7 +60,11 @@ export const UserButton = () => (
     AM
   </button>
 );
-export const useRouter = () => ({ replace: () => {} });
+export const useRouter = () => ({
+  replace: (path: string) =>
+    Object.assign(window, { __atlasReplacedPath: path }),
+  push: (path: string) => Object.assign(window, { __atlasPushedPath: path }),
+});
 export const usePathname = () => {
   const search = React.useSyncExternalStore(
     (callback) => {
@@ -88,9 +92,50 @@ export default function Link({
     </a>
   );
 }
+type ListingStatus = "active" | "unlisted" | "archived";
+const listingStatuses = new Map<string, ListingStatus>();
+const removedListings = new Set<string>();
+let loanReturnStatus: "return_pending" | "returned" | undefined;
+
 export function useMutation(ref: never) {
-  return async () => {
-    if (getFunctionName(ref) === "loans:saveHandover") return null;
+  const [, refresh] = React.useReducer((version: number) => version + 1, 0);
+  return async (
+    args:
+      | { toolId: string; status: ListingStatus }
+      | { toolId: string }
+      | { loanId: string },
+  ) => {
+    const name = getFunctionName(ref);
+    const fixtureMutation = (
+      window as Window & {
+        __atlasMutation?: (name: string, args: unknown) => unknown;
+      }
+    ).__atlasMutation;
+    if (fixtureMutation) return fixtureMutation(name, args);
+    if (name === "loans:saveHandover") {
+      Object.assign(window, { __atlasHandoverArgs: args });
+      return null;
+    }
+    if (
+      (name === "loans:reportReturn" || name === "loans:confirmReturn") &&
+      "loanId" in args &&
+      args.loanId === "loan0"
+    ) {
+      loanReturnStatus =
+        name === "loans:reportReturn" ? "return_pending" : "returned";
+      refresh();
+      return null;
+    }
+    if (name === "tools:setStatus" && "status" in args) {
+      listingStatuses.set(args.toolId, args.status);
+      refresh();
+      return null;
+    }
+    if (name === "admin:removeListing" && "toolId" in args) {
+      removedListings.add(args.toolId);
+      refresh();
+      return null;
+    }
     throw new Error("Mutations disabled in visual QA");
   };
 }
@@ -102,7 +147,7 @@ export function usePaginatedQuery(ref: never) {
           owner: "A neighbor",
           society: "Paper Gardens",
           societyId: "society1",
-          status: "active",
+          status: removedListings.has(item.id) ? "removed" : "active",
           coverUrl: index === 1 ? null : item.photos[0].url,
           createdAt: 1794200000000,
           updatedAt: 1794200000000,
@@ -113,7 +158,10 @@ export function usePaginatedQuery(ref: never) {
 export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
   const name = getFunctionName(ref);
   if (args === "skip") return undefined;
-  if (name === "users:me") return profile;
+  if (name === "users:me")
+    return new URLSearchParams(location.search).get("view") === "onboarding"
+      ? { ...profile, societyId: undefined }
+      : profile;
   if (name === "handover:mine")
     return {
       phone: "+91 98765 43210",
@@ -121,6 +169,9 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       instructions: "Call on arrival",
       returnInstructions: "Leave with security",
     };
+  const pendingReturn = new URLSearchParams(location.search).has(
+    "pendingReturn",
+  );
   if (name === "automation:loanActivity")
     return [
       {
@@ -129,8 +180,26 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         at: 1794200000000,
         status: "failed",
       },
+      ...(pendingReturn
+        ? [
+            {
+              id: "event1",
+              message: "Return reported",
+              at: 1794200000000,
+              status: "delivered",
+            },
+            {
+              id: "event2",
+              message: "Return update",
+              at: 1794200000000,
+              status: "retry_pending",
+            },
+          ]
+        : []),
     ];
-  if (name === "loans:detail")
+  if (name === "loans:detail") {
+    const status =
+      loanReturnStatus ?? (pendingReturn ? "return_pending" : "reserved");
     return {
       id: "loan0",
       toolName: "Cordless drill",
@@ -144,12 +213,12 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       days: 4,
       rateMinor: 15000,
       totalMinor: 60000,
-      status: "reserved",
+      status,
       overdue: false,
       requestCreatedAt: 1794200000000,
       approvedAt: 1794200000000,
-      returnReportedAt: null,
-      returnedAt: null,
+      returnReportedAt: status === "reserved" ? null : 1794200000000,
+      returnedAt: status === "returned" ? 1794200001000 : null,
       details:
         new URLSearchParams(location.search).get("view") === "loan-shared"
           ? [
@@ -166,6 +235,7 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
             ]
           : [],
     };
+  }
   if (name === "societies:search")
     return [
       {
@@ -174,7 +244,15 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         locality: "Illustrative neighborhood",
         city: "Demo city",
       },
-    ];
+    ].filter((s) =>
+      `${s.name} ${s.locality} ${s.city}`.toLowerCase().includes(
+        String(args?.term ?? "")
+          .trim()
+          .toLowerCase(),
+      ),
+    );
+  if (name === "suggestions:mine")
+    return [{ name: "Oak Court", status: "pending", societyName: null }];
   if (name === "tools:publicList")
     return items.map(({ name, category }) => ({
       name: `Demo · ${name}`,
@@ -192,7 +270,16 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
     );
   }
   if (name === "tools:mine")
-    return items.map((x, i) => ({ ...x, isOwner: true, active: i !== 2 }));
+    return items.map((x, i) => {
+      const status =
+        listingStatuses.get(x.id) ?? (i === 2 ? "unlisted" : "active");
+      return {
+        ...x,
+        isOwner: true,
+        active: status === "active",
+        archived: status === "archived",
+      };
+    });
   if (name === "tools:detail")
     return new URLSearchParams(location.search).get("view") === "detail-owner"
       ? { ...items[0], isOwner: true }
@@ -214,6 +301,9 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
     return args?.month === "2026-11"
       ? [{ startDate: "2026-11-10", endDate: "2026-11-12" }]
       : [];
+  const pendingOffer =
+    name === "requests:incoming" &&
+    new URLSearchParams(location.search).has("pendingOffer");
   if (name.startsWith("requests:"))
     return ["pending", "awaiting_borrower", "approved"].map((status, i) => ({
       id: `request${i}`,
@@ -231,13 +321,16 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
       rateMinor: 15000,
       totalMinor: 30000,
       listedRateMinor: 15000,
-      borrowerOfferMinor: i === 1 ? 10000 : null,
+      borrowerOfferMinor: i === 1 || (i === 0 && pendingOffer) ? 10000 : null,
       lenderCounterMinor: i === 1 ? 12500 : null,
       priceDecision: i === 1 ? "countered" : null,
       createdAt: 1794200000000,
       lenderRespondedAt: 1794200010000,
     }));
-  if (name === "automation:mine")
+  if (name === "automation:mine") {
+    const state = new URLSearchParams(location.search).get("updates");
+    if (state === "loading") return undefined;
+    if (state === "empty") return [];
     return [
       {
         id: "event1",
@@ -251,8 +344,20 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         status: "retry_pending",
         createdAt: 1794190000000,
       },
+      ...(state === "sent"
+        ? [
+            {
+              id: "event3",
+              message: "Overdue reminder",
+              status: "sent",
+              createdAt: 1794180000000,
+            },
+          ]
+        : []),
     ];
-  if (name === "admin:access") return true;
+  }
+  if (name === "admin:access")
+    return !new URLSearchParams(location.search).has("adminDenied");
   if (name === "admin:overview")
     return {
       users: 24,

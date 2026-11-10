@@ -1,4 +1,4 @@
-import { ListingForm } from "@/components/listing-form";
+import { ListingForm } from "@/components/listings/listing-form";
 import type { Id } from "@/convex/_generated/dataModel";
 export default async function EditListingPage({
   params,

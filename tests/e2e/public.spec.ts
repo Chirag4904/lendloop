@@ -8,7 +8,7 @@ test("landing hero, catalog entry, and journal navigation", async ({
   await page.goto("/");
   await expect(
     page
-      .locator(".marketing-header")
+      .getByRole("banner")
       .getByRole("link", { name: "Sign in", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -46,6 +46,10 @@ for (const width of [360, 390, 768, 1280, 1600]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await page.evaluate(() => document.fonts.ready);
+    await expect(page.getByRole("banner")).toHaveCSS(
+      "position",
+      width >= 1280 ? "absolute" : "static",
+    );
     await expect(page.locator(".traveling-drill")).toBeVisible();
     // Wait for the client timeline, not an arbitrary animation duration.
     await expect
@@ -282,6 +286,28 @@ test("protected routes require sign-in", async ({ page }) => {
   await expect(page).toHaveURL(/\/sign-in/);
 });
 
+test("auth pages fit on narrow phones", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 900 });
+  for (const [route, name] of [
+    ["/sign-in", /Good to see you/],
+    ["/sign-up", /Meet your new/],
+  ] as const) {
+    await page.goto(route);
+    const heading = page.getByRole("heading", { level: 1, name });
+    await expect(heading).toBeVisible();
+    if (process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+      await expect(page.locator(".cl-cardBox")).toBeVisible();
+    }
+    await page.evaluate(() => document.fonts.ready);
+    expect(
+      await heading.evaluate((node) => node.scrollWidth <= node.clientWidth),
+    ).toBe(true);
+    expect(
+      await page.evaluate(() => document.documentElement.scrollWidth),
+    ).toBeLessThanOrEqual(360);
+  }
+});
+
 test("stable landing screenshots", async ({ page }) => {
   test.skip(
     process.platform !== "darwin",
@@ -297,7 +323,7 @@ test("stable landing screenshots", async ({ page }) => {
     await page.evaluate(() => document.fonts.ready);
     await expect(
       page
-        .locator(".marketing-header")
+        .getByRole("banner")
         .getByRole("link", { name: "Sign in", exact: true }),
     ).toBeVisible();
     await page.addStyleTag({ content: "nextjs-portal { display: none; }" });

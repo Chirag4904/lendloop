@@ -38,7 +38,6 @@ async function listDrill(page: Page, dailyRate?: string) {
     await page.getByLabel("Paid rental").check();
     await page.getByLabel("Daily rate in INR").fill(dailyRate);
   }
-  await page.getByRole("button", { name: "Preview listing" }).click();
   await page.getByRole("button", { name: "Publish listing" }).click();
   await expect(page).toHaveURL(/\/dashboard\/listings$/);
   const card = page
@@ -321,11 +320,12 @@ test("notification center updates live and loan automation fits mobile widths", 
     await expect(
       lender.page.getByRole("heading", { name: "The latest, from nearby." }),
     ).toBeVisible();
-    const before = await lender.page.locator(".automation-list li").count();
+    const notifications = lender.page
+      .getByRole("list", { name: "Notifications" })
+      .getByRole("listitem");
+    const before = await notifications.count();
     await request(borrower.page, href);
-    await expect
-      .poll(() => lender.page.locator(".automation-list li").count())
-      .toBeGreaterThan(before);
+    await expect.poll(() => notifications.count()).toBeGreaterThan(before);
     for (const width of [360, 390]) {
       await lender.page.setViewportSize({ width, height: 800 });
       expect(
