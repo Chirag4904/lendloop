@@ -21,7 +21,7 @@ Convex does not receive Clerk's secret key. Clerk stays the identity system; Con
 
 Active societies can be entered by a provisioned LendLoop admin through `/admin/societies` or by a deployment operator through a controlled migration. Normal users cannot create or approve societies. Source city, locality, latitude, and longitude independently for LendLoop's own directory. Until an active society exists, onboarding shows a clear empty state and lets users submit a suggestion.
 
-For a development preview, seed four fictional Pune societies, four synthetic neighbor profiles, and eight sample tools. The profiles are Convex sample rows, not Clerk sign-in accounts. Names are prefixed `Demo ·`, and the catalog labels their tools as sample listings. Enable the seed only on your Convex development deployment, then run it once (re-running is safe):
+For a development preview, seed four fictional Mumbai societies near Rizvi Oak, four synthetic neighbor profiles, and eight sample tools. Their coordinates are illustrative. The profiles are Convex sample rows, not Clerk sign-in accounts. Names are prefixed `Demo ·`, and the catalog labels their tools as sample listings. Enable the seed only on your Convex development deployment, then run it once (re-running is safe):
 
 ```bash
 npx convex env set LENDLOOP_DEMO_SEED_ALLOWED true
@@ -74,7 +74,7 @@ The current society search checks the first 200 active records. Add a dedicated 
 
 ## Rizvi Oak CHSL demo data
 
-The development deployment has four synthetic profiles and eight photo-backed tool listings in Rizvi Oak CHSL, Malad East, Mumbai. These are display-only mock profiles (`demo_rizvi_*` Clerk subjects), not real Clerk accounts or verified residents. Every tool and owner name starts with `Demo ·`. The eight generated source images are in `public/images/demo-rizvi/`; their serving copies are stored in Convex File Storage. No Trusted Lender badges were assigned.
+The development deployment has four synthetic profiles and fifteen photo-backed tool listings in Rizvi Oak CHSL, Malad East, Mumbai. These are display-only mock profiles (`demo_rizvi_*` Clerk subjects), not real Clerk accounts or verified residents. Every tool and owner name starts with `Demo ·`. The generated source images are in `public/images/demo-rizvi/`; their serving copies are stored in Convex File Storage. No Trusted Lender badges were assigned.
 
 The scoped seed is idempotent and only runs when `LENDLOOP_DEMO_SEED_ALLOWED=true` in the development Convex deployment:
 
@@ -82,7 +82,7 @@ The scoped seed is idempotent and only runs when `LENDLOOP_DEMO_SEED_ALLOWED=tru
 npx convex run demoRizvi:seed '{"societyId":"j576c7743fr9d6jghg3wjer7yd8hvkz3"}'
 ```
 
-`demoRizvi:preparePhotos` creates upload URLs for listings without photos; upload the local JPEGs to those URLs and call `demoRizvi:attachPhotos` with their returned storage IDs. The live development dataset already has all eight images attached. Keep this seed flag disabled in production.
+`demoRizvi:preparePhotos` creates upload URLs for listings without photos; upload the local JPEGs to those URLs and call `demoRizvi:attachPhotos` with their returned storage IDs. The live development dataset already has all fifteen images attached. The four fictional neighboring societies use approximate coordinates around Rizvi Oak; they are not real building locations. Keep this seed flag disabled in production.
 
 ## Admin browser tests
 

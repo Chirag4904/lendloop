@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import Link, { useLinkStatus } from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef } from "react";
 import { UserButton } from "@clerk/nextjs";
@@ -19,6 +19,15 @@ const items = [
   { href: "/dashboard/listings", label: "My Listings", icon: Package },
   { href: "/dashboard/notifications", label: "Updates", icon: Bell },
 ];
+
+function NavigationPending({ label }: { label: string }) {
+  const { pending } = useLinkStatus();
+  return pending ? (
+    <span data-pending="true" className={styles.pendingMessage} role="status">
+      Opening {label}…
+    </span>
+  ) : null;
+}
 
 function DashboardNavigation({
   pathname,
@@ -95,6 +104,7 @@ function DashboardNavigation({
           >
             <Icon size={19} />
             {label}
+            <NavigationPending label={label} />
             {showBadge && (
               <span className={styles.updatesBadge} aria-hidden="true">
                 {unread}

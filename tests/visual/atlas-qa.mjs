@@ -681,6 +681,43 @@ assert.deepEqual(await page.evaluate(() => window.__atlasOnboardingCalls), [
   { name: "users:selectSociety", args: { societyId: "society1" } },
 ]);
 
+for (const width of [390, 1280]) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto("http://localhost:3000/__atlas-qa?view=listings&nav-pending");
+  const nav = page.getByRole("navigation", {
+    name:
+      width === 390 ? "Mobile dashboard navigation" : "Dashboard navigation",
+    exact: true,
+  });
+  const active = nav.getByRole("link", { name: "My Listings" });
+  const next = nav.getByRole("link", { name: "My Activity" });
+  if (width === 390) {
+    await page.waitForFunction(() =>
+      document.querySelector('nav[data-ready="true"]'),
+    );
+    assert.equal(
+      await nav
+        .locator(':scope > [aria-hidden="true"]')
+        .evaluate((el) => getComputedStyle(el).backgroundColor),
+      "rgb(217, 243, 106)",
+    );
+  }
+  await next.click();
+  await nav
+    .getByRole("status")
+    .filter({ hasText: "Opening My Activity…" })
+    .waitFor();
+  assert.equal(await active.getAttribute("aria-current"), "page");
+  assert.equal(await next.getAttribute("aria-current"), null);
+  assert.equal(
+    await next.evaluate((el) => getComputedStyle(el).backgroundColor),
+    "rgb(217, 243, 106)",
+  );
+  await page.screenshot({
+    path: `artifacts/atlas/navigation-pending-${width}.png`,
+    fullPage: true,
+  });
+}
 for (const width of [390, 1000, 1001, 1280]) {
   await page.setViewportSize({ width, height: 900 });
   await page.goto("http://localhost:3000/__atlas-qa?view=explore");

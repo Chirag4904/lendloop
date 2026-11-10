@@ -83,15 +83,36 @@ export const usePathname = () => {
       ? "/admin"
       : `/dashboard/${v}`;
 };
+const LinkPendingContext = React.createContext(false);
+export const useLinkStatus = () => ({
+  pending: React.useContext(LinkPendingContext),
+});
 export default function Link({
   href,
   children,
+  onClick,
   ...rest
 }: React.ComponentProps<"a">) {
+  const [pending, setPending] = React.useState(false);
   return (
-    <a href={href} {...rest}>
-      {children}
-    </a>
+    <LinkPendingContext.Provider value={pending}>
+      <a
+        href={href}
+        {...rest}
+        onClick={(event) => {
+          onClick?.(event);
+          if (
+            new URLSearchParams(location.search).has("nav-pending") &&
+            !event.defaultPrevented
+          ) {
+            event.preventDefault();
+            setPending(true);
+          }
+        }}
+      >
+        {children}
+      </a>
+    </LinkPendingContext.Provider>
   );
 }
 type ListingStatus = "active" | "unlisted" | "archived";

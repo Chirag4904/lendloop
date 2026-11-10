@@ -42,7 +42,7 @@ test("Rizvi demo seed is guarded, scoped, repeatable and links a photo", async (
     ).rejects.toThrow("Target society unavailable");
     expect(await t.mutation(internal.demoRizvi.seed, { societyId })).toEqual({
       users: 4,
-      tools: 8,
+      tools: 15,
     });
     expect(await t.mutation(internal.demoRizvi.seed, { societyId })).toEqual({
       users: 0,
@@ -51,7 +51,7 @@ test("Rizvi demo seed is guarded, scoped, repeatable and links a photo", async (
     const uploads = await t.mutation(internal.demoRizvi.preparePhotos, {
       societyId,
     });
-    expect(uploads).toHaveLength(8);
+    expect(uploads).toHaveLength(15);
     const storageId = await t.run((ctx) =>
       ctx.storage.store(
         new Blob([new Uint8Array([0xff, 0xd8, 0xff, 0xd9])], {
@@ -79,7 +79,7 @@ test("Rizvi demo seed is guarded, scoped, repeatable and links a photo", async (
         )
         .take(20),
     );
-    expect(rows).toHaveLength(8);
+    expect(rows).toHaveLength(15);
     expect(
       rows.find((row) => row.name === "Demo · Cordless drill kit")?.photoIds,
     ).toHaveLength(1);

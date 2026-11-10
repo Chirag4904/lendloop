@@ -55,7 +55,8 @@
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.desktopNav a[aria-current="page"] .updatesBadge {
+.navigation a[aria-current="page"] .updatesBadge,
+.navigation a:has([data-pending="true"]) .updatesBadge {
   background: var(--brand-ink);
   color: var(--brand-paper);
 }
@@ -106,7 +107,7 @@
   margin-inline-start: 0;
 }
 .mobileNav a[aria-current="page"] {
-  background: var(--surface-selected);
+  background: var(--brand-lime);
   color: var(--blue);
 }
 .indicator {
@@ -122,7 +123,7 @@
   background: var(--brand-lime);
 }
 .mobileNav .indicator {
-  background: var(--surface-selected);
+  background: var(--brand-lime);
   border-radius: 12px;
 }
 .navigation[data-ready="true"] .indicator {
@@ -132,6 +133,38 @@
 }
 .navigation[data-instant] .indicator {
   transition: none;
+}
+.navigation:has([data-pending="true"]) .indicator {
+  opacity: 0 !important;
+  transition: none;
+}
+.navigation:has([data-pending="true"]) a[aria-current="page"] {
+  background: transparent;
+}
+.desktopNav:has([data-pending="true"]) a[aria-current="page"] {
+  color: var(--brand-paper);
+}
+.mobileNav:has([data-pending="true"]) a[aria-current="page"] {
+  color: var(--muted);
+}
+.navigation a:has([data-pending="true"]) {
+  background: var(--brand-lime);
+  color: var(--brand-ink);
+}
+.pendingMessage {
+  position: fixed;
+  z-index: 30;
+  top: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 32px);
+  padding: 10px 16px;
+  border-radius: 100px;
+  background: var(--brand-ink);
+  color: white;
+  font-size: 13px;
+  box-shadow: 0 4px 18px #152d3b22;
 }
 .navigation[data-ready="true"] a[aria-current="page"] {
   background: transparent;
@@ -271,4 +304,12 @@
   .loadingOrbit {
     animation: none;
   }
+}
+
+.routeLoading {
+  min-height: 35vh;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  text-align: center;
 }

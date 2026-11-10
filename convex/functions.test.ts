@@ -185,3 +185,76 @@ test("suggestions need authentication and never create an approved society", asy
   });
   expect(Object.hasOwn(societyFunctions, "create")).toBe(false);
 });
+
+test("demo societies move near Rizvi without changing the real society, and sample photos attach safely", async () => {
+  const t = convexTest(schema, modules);
+  process.env.LENDLOOP_DEMO_SEED_ALLOWED = "true";
+  try {
+    const anchor = await t.run((ctx) =>
+      ctx.db.insert("societies", {
+        name: "Rizvi Oak CHSL",
+        city: "Mumbai",
+        locality: "Malad East",
+        latitude: 19.1910847,
+        longitude: 72.8594472,
+        status: "active",
+        createdAt: 0,
+        updatedAt: 0,
+      }),
+    );
+    await t.mutation(internal.devSeed.seed, {});
+    await t.run(async (ctx) => {
+      const rows = await ctx.db.query("societies").take(10);
+      for (const row of rows)
+        if (row.name.startsWith("Demo ·"))
+          await ctx.db.patch(row._id, {
+            city: "Pune",
+            locality: "Baner",
+            latitude: 18,
+            longitude: 73,
+          });
+    });
+    expect(
+      await t.mutation(internal.devSeed.relocateDemoSocieties, {
+        societyId: anchor,
+      }),
+    ).toBe(4);
+    expect(
+      await t.mutation(internal.devSeed.relocateDemoSocieties, {
+        societyId: anchor,
+      }),
+    ).toBe(0);
+    const rows = await t.run((ctx) => ctx.db.query("societies").take(10));
+    expect(
+      rows.every(
+        (row) =>
+          row.city === "Mumbai" &&
+          Math.abs(row.latitude - 19.1910847) < 0.01 &&
+          Math.abs(row.longitude - 72.8594472) < 0.01,
+      ),
+    ).toBe(true);
+    expect(rows.find((row) => row._id === anchor)?.updatedAt).toBe(0);
+    expect(
+      await t.mutation(internal.devSeed.prepareDemoPhotos, {}),
+    ).toHaveLength(8);
+    const storageId = await t.run((ctx) =>
+      ctx.storage.store(
+        new Blob([new Uint8Array([255, 216, 255, 217])], {
+          type: "image/jpeg",
+        }),
+      ),
+    );
+    expect(
+      await t.mutation(internal.devSeed.attachDemoPhotos, {
+        photos: [{ key: "drill", storageId }],
+      }),
+    ).toBe(1);
+    expect(
+      await t.mutation(internal.devSeed.attachDemoPhotos, {
+        photos: [{ key: "drill", storageId }],
+      }),
+    ).toBe(0);
+  } finally {
+    delete process.env.LENDLOOP_DEMO_SEED_ALLOWED;
+  }
+});

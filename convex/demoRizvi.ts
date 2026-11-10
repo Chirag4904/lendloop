@@ -82,6 +82,74 @@ const items = [
       "Sturdy folding step ladder for reaching shelves and ceiling fixtures. Use on level ground.",
     owner: 3,
   },
+  {
+    key: "sander",
+    name: "Demo · Orbital sander",
+    category: "Power Tools",
+    condition: "good",
+    owner: 0,
+    dailyAmount: 14000,
+    description:
+      "Compact orbital sander with a dust bag and a selection of sanding discs. Suitable for small woodworking projects; please empty the dust bag after use.",
+  },
+  {
+    key: "vacuum",
+    name: "Demo · Handheld vacuum",
+    category: "Home & Cleaning",
+    condition: "likeNew",
+    owner: 1,
+    dailyAmount: 9000,
+    description:
+      "Cordless handheld vacuum with a crevice nozzle and charger. Useful for furniture, stairs and car interiors; please empty the dust cup before returning.",
+  },
+  {
+    key: "scale",
+    name: "Demo · Digital kitchen scale",
+    category: "Kitchen",
+    condition: "good",
+    owner: 2,
+    description:
+      "Digital kitchen scale with a removable bowl and tare function. Ideal for baking and portioning; please wipe clean after use.",
+  },
+  {
+    key: "speaker",
+    name: "Demo · Portable Bluetooth speaker",
+    category: "Electronics",
+    condition: "good",
+    owner: 3,
+    dailyAmount: 10000,
+    description:
+      "Rechargeable portable speaker with Bluetooth pairing and a charging cable. A convenient companion for a small gathering or movie night.",
+  },
+  {
+    key: "bike",
+    name: "Demo · Bicycle repair kit",
+    category: "Sports & Fitness",
+    condition: "good",
+    owner: 0,
+    description:
+      "Hand pump, tire levers, patch kit and compact multitool in a zip case. Suitable for everyday bicycle adjustments and puncture repairs.",
+  },
+  {
+    key: "dehydrator",
+    name: "Demo · Food dehydrator",
+    category: "Kitchen",
+    condition: "likeNew",
+    owner: 1,
+    dailyAmount: 15000,
+    description:
+      "Countertop food dehydrator with removable trays and adjustable temperature. Great for drying fruit or herbs; return the trays clean and dry.",
+  },
+  {
+    key: "table",
+    name: "Demo · Folding picnic table",
+    category: "Camping & Outdoors",
+    condition: "good",
+    owner: 2,
+    dailyAmount: 12000,
+    description:
+      "Lightweight folding table for picnics and outdoor gatherings. Folds flat for transport; use on level ground and wipe clean before returning.",
+  },
 ] as const;
 
 async function target(ctx: MutationCtx, societyId: Id<"societies">) {
