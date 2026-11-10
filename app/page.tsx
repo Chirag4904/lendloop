@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { PublicCatalog } from "@/components/public-catalog";
-import { MarketingHeader, MarketingFooter } from "@/components/marketing-shell";
+import {
+  MarketingHeader,
+  MarketingFooter,
+} from "@/components/marketing/marketing-shell";
 import { ScrollStory } from "@/components/story/scroll-story";
 import { SocietyShowcase } from "@/components/story/society-showcase";
 import { Button } from "@/components/ui/button";

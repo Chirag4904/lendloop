@@ -5,12 +5,6 @@
 /* Homepage journey: one drill across six chapters. The stacked media query
    below must match STACKED_QUERY in components/story/scroll-story.tsx. */
 
-.marketing-header.is-overlay {
-  position: absolute;
-  inset: 0 0 auto;
-  z-index: 5;
-  background: transparent;
-}
 .scroll-story {
   --lamplight: #f2b866;
   position: relative;
@@ -630,10 +624,6 @@
   background: var(--cream);
 }
 @media (max-width: 760px), (max-aspect-ratio: 1249/1000) {
-  .marketing-header.is-overlay {
-    position: static;
-    background: var(--ink);
-  }
   .story-stage {
     z-index: 4;
     height: 46svh;

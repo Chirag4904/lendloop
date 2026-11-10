@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
-import { MarketingHeader, MarketingFooter } from "@/components/marketing-shell";
+import {
+  MarketingHeader,
+  MarketingFooter,
+} from "@/components/marketing/marketing-shell";
 import styles from "./editorial-page.module.css";
 
 export function EditorialPage({

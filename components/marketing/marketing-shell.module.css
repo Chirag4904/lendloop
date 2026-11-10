@@ -1,0 +1,121 @@
+.header,
+.footer {
+  background: var(--ink);
+  color: var(--cream);
+}
+.header.overlay {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 5;
+  background: transparent;
+}
+.nav {
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  border-bottom: 1px solid #ffffff24;
+}
+.mark {
+  color: var(--brand-lime);
+  font-size: 34px;
+}
+.period {
+  color: var(--brand-lime);
+  margin-left: -8px;
+}
+.nav nav {
+  display: flex;
+  gap: 30px;
+  font-size: 13px;
+}
+.nav nav a {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+.accountLink {
+  padding: 0 18px;
+  gap: 10px;
+  border-color: #9faeae;
+  border-radius: 100px;
+  background: transparent;
+  color: var(--cream);
+  font-size: 13px;
+  font-weight: inherit;
+  line-height: inherit;
+  transition: none;
+}
+.accountLink:hover {
+  background: #294553;
+}
+.header a:focus-visible,
+.footer a:focus-visible {
+  outline-color: var(--brand-lime);
+}
+.footerTop {
+  border-top: 1px solid #ffffff30;
+  display: flex;
+  justify-content: space-between;
+  gap: 35px;
+  padding: 55px 0;
+}
+.footerTop p {
+  font-size: 15px;
+  line-height: 1.6;
+}
+.footerTop > div {
+  display: grid;
+  gap: 15px;
+  font-size: 12px;
+}
+.footerBottom {
+  display: flex;
+  justify-content: space-between;
+  padding: 20px 0 30px;
+  font-size: 10px;
+  color: #c3d2cc;
+  border-top: 1px solid #ffffff30;
+}
+@media (max-width: 1000px) {
+  .nav nav {
+    gap: 18px;
+  }
+}
+@media (max-width: 760px) {
+  .nav {
+    min-height: 106px;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-block: 15px;
+  }
+  .nav nav {
+    order: 3;
+    width: 100%;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 11px;
+  }
+  .accountLink {
+    font-size: 11px;
+    padding-inline: 13px;
+  }
+  .footerTop {
+    flex-wrap: wrap;
+  }
+  .footerTop :global(.wordmark) {
+    width: 100%;
+  }
+  .footerBottom {
+    gap: 30px;
+    line-height: 1.6;
+  }
+}
+/* Keep the header in flow when ScrollStory switches to its stacked layout. */
+@media (max-width: 760px), (max-aspect-ratio: 1249/1000) {
+  .header.overlay {
+    position: static;
+    background: var(--ink);
+  }
+}

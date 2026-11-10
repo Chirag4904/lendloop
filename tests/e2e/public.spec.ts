@@ -8,7 +8,7 @@ test("landing hero, catalog entry, and journal navigation", async ({
   await page.goto("/");
   await expect(
     page
-      .locator(".marketing-header")
+      .getByRole("banner")
       .getByRole("link", { name: "Sign in", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
@@ -46,6 +46,10 @@ for (const width of [360, 390, 768, 1280, 1600]) {
     await page.setViewportSize({ width, height: 900 });
     await page.goto("/");
     await page.evaluate(() => document.fonts.ready);
+    await expect(page.getByRole("banner")).toHaveCSS(
+      "position",
+      width >= 1280 ? "absolute" : "static",
+    );
     await expect(page.locator(".traveling-drill")).toBeVisible();
     // Wait for the client timeline, not an arbitrary animation duration.
     await expect
@@ -319,7 +323,7 @@ test("stable landing screenshots", async ({ page }) => {
     await page.evaluate(() => document.fonts.ready);
     await expect(
       page
-        .locator(".marketing-header")
+        .getByRole("banner")
         .getByRole("link", { name: "Sign in", exact: true }),
     ).toBeVisible();
     await page.addStyleTag({ content: "nextjs-portal { display: none; }" });

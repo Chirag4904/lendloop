@@ -98,19 +98,6 @@ textarea:focus-visible {
 .site-header nav > a:not(.nav-cta):hover {
   color: var(--blue);
 }
-.nav-cta {
-  min-height: 44px;
-  padding: 0 18px;
-  border: 1px solid var(--blue);
-  border-radius: 100px;
-  color: var(--blue);
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-.nav-cta:hover {
-  background: var(--blue-soft);
-}
 .hero {
   min-height: 670px;
   display: grid;
@@ -1032,20 +1019,6 @@ textarea:focus-visible {
   background: #ffe3bd;
   color: #70410c;
 }
-
-/* Phase 7: editorial marketing, scoped separately from marketplace layouts. */
-.marketing-header {
-  background: var(--ink);
-  color: var(--cream);
-}
-.marketing-nav {
-  min-height: 96px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  border-bottom: 1px solid #ffffff24;
-}
 .wordmark {
   display: inline-flex;
   align-items: center;
@@ -1055,105 +1028,9 @@ textarea:focus-visible {
   font-weight: 600;
   letter-spacing: -1.5px;
 }
-.wordmark > span:first-child {
-  color: var(--brand-lime);
-  font-size: 34px;
-}
-.logo-period {
-  color: var(--brand-lime);
-  margin-left: -8px;
-}
-.marketing-nav nav {
-  display: flex;
-  gap: 30px;
-  font-size: 13px;
-}
-.marketing-nav .nav-cta {
-  border-color: #9faeae;
-  color: var(--cream);
-  font-size: 13px;
-}
-.marketing-nav .nav-cta:hover {
-  background: #294553;
-}
-.marketing-header a:focus-visible,
-.editorial-footer a:focus-visible {
-  outline-color: var(--brand-lime);
-}
-.editorial-footer {
-  background: var(--ink);
-  color: var(--cream);
-}
-.footer-top {
-  border-top: 1px solid #ffffff30;
-  display: flex;
-  justify-content: space-between;
-  gap: 35px;
-  padding: 55px 0;
-}
-.footer-top p {
-  font-size: 15px;
-  line-height: 1.6;
-}
-.footer-top > div {
-  display: grid;
-  gap: 15px;
-  font-size: 12px;
-}
-.footer-bottom {
-  display: flex;
-  justify-content: space-between;
-  padding: 20px 0 30px;
-  font-size: 10px;
-  color: #c3d2cc;
-  border-top: 1px solid #ffffff30;
-}
-@media (max-width: 1000px) {
-  .marketing-nav nav {
-    gap: 18px;
-  }
-}
 @media (max-width: 760px) {
-  .marketing-nav {
-    min-height: 106px;
-    flex-wrap: wrap;
-    gap: 10px;
-    padding-block: 15px;
-  }
   .wordmark {
     font-size: 25px;
-  }
-  .marketing-nav nav {
-    order: 3;
-    width: 100%;
-    justify-content: space-between;
-    gap: 10px;
-    font-size: 11px;
-  }
-  .marketing-nav .nav-cta {
-    min-height: 40px;
-    font-size: 11px;
-    padding-inline: 13px;
-  }
-  .footer-top {
-    flex-wrap: wrap;
-  }
-  .footer-top .wordmark {
-    width: 100%;
-  }
-  .footer-bottom {
-    gap: 30px;
-    line-height: 1.6;
-  }
-}
-.marketing-nav nav a {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-}
-@media (max-width: 760px) {
-  .marketing-nav .nav-cta {
-    min-height: 44px;
   }
 }
 
