@@ -1,5 +1,5 @@
-import { Profile } from "./profile";
-import { RequestList } from "@/components/borrowing";
+import { Profile } from "@/components/profile/profile";
+import { RequestList } from "@/components/borrowing/borrowing";
 import { ExploreTools, MyListings } from "@/components/marketplace";
 import { Notifications } from "@/components/notifications";
 

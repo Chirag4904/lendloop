@@ -1,4 +1,4 @@
-import { ListingForm } from "@/components/listing-form";
+import { ListingForm } from "@/components/listings/listing-form";
 export default function NewListingPage() {
   return <ListingForm />;
 }

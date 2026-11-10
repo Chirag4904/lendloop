@@ -23,9 +23,9 @@ import {
   Tent,
   type LucideIcon,
 } from "lucide-react";
-import { categories, conditions } from "./listing-form";
+import { categories, conditions } from "@/components/listings/listing-form";
 import { useCurrentProfile } from "@/hooks/use-current-profile";
-import { RequestForm } from "./borrowing";
+import { RequestForm } from "@/components/borrowing/borrowing";
 
 type Tool = {
   id: Id<"tools">;
