@@ -43,11 +43,11 @@ const hmac = `const crypto = require('crypto');
 const secret = $env.LENDLOOP_INBOUND_SECRET;
 const base = $env.LENDLOOP_CONVEX_SITE_URL;
 if (!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');
-const url = new URL(path, base);
+const url = base.replace(/\\/$/, '') + path;
 const timestamp = String(Date.now());
 const nonce = crypto.randomUUID();
-const signature = crypto.createHmac('sha256', secret).update(method + '\\n' + url.pathname + url.search + '\\n' + timestamp + '\\n' + nonce + '\\n' + body, 'utf8').digest('hex');
-return [{json:{url:url.toString(),body,timestamp,nonce,signature}}];`;
+const signature = crypto.createHmac('sha256', secret).update(method + '\\n' + path + '\\n' + timestamp + '\\n' + nonce + '\\n' + body, 'utf8').digest('hex');
+return [{json:{url,body,timestamp,nonce,signature}}];`;
 const signedPost = (path, body) =>
   `const path = '${path}';\nconst method = 'POST';\nconst body = ${body};\n${hmac}`;
 const signedGet = `const cursor = $input.first().json.cursor;\nconst path = '/automation/overdue-loans' + (cursor ? '?cursor=' + encodeURIComponent(cursor) : '');\nconst method = 'GET';\nconst body = '';\n${hmac}`;
@@ -58,12 +58,13 @@ const signedBatch = (
 ) => `const crypto=require('crypto');
 const secret=$env.LENDLOOP_INBOUND_SECRET, base=$env.LENDLOOP_CONVEX_SITE_URL;
 if(!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');
-const url=new URL('${path}',base);
+const path='${path}';
+const url=base.replace(/\\/$/, '') + path;
 return $input.all().map(x=>x.json).filter(row=>${filter}).map(row=>{
   const body=JSON.stringify(${expression});
   const timestamp=String(Date.now()), nonce=crypto.randomUUID();
-  const signature=crypto.createHmac('sha256',secret).update('POST\\n'+url.pathname+url.search+'\\n'+timestamp+'\\n'+nonce+'\\n'+body,'utf8').digest('hex');
-  return {json:{url:url.toString(),body,timestamp,nonce,signature}};
+  const signature=crypto.createHmac('sha256',secret).update('POST\\n'+path+'\\n'+timestamp+'\\n'+nonce+'\\n'+body,'utf8').digest('hex');
+  return {json:{url,body,timestamp,nonce,signature}};
 });`;
 const httpNode = (name, method, x, y) => ({
   name,

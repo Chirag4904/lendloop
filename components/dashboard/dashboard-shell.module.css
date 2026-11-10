@@ -41,6 +41,24 @@
   align-items: center;
   font-weight: 600;
 }
+.updatesBadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  min-height: 18px;
+  padding-inline: 4px;
+  margin-inline-start: 6px;
+  border-radius: 999px;
+  background: var(--brand-lime);
+  color: var(--brand-ink);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.desktopNav a[aria-current="page"] .updatesBadge {
+  background: var(--brand-ink);
+  color: var(--brand-paper);
+}
 .desktopNav {
   display: none;
   position: relative;
@@ -72,6 +90,7 @@
   justify-content: space-around;
 }
 .mobileNav a {
+  position: relative;
   flex-direction: column;
   gap: 4px;
   font-size: 11px;
@@ -79,6 +98,12 @@
   min-width: 65px;
   border-radius: 12px;
   color: var(--muted);
+}
+.mobileNav .updatesBadge {
+  position: absolute;
+  top: 2px;
+  inset-inline-start: calc(50% + 5px);
+  margin-inline-start: 0;
 }
 .mobileNav a[aria-current="page"] {
   background: var(--surface-selected);

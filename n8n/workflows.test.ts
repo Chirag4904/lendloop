@@ -2,6 +2,7 @@
 import { createHmac } from "node:crypto";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
+import { runInNewContext } from "node:vm";
 import { expect, test } from "vitest";
 
 const requireNode = createRequire(import.meta.url);
@@ -105,4 +106,69 @@ test("request workflow checks the exact raw body and rejects tampering", async (
   });
   expect((await execute(body + " "))[0].json.valid).toBe(false);
   expect((await execute(body, "0".repeat(64)))[0].json.valid).toBe(false);
+});
+
+test("signing nodes run without URL and sign the exact request path", async () => {
+  const origin = "https://lendloop-dev.convex.site";
+  const secret = "test-inbound-secret";
+  const input = {
+    cursor: "a+/=",
+    eventId: "event",
+    lease: "lease",
+    message: "Request received",
+    loanId: "loan",
+    claim: { key: "overdue:loan:2026-11-10", lease: "lease" },
+  };
+  for (const [workflow, name, method, path] of [
+    [
+      "request-notification",
+      "Sign delivery acknowledgement",
+      "POST",
+      "/automation/events/complete",
+    ],
+    [
+      "overdue-reminders",
+      "Sign overdue page",
+      "GET",
+      "/automation/overdue-loans?cursor=a%2B%2F%3D",
+    ],
+    [
+      "overdue-reminders",
+      "Sign reminder claim",
+      "POST",
+      "/automation/reminders/claim",
+    ],
+    [
+      "overdue-reminders",
+      "Sign mock delivery",
+      "POST",
+      "/automation/reminders/complete",
+    ],
+  ]) {
+    const node = load(workflow).nodes.find(
+      (item: { name: string }) => item.name === name,
+    );
+    const [{ json }] = await runInNewContext(
+      "(async () => {\n" + node.parameters.jsCode + "\n})()",
+      {
+        $input: {
+          first: () => ({ json: input }),
+          all: () => [{ json: input }],
+        },
+        $env: {
+          LENDLOOP_INBOUND_SECRET: secret,
+          LENDLOOP_CONVEX_SITE_URL: origin + "/",
+        },
+        require: requireNode,
+      },
+    );
+    expect(json.url).toBe(origin + path);
+    expect(json.signature).toBe(
+      createHmac("sha256", secret)
+        .update(
+          [method, path, json.timestamp, json.nonce, json.body].join("\n"),
+        )
+        .digest("hex"),
+    );
+  }
 });

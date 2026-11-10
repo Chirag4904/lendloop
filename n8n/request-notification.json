@@ -67,7 +67,7 @@
       "position": [660, -100],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const path = '/automation/events/complete';\nconst method = 'POST';\nconst body = JSON.stringify({eventId:$input.first().json.eventId,lease:$input.first().json.lease,message:$input.first().json.message});\nconst crypto = require('crypto');\nconst secret = $env.LENDLOOP_INBOUND_SECRET;\nconst base = $env.LENDLOOP_CONVEX_SITE_URL;\nif (!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url = new URL(path, base);\nconst timestamp = String(Date.now());\nconst nonce = crypto.randomUUID();\nconst signature = crypto.createHmac('sha256', secret).update(method + '\\n' + url.pathname + url.search + '\\n' + timestamp + '\\n' + nonce + '\\n' + body, 'utf8').digest('hex');\nreturn [{json:{url:url.toString(),body,timestamp,nonce,signature}}];"
+        "jsCode": "const path = '/automation/events/complete';\nconst method = 'POST';\nconst body = JSON.stringify({eventId:$input.first().json.eventId,lease:$input.first().json.lease,message:$input.first().json.message});\nconst crypto = require('crypto');\nconst secret = $env.LENDLOOP_INBOUND_SECRET;\nconst base = $env.LENDLOOP_CONVEX_SITE_URL;\nif (!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url = base.replace(/\\/$/, '') + path;\nconst timestamp = String(Date.now());\nconst nonce = crypto.randomUUID();\nconst signature = crypto.createHmac('sha256', secret).update(method + '\\n' + path + '\\n' + timestamp + '\\n' + nonce + '\\n' + body, 'utf8').digest('hex');\nreturn [{json:{url,body,timestamp,nonce,signature}}];"
       }
     },
     {

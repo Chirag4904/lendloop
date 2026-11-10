@@ -40,7 +40,7 @@
       "position": [400, 0],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const cursor = $input.first().json.cursor;\nconst path = '/automation/overdue-loans' + (cursor ? '?cursor=' + encodeURIComponent(cursor) : '');\nconst method = 'GET';\nconst body = '';\nconst crypto = require('crypto');\nconst secret = $env.LENDLOOP_INBOUND_SECRET;\nconst base = $env.LENDLOOP_CONVEX_SITE_URL;\nif (!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url = new URL(path, base);\nconst timestamp = String(Date.now());\nconst nonce = crypto.randomUUID();\nconst signature = crypto.createHmac('sha256', secret).update(method + '\\n' + url.pathname + url.search + '\\n' + timestamp + '\\n' + nonce + '\\n' + body, 'utf8').digest('hex');\nreturn [{json:{url:url.toString(),body,timestamp,nonce,signature}}];"
+        "jsCode": "const cursor = $input.first().json.cursor;\nconst path = '/automation/overdue-loans' + (cursor ? '?cursor=' + encodeURIComponent(cursor) : '');\nconst method = 'GET';\nconst body = '';\nconst crypto = require('crypto');\nconst secret = $env.LENDLOOP_INBOUND_SECRET;\nconst base = $env.LENDLOOP_CONVEX_SITE_URL;\nif (!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url = base.replace(/\\/$/, '') + path;\nconst timestamp = String(Date.now());\nconst nonce = crypto.randomUUID();\nconst signature = crypto.createHmac('sha256', secret).update(method + '\\n' + path + '\\n' + timestamp + '\\n' + nonce + '\\n' + body, 'utf8').digest('hex');\nreturn [{json:{url,body,timestamp,nonce,signature}}];"
       }
     },
     {
@@ -125,7 +125,7 @@
       "position": [1200, 100],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const crypto=require('crypto');\nconst secret=$env.LENDLOOP_INBOUND_SECRET, base=$env.LENDLOOP_CONVEX_SITE_URL;\nif(!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url=new URL('/automation/reminders/claim',base);\nreturn $input.all().map(x=>x.json).filter(row=>true).map(row=>{\n  const body=JSON.stringify({loanId:row.loanId,lease:crypto.randomUUID()});\n  const timestamp=String(Date.now()), nonce=crypto.randomUUID();\n  const signature=crypto.createHmac('sha256',secret).update('POST\\n'+url.pathname+url.search+'\\n'+timestamp+'\\n'+nonce+'\\n'+body,'utf8').digest('hex');\n  return {json:{url:url.toString(),body,timestamp,nonce,signature}};\n});"
+        "jsCode": "const crypto=require('crypto');\nconst secret=$env.LENDLOOP_INBOUND_SECRET, base=$env.LENDLOOP_CONVEX_SITE_URL;\nif(!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst path='/automation/reminders/claim';\nconst url=base.replace(/\\/$/, '') + path;\nreturn $input.all().map(x=>x.json).filter(row=>true).map(row=>{\n  const body=JSON.stringify({loanId:row.loanId,lease:crypto.randomUUID()});\n  const timestamp=String(Date.now()), nonce=crypto.randomUUID();\n  const signature=crypto.createHmac('sha256',secret).update('POST\\n'+path+'\\n'+timestamp+'\\n'+nonce+'\\n'+body,'utf8').digest('hex');\n  return {json:{url,body,timestamp,nonce,signature}};\n});"
       }
     },
     {
@@ -174,7 +174,7 @@
       "position": [1600, 100],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const crypto=require('crypto');\nconst secret=$env.LENDLOOP_INBOUND_SECRET, base=$env.LENDLOOP_CONVEX_SITE_URL;\nif(!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst url=new URL('/automation/reminders/complete',base);\nreturn $input.all().map(x=>x.json).filter(row=>!!row.claim).map(row=>{\n  const body=JSON.stringify({key:row.claim.key,lease:row.claim.lease,success:true});\n  const timestamp=String(Date.now()), nonce=crypto.randomUUID();\n  const signature=crypto.createHmac('sha256',secret).update('POST\\n'+url.pathname+url.search+'\\n'+timestamp+'\\n'+nonce+'\\n'+body,'utf8').digest('hex');\n  return {json:{url:url.toString(),body,timestamp,nonce,signature}};\n});"
+        "jsCode": "const crypto=require('crypto');\nconst secret=$env.LENDLOOP_INBOUND_SECRET, base=$env.LENDLOOP_CONVEX_SITE_URL;\nif(!secret || !base || !base.startsWith('https://')) throw new Error('Missing secure Convex configuration');\nconst path='/automation/reminders/complete';\nconst url=base.replace(/\\/$/, '') + path;\nreturn $input.all().map(x=>x.json).filter(row=>!!row.claim).map(row=>{\n  const body=JSON.stringify({key:row.claim.key,lease:row.claim.lease,success:true});\n  const timestamp=String(Date.now()), nonce=crypto.randomUUID();\n  const signature=crypto.createHmac('sha256',secret).update('POST\\n'+path+'\\n'+timestamp+'\\n'+nonce+'\\n'+body,'utf8').digest('hex');\n  return {json:{url,body,timestamp,nonce,signature}};\n});"
       }
     },
     {

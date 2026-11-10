@@ -36,6 +36,7 @@ export const items = [
   ],
 }));
 const profile = {
+  _id: "user1",
   displayName: "Asha Mehta",
   societyId: "society1",
   role: "admin",
@@ -103,7 +104,8 @@ export function useMutation(ref: never) {
     args:
       | { toolId: string; status: ListingStatus }
       | { toolId: string }
-      | { loanId: string },
+      | { loanId: string }
+      | { ids: string[] },
   ) => {
     const name = getFunctionName(ref);
     const fixtureMutation = (
@@ -112,6 +114,10 @@ export function useMutation(ref: never) {
       }
     ).__atlasMutation;
     if (fixtureMutation) return fixtureMutation(name, args);
+    if (name === "automation:markRead") {
+      Object.assign(window, { __atlasReadArgs: args });
+      return null;
+    }
     if (name === "loans:saveHandover") {
       Object.assign(window, { __atlasHandoverArgs: args });
       return null;
@@ -337,12 +343,14 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
         message: "Your request for the cordless drill was approved.",
         status: "delivered",
         createdAt: 1794200000000,
+        unreadId: state === "unread" ? "notification1" : null,
       },
       {
         id: "event2",
         message: "The lender suggested a new price.",
         status: "retry_pending",
         createdAt: 1794190000000,
+        unreadId: null,
       },
       ...(state === "sent"
         ? [
@@ -351,6 +359,7 @@ export function useQuery(ref: never, args?: Record<string, unknown> | "skip") {
               message: "Overdue reminder",
               status: "sent",
               createdAt: 1794180000000,
+              unreadId: null,
             },
           ]
         : []),
